@@ -1,0 +1,109 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Noto Sans Georgian";
+  src: url("../fonts/NotoSansGeorgian-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans Georgian";
+  src: url("../fonts/NotoSansGeorgian-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans Georgian";
+  src: url("../fonts/NotoSansGeorgian-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans Georgian";
+  src: url("../fonts/NotoSansGeorgian-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans Georgian";
+  src: url("../fonts/NotoSansGeorgian-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+@layer components {
+  .container-fluid {
+    @apply container;
+  }
+
+  @media (min-width: 1440px) {
+    .container-fluid {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+}
+
+body {
+  font-family: "Noto Sans Georgian", sans-serif;
+  font-weight: 400;
+}
+
+.upper {
+  text-transform: uppercase;
+  -moz-font-feature-settings: "case";
+  -webkit-font-feature-settings: "case";
+  font-feature-settings: "case" on;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+@media (max-width: 479px) {
+  .title-under-xs {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .subtitle-under-xs {
+    font-size: 16px;
+    line-height: 22px;
+  }
+}

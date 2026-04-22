@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend (shopback)",
+      "type": "shell",
+      "command": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
+      "options": {
+        "cwd": "${workspaceFolder:shopback}",
+        "env": {}
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      }
+    },
+    {
+      "label": "Start Frontend (shopfront)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder:shopfront}"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      }
+    },
+    {
+      "label": "Start All (Backend + Frontend)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Start Backend (shopback)", "Start Frontend (shopfront)"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

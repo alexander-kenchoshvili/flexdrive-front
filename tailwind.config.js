@@ -1,0 +1,66 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
+  darkMode: "class",
+  content: [],
+  theme: {
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: "16px",
+        md: "24px",
+        lg: "32px",
+      },
+      screens: {
+        "2xl": "1280px",
+      },
+    },
+    extend: {
+      screens: {
+        xs: "480px",
+      },
+      colors: {
+        "bg-primary": "var(--bg-primary)",
+        "bg-secondary": "var(--bg-secondary)",
+        "bg-muted": "var(--bg-muted)",
+        surface: "var(--surface)",
+        "surface-2": "var(--surface-2)",
+        "surface-3": "var(--surface-3)",
+        "header-bg": "var(--header-bg)",
+        "header-surface": "var(--header-surface)",
+        "header-hover": "var(--header-hover)",
+        "header-border": "var(--header-border)",
+        "footer-bg": "var(--footer-bg)",
+        "footer-surface": "var(--footer-surface)",
+        "footer-hover": "var(--footer-hover)",
+        "footer-border": "var(--footer-border)",
+        "footer-text-primary": "var(--footer-text-primary)",
+        "footer-text-secondary": "var(--footer-text-secondary)",
+        "footer-text-muted": "var(--footer-text-muted)",
+        "section-soft": "var(--section-soft)",
+        "section-warm": "var(--section-warm)",
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "text-muted": "var(--text-muted)",
+        "text-invert": "var(--text-invert)",
+        "border-default": "var(--border-default)",
+        "border-muted": "var(--border-muted)",
+        "accent-primary": "var(--accent-primary)",
+        "accent-hover": "var(--accent-hover)",
+        "accent-pressed": "var(--accent-pressed)",
+        link: "var(--link)",
+        "link-hover": "var(--link-hover)",
+        success: "var(--success)",
+        warning: "var(--warning)",
+        error: "var(--error)",
+      },
+      fontFamily: {
+        sans: ["Noto Sans Georgian", "sans-serif"],
+        georgian: ["Noto Sans Georgian", "sans-serif"],
+      },
+    },
+  },
+  plugins: [],
+}
