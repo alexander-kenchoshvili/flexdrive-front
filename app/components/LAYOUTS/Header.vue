@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { MoonIcon, SunIcon, UserCircleIcon } from "@heroicons/vue/24/outline";
-import { useMediaQuery } from "@vueuse/core";
 
 const route = useRoute();
 const menuStore = useMenu();
@@ -12,11 +11,7 @@ const { isDark, toggleTheme } = useTheme();
 
 const isMobileMenuOpen = ref(false);
 const isAccountDialogOpen = ref(false);
-const shouldUseHorizontalLogo = useMediaQuery("(max-width: 767px)");
 const desktopSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
-  null,
-);
-const mobileSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
   null,
 );
 
@@ -112,11 +107,6 @@ const handleLogout = async () => {
   await logout();
 };
 
-const openMobileSearch = () => {
-  closeMobileMenu();
-  void mobileSearchRef.value?.openMobileSheet();
-};
-
 watch(
   () => route.fullPath,
   () => {
@@ -172,7 +162,7 @@ onBeforeUnmount(() => {
 
 <template>
   <header
-    class="sticky top-0 z-40 border-b border-header-border bg-header-bg/95 shadow-[0_10px_28px_-24px_var(--shadow-color)] backdrop-blur-xl"
+    class="sticky top-0 z-40 border-b border-header-border bg-header-bg shadow-[0_14px_34px_-24px_var(--shadow-color)]"
   >
     <div class="container-fluid px-3 py-3 sm:px-4">
       <div class="flex min-h-[58px] items-center gap-2 sm:gap-3 lg:gap-4">
@@ -181,12 +171,20 @@ onBeforeUnmount(() => {
           class="site-logo-link inline-flex shrink-0 items-center no-underline"
           aria-label="FlexDrive"
         >
-          <FlexdriveLogoHorizontal
-            v-if="shouldUseHorizontalLogo"
-            variant="auto"
-            class="site-logo-horizontal"
-          />
-          <FlexdriveLogo v-else variant="auto" class="site-logo-image" />
+          <span class="inline-flex items-center md:hidden" aria-hidden="true">
+            <FlexdriveLogoHorizontal
+              variant="auto"
+              decorative
+              class="site-logo-horizontal"
+            />
+          </span>
+          <span class="hidden items-center md:inline-flex" aria-hidden="true">
+            <FlexdriveLogo
+              variant="auto"
+              decorative
+              class="site-logo-image"
+            />
+          </span>
         </NuxtLink>
 
         <div class="hidden min-w-0 flex-1 md:block lg:mx-4 xl:mx-6">
@@ -288,7 +286,6 @@ onBeforeUnmount(() => {
 
       <div class="mt-3 md:hidden">
         <HeaderSearch
-          ref="mobileSearchRef"
           :hide-mobile-trigger="false"
           @open-mobile-search="closeMobileMenu"
         />
@@ -353,28 +350,6 @@ onBeforeUnmount(() => {
             @click="closeMobileMenu"
           >
             <span class="text-xl leading-none">×</span>
-          </button>
-        </div>
-
-        <div class="border-b border-header-border px-4 py-4 sm:hidden">
-          <button
-            type="button"
-            class="flex min-h-[52px] w-full items-center gap-3 rounded-[14px] border border-header-border bg-header-surface px-3 text-left text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
-            @click="openMobileSearch"
-          >
-            <span
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-current"
-            >
-              <BaseIcon name="search" :size="18" />
-            </span>
-            <span class="min-w-0">
-              <span class="block text-sm font-semibold text-text-primary">
-                ძებნა
-              </span>
-              <span class="mt-0.5 block truncate text-xs text-text-muted">
-                ნაწილი, OEM, SKU ან VIN
-              </span>
-            </span>
           </button>
         </div>
 
@@ -451,13 +426,11 @@ onBeforeUnmount(() => {
 }
 
 .site-logo-image {
-  display: block;
   height: 62px;
   width: 110px;
 }
 
 .site-logo-horizontal {
-  display: block;
   height: 40px;
   width: 142px;
 }
@@ -486,10 +459,6 @@ onBeforeUnmount(() => {
   .site-logo-image {
     height: 62px;
     width: 110px;
-  }
-
-  .site-logo-horizontal {
-    display: none;
   }
 }
 

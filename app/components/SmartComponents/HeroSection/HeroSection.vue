@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CreditCardIcon, TruckIcon } from "@heroicons/vue/24/outline";
 import { sanitizeText } from "~/composables/helpers";
 import type { HeroSectionData } from "~/types/page";
 
@@ -19,64 +20,266 @@ const hasHeroImage = computed(() =>
     heroImageData.value?.mobile,
   ),
 );
-const heroImageAlt = computed(() => heroTitle.value || "AutoMate hero image");
+const heroImageAlt = computed(() => heroTitle.value || "FlexDrive hero image");
+
+const trustItems = [
+  {
+    label: "სწრაფი მიტანა",
+    icon: TruckIcon,
+  },
+  {
+    label: "უსაფრთხო გადახდა",
+    icon: CreditCardIcon,
+  },
+];
 </script>
 
 <template>
-  <section class="w-full">
-    <div class="container-fluid">
-      <div
-        class="grid grid-cols-1 items-center gap-6 py-8 min-[480px]:py-10 sm:gap-8 sm:py-12 md:py-16 lg:grid-cols-2 lg:gap-12 lg:py-20 xl:py-24"
-      >
-        <div>
+  <section
+    class="hero-section relative isolate w-full overflow-hidden bg-surface-2"
+  >
+    <BasePicture
+      v-if="hasHeroImage"
+      :data="heroImageData"
+      :alt="heroImageAlt"
+      preset="hero"
+      fit="cover"
+      position="center center"
+      :lazy="false"
+      fetchpriority="high"
+      class="hero-image absolute inset-0 -z-20 h-full w-full"
+    />
+
+    <div
+      v-else
+      class="hero-fallback absolute inset-0 -z-20"
+      aria-hidden="true"
+    />
+
+    <div class="hero-overlay absolute inset-0 -z-10" aria-hidden="true" />
+
+    <div class="hero-inner absolute inset-0 z-0">
+      <div class="hero-content-frame container-fluid flex h-full items-center">
+        <div
+          class="hero-copy max-w-[560px] py-8 sm:py-10 md:py-12 lg:max-w-[620px]"
+        >
+          <p
+            class="mb-3 inline-flex min-h-[32px] items-center rounded-full border border-accent-primary/25 bg-surface/80 px-3 text-[12px] font-bold leading-[18px] text-accent-primary shadow-[0_12px_28px_-24px_var(--shadow-color)] backdrop-blur"
+          >
+            ავტონაწილების ონლაინ მაღაზია
+          </p>
+
           <h1
             v-if="heroTitle"
-            class="title-under-xs mb-3 text-[24px] font-extrabold leading-[1.3] text-text-primary min-[480px]:text-[28px] sm:text-[32px] md:text-[36px] lg:text-[42px] xl:text-[48px] upper"
+            class="hero-title upper text-[30px] font-extrabold leading-[38px] text-text-primary sm:text-[34px] sm:leading-[42px] lg:text-[44px] lg:leading-[52px] xl:text-[48px] xl:leading-[56px]"
           >
             {{ heroTitle }}
           </h1>
 
           <p
             v-if="heroSubtitle"
-            class="subtitle-under-xs mb-6 text-[15px] leading-[1.6] text-text-secondary min-[480px]:text-[16px] md:text-[17px] lg:text-[18px] xl:text-[20px]"
+            class="hero-subtitle mt-3 max-w-[520px] text-[16px] font-medium leading-[24px] text-text-secondary"
           >
             {{ heroSubtitle }}
           </p>
 
-          <div v-if="heroPrimaryCtaText" class="flex flex-wrap gap-3">
+          <div
+            v-if="heroPrimaryCtaText"
+            class="mt-5 flex flex-wrap items-center gap-3"
+          >
             <BaseButton
               as="nuxt-link"
               to="/catalog"
               variant="primary"
-              class="px-[18px] py-[10px] text-[14px] leading-[1.2] upper"
+              class="rounded-[8px] px-5 py-3 text-[14px] leading-5"
             >
               {{ heroPrimaryCtaText }}
             </BaseButton>
           </div>
-        </div>
 
-        <div
-          class="relative overflow-hidden rounded-xl border border-border-default bg-gradient-to-br from-[#fff5f0] to-[#ffe6db] dark:from-[#1e293b] dark:to-[#2d3748] pt-[60%] md:pt-[50%] lg:pt-[91.7%] xl:pt-[62.7%] 2xl:pt-[61.845%]"
-        >
-          <BasePicture
-            v-if="hasHeroImage"
-            :data="heroImageData"
-            :alt="heroImageAlt"
-            preset="hero"
-            fit="cover"
-            :lazy="false"
-            fetchpriority="high"
-            class="absolute inset-0 h-full w-full top-0 left-0"
-          />
-
-          <div
-            v-else
-            class="flex h-full w-full items-center justify-center px-4 text-center text-[14px] text-text-muted"
+          <ul
+            class="mt-5 hidden max-w-[560px] gap-2 sm:flex sm:flex-wrap"
+            aria-label="FlexDrive trust benefits"
           >
-            Hero image
-          </div>
+            <li
+              v-for="item in trustItems"
+              :key="item.label"
+              class="inline-flex min-h-[38px] items-center gap-2 rounded-full border border-border-default bg-surface/75 px-3 text-[12px] font-semibold leading-[18px] text-text-secondary shadow-[0_10px_24px_-24px_var(--shadow-color)] backdrop-blur"
+            >
+              <component
+                :is="item.icon"
+                class="h-4 w-4 shrink-0 text-accent-primary"
+                aria-hidden="true"
+              />
+              <span class="truncate">{{ item.label }}</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.hero-fallback {
+  background: linear-gradient(
+    115deg,
+    var(--surface) 0%,
+    var(--surface-2) 48%,
+    var(--accent-soft) 100%
+  );
+}
+
+.hero-section {
+  aspect-ratio: 375 / 570;
+}
+
+.hero-title {
+  max-width: 550px;
+}
+
+.hero-subtitle {
+  max-width: 520px;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-overlay {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--surface) 96%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 86%, transparent) 34%,
+      color-mix(in srgb, var(--surface) 28%, transparent) 58%,
+      transparent 100%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--surface) 22%, transparent),
+      transparent 42%
+    );
+}
+
+@media (min-width: 768px) {
+  .hero-section {
+    aspect-ratio: 768 / 400;
+  }
+}
+
+@media (max-width: 1239px) {
+  .hero-title {
+    font-size: 32px;
+    line-height: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-section {
+    aspect-ratio: 1440 / 620;
+  }
+
+  :deep(.hero-image img) {
+    object-fit: cover !important;
+    object-position: 58% 38% !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hero-title {
+    max-width: 430px;
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .hero-subtitle {
+    max-width: 370px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .hero-section {
+    aspect-ratio: 1920 / 680;
+  }
+
+  .hero-title {
+    max-width: 620px;
+  }
+}
+
+:global(.dark) .hero-overlay {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--bg-primary) 94%, transparent) 0%,
+      color-mix(in srgb, var(--bg-primary) 82%, transparent) 38%,
+      color-mix(in srgb, var(--bg-primary) 38%, transparent) 62%,
+      color-mix(in srgb, var(--bg-primary) 10%, transparent) 100%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--bg-primary) 28%, transparent),
+      transparent 48%
+    );
+}
+
+@media (max-width: 767px) {
+  .hero-inner {
+    align-items: flex-start;
+  }
+
+  .hero-title,
+  .hero-subtitle {
+    max-width: none;
+  }
+
+  .hero-content-frame {
+    align-items: flex-start;
+  }
+
+  .hero-copy {
+    padding-top: 28px;
+    padding-bottom: 24px;
+  }
+
+  .hero-overlay {
+    background:
+      linear-gradient(
+        155deg,
+        color-mix(in srgb, var(--surface) 98%, transparent) 0%,
+        color-mix(in srgb, var(--surface) 96%, transparent) 26%,
+        color-mix(in srgb, var(--surface) 78%, transparent) 44%,
+        color-mix(in srgb, var(--surface) 34%, transparent) 62%,
+        transparent 80%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 22%, transparent) 0%,
+        transparent 26%
+      );
+  }
+
+  :global(.dark) .hero-overlay {
+    background:
+      linear-gradient(
+        155deg,
+        color-mix(in srgb, var(--bg-primary) 97%, transparent) 0%,
+        color-mix(in srgb, var(--bg-primary) 94%, transparent) 24%,
+        color-mix(in srgb, var(--bg-primary) 82%, transparent) 42%,
+        color-mix(in srgb, var(--bg-primary) 34%, transparent) 60%,
+        transparent 78%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg-primary) 22%, transparent) 0%,
+        transparent 20%
+      );
+  }
+
+  :global(.dark) .hero-subtitle {
+    color: color-mix(in srgb, var(--text-primary) 92%, var(--surface));
+  }
+}
+</style>
