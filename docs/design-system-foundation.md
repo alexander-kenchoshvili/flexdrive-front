@@ -190,6 +190,28 @@ Viewport checkpoints:
 - 1440px primary desktop canvas
 - 1536px+ wide desktop with full 1440px content width
 
+## Typography And Spacing
+
+Typography and vertical spacing rules are defined in:
+
+- `docs/typography-spacing-standard.md`
+
+This document is the source of truth for:
+
+- mobile and desktop font sizes;
+- line heights;
+- heading hierarchy;
+- page header density;
+- section spacing;
+- homepage hero height;
+- catalog/product text density.
+
+Implementation principle:
+
+- Mobile typography must remain readable but compact.
+- Page headers and hero sections must not push useful ecommerce content too far below the fold.
+- Desktop can increase hierarchy and density, but mobile remains the default scale.
+
 ### Buttons
 
 Required states:

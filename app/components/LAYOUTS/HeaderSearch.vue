@@ -34,6 +34,21 @@ const mobileInputRef = ref<HTMLInputElement | null>(null);
 
 const RECENT_SEARCHES_KEY = "automate-header-searches";
 const RECENT_SEARCHES_LIMIT = 5;
+const searchPlaceholder = "მოძებნე ნაწილი, OEM, SKU ან VIN";
+const quickSearchModes = [
+  {
+    label: "ნაწილი",
+    copy: "პროდუქტის სახელით",
+  },
+  {
+    label: "OEM/SKU",
+    copy: "კოდით ან არტიკულით",
+  },
+  {
+    label: "VIN",
+    copy: "მომავალი VIN flow-სთვის",
+  },
+];
 
 const searchText = ref("");
 const isDesktopOpen = ref(false);
@@ -51,7 +66,7 @@ const lastCompletedQuery = ref("");
 
 const emptyStateTitle = "სწრაფი ძებნა";
 const emptyStateCopy =
-  "დაიწყე პროდუქტის სახელის ან SKU-ის ჩაწერა, ან აირჩიე კატეგორია.";
+  "დაიწყე ნაწილის სახელის, OEM-ის, SKU-ის ან VIN-ის ჩაწერა, ან აირჩიე კატეგორია.";
 
 const normalizedSearchText = computed(() => searchText.value.trim());
 const quickCategories = computed(() => categories.value.slice(0, 5));
@@ -88,7 +103,7 @@ const hasActiveSuggestion = computed(
     activeSuggestionIndex.value < suggestions.value.length,
 );
 const mobileTriggerLabel = computed(
-  () => normalizedSearchText.value || "მოძებნე პროდუქტი",
+  () => normalizedSearchText.value || "მოძებნე ნაწილი",
 );
 
 const extractSearchQueryFromRoute = () => {
@@ -370,11 +385,11 @@ defineExpose({
     <div class="hidden sm:block">
       <div class="relative">
         <form
-          class="group flex items-center gap-2 rounded-[20px] border border-header-border bg-header-surface p-2 shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200 focus-within:border-accent-primary focus-within:bg-surface focus-within:shadow-[0_14px_34px_-22px_rgba(255,107,53,0.35)]"
+          class="group flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200 focus-within:border-accent-primary focus-within:bg-surface focus-within:shadow-[0_14px_34px_-22px_rgba(82,120,32,0.32)]"
           @submit.prevent="submitSearch"
         >
           <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-surface text-text-secondary transition-colors duration-200 group-focus-within:text-accent-primary"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-text-secondary transition-colors duration-200 group-focus-within:text-accent-primary"
           >
             <BaseIcon name="search" :size="18" />
           </div>
@@ -382,7 +397,7 @@ defineExpose({
           <input
             v-model="searchText"
             type="search"
-            placeholder="მოძებნე პროდუქტი"
+            :placeholder="searchPlaceholder"
             autocomplete="off"
             spellcheck="false"
             :aria-expanded="showDesktopPanel"
@@ -394,7 +409,7 @@ defineExpose({
 
           <button
             type="submit"
-            class="hidden min-h-[44px] shrink-0 upper items-center gap-2 rounded-[16px] bg-accent-primary px-4 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover md:inline-flex"
+            class="hidden min-h-[44px] shrink-0 upper items-center gap-2 rounded-[12px] bg-accent-primary px-4 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover md:inline-flex"
           >
             ძებნა
           </button>
@@ -402,7 +417,7 @@ defineExpose({
           <button
             type="submit"
             aria-label="ძებნა"
-            class="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-[16px] bg-accent-primary text-text-invert transition-colors duration-200 hover:bg-accent-hover md:hidden"
+            class="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-[12px] bg-accent-primary text-text-invert transition-colors duration-200 hover:bg-accent-hover md:hidden"
           >
             <BaseIcon name="search" :size="16" />
           </button>
@@ -413,7 +428,9 @@ defineExpose({
             v-if="showDesktopPanel"
             class="absolute left-0 right-0 top-[calc(100%+12px)] z-50 overflow-hidden rounded-[24px] border border-header-border bg-surface shadow-[0_28px_60px_-28px_rgba(2,6,23,0.25)]"
           >
-            <div class="max-h-[min(70vh,640px)] overflow-y-auto p-4 md:p-5">
+            <div
+              class="header-search-scroll max-h-[min(70vh,640px)] overflow-y-auto p-4 md:p-5"
+            >
               <div
                 v-if="showDiscoveryState"
                 class="grid gap-5 lg:grid-cols-[1.2fr_0.9fr]"
@@ -429,6 +446,23 @@ defineExpose({
                   <p class="mt-2 text-sm leading-6 text-text-secondary">
                     {{ emptyStateCopy }}
                   </p>
+
+                  <ul class="mt-4 grid gap-2 sm:grid-cols-3">
+                    <li
+                      v-for="mode in quickSearchModes"
+                      :key="mode.label"
+                      class="rounded-[14px] border border-border-default bg-surface px-3 py-2"
+                    >
+                      <span
+                        class="block text-[12px] font-bold text-text-primary"
+                      >
+                        {{ mode.label }}
+                      </span>
+                      <span class="mt-0.5 block text-[11px] text-text-muted">
+                        {{ mode.copy }}
+                      </span>
+                    </li>
+                  </ul>
 
                   <div class="mt-5">
                     <p class="text-sm font-semibold text-text-primary">
@@ -675,7 +709,7 @@ defineExpose({
                     ვიპოვეთ.
                   </p>
                   <p class="mt-2 text-sm leading-6 text-text-secondary">
-                    სცადე სხვა სიტყვა, SKU, ან გადადი სრულ კატალოგში.
+                    სცადე სხვა სიტყვა, OEM, SKU, VIN ან გადადი სრულ კატალოგში.
                   </p>
 
                   <button
@@ -715,11 +749,11 @@ defineExpose({
     <div v-if="!props.hideMobileTrigger" class="sm:hidden">
       <button
         type="button"
-        class="flex min-h-[52px] w-full items-center gap-3 rounded-[18px] border border-header-border bg-header-surface px-3 text-left shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-colors duration-200 hover:border-accent-primary hover:bg-surface"
+        class="flex min-h-[52px] w-full items-center gap-3 rounded-[14px] border border-header-border bg-header-surface px-3 text-left shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-colors duration-200 hover:border-accent-primary hover:bg-surface"
         @click="openMobileSheet"
       >
         <span
-          class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-surface text-text-secondary"
+          class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-text-secondary"
         >
           <BaseIcon name="search" :size="18" />
         </span>
@@ -728,7 +762,7 @@ defineExpose({
             {{ mobileTriggerLabel }}
           </span>
           <span class="mt-0.5 block text-xs text-text-muted">
-            პროდუქტის სახელი ან SKU
+            OEM, SKU ან VIN
           </span>
         </span>
       </button>
@@ -741,7 +775,7 @@ defineExpose({
         @click="closeMobileSheet"
       >
         <section
-          class="absolute inset-x-0 top-0 flex max-h-[100dvh] min-h-[100dvh] flex-col rounded-b-[28px] border-b border-header-border bg-header-bg"
+          class="absolute inset-x-0 top-0 flex max-h-[100dvh] min-h-[100dvh] flex-col rounded-b-[24px] border-b border-header-border bg-header-bg"
           @click.stop
         >
           <div
@@ -755,7 +789,7 @@ defineExpose({
                   სწრაფი ძებნა
                 </p>
                 <p class="mt-1 text-sm text-text-secondary">
-                  მოძებნე და პირდაპირ პროდუქტზე გადადი
+                  ნაწილი, OEM, SKU ან VIN ერთ ველში
                 </p>
               </div>
 
@@ -770,11 +804,11 @@ defineExpose({
             </div>
 
             <form
-              class="flex items-center gap-2 rounded-[20px] border border-header-border bg-header-surface p-2 shadow-[0_12px_26px_-22px_var(--shadow-color)]"
+              class="flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 shadow-[0_12px_26px_-22px_var(--shadow-color)]"
               @submit.prevent="submitSearch"
             >
               <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-surface text-text-secondary"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-text-secondary"
               >
                 <BaseIcon name="search" :size="18" />
               </div>
@@ -783,7 +817,7 @@ defineExpose({
                 ref="mobileInputRef"
                 v-model="searchText"
                 type="search"
-                placeholder="მოძებნე პროდუქტი ან SKU"
+                :placeholder="searchPlaceholder"
                 autocomplete="off"
                 spellcheck="false"
                 class="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
@@ -792,15 +826,37 @@ defineExpose({
 
               <button
                 type="submit"
-                class="inline-flex min-h-[44px] items-center rounded-[16px] bg-accent-primary px-4 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover"
+                class="inline-flex min-h-[44px] items-center rounded-[12px] bg-accent-primary px-4 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover"
               >
                 ძებნა
               </button>
             </form>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-4 pb-6 pt-4">
+          <div class="header-search-scroll flex-1 overflow-y-auto px-4 pb-6 pt-4">
             <div v-if="showDiscoveryState" class="space-y-4">
+              <section
+                class="rounded-[20px] border border-border-default bg-surface p-4"
+              >
+                <p class="text-sm font-semibold text-text-primary">
+                  როგორ შეგიძლია მოძებნო
+                </p>
+                <ul class="mt-3 grid gap-2">
+                  <li
+                    v-for="mode in quickSearchModes"
+                    :key="mode.label"
+                    class="rounded-[14px] border border-border-default bg-surface-2 px-3 py-2"
+                  >
+                    <span class="block text-xs font-bold text-text-primary">
+                      {{ mode.label }}
+                    </span>
+                    <span class="mt-0.5 block text-xs text-text-muted">
+                      {{ mode.copy }}
+                    </span>
+                  </li>
+                </ul>
+              </section>
+
               <section
                 class="rounded-[20px] border border-border-default bg-surface p-4"
               >
@@ -1003,7 +1059,7 @@ defineExpose({
                 “{{ normalizedSearchText }}” შესაბამის პროდუქტებში ვერ ვიპოვეთ.
               </p>
               <p class="mt-2 text-sm leading-6 text-text-secondary">
-                სცადე სხვა სიტყვა ან აირჩიე კატეგორია ქვემოთ.
+                სცადე სხვა სიტყვა, OEM, SKU, VIN ან აირჩიე კატეგორია ქვემოთ.
               </p>
 
               <div class="mt-4 flex flex-wrap gap-2">
@@ -1031,6 +1087,29 @@ defineExpose({
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.header-search-scroll {
+  scrollbar-color: var(--accent-primary) transparent;
+  scrollbar-width: thin;
+}
+
+.header-search-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.header-search-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.header-search-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--accent-primary);
+}
+
+.header-search-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-hover);
 }
 
 .header-search-panel-enter-active,

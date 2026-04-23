@@ -68,6 +68,10 @@ Do not make the whole product orange, beige, tan, brown, purple, or dark-blue do
 
 Keep `Noto Sans Georgian` for now because the product UI is Georgian and the local font files already exist.
 
+Detailed font-size, line-height, heading, hero and spacing rules are defined in:
+
+- `docs/typography-spacing-standard.md`
+
 Recommended usage:
 
 - 400 for body text.
@@ -76,6 +80,7 @@ Recommended usage:
 - No viewport-width-based font scaling.
 - No negative letter spacing.
 - Uppercase should be used sparingly; current UI overuses `.upper`.
+- Mobile page headers should be compact enough that product/search/filter content appears quickly.
 
 ### Shape And Density
 
@@ -294,6 +299,7 @@ Primary files:
 
 Tasks:
 
+- Apply `docs/typography-spacing-standard.md` before rebuilding homepage sections.
 - Decide which marketing/content components still belong in the new storefront.
 - Rebuild homepage components around auto parts shopping.
 - Remove or replace components that only supported the old accessories positioning.
@@ -318,8 +324,10 @@ Start with the smallest foundation that changes the whole product without touchi
 1. Redesign `design-system.css` tokens.
 2. Redesign `BaseButton`, `BaseInput`, `BaseSelect`, `BaseModal`, `AppBreadcrumbs`.
 3. Redesign `Header` and `HeaderSearch`.
-4. Redesign `ProductCard`, `CatalogToolbar`, and `CatalogFilters`.
-5. Redesign product detail page visual structure.
+4. Lock the typography and vertical spacing standard before homepage/component redesign.
+5. Redesign homepage `HeroSection` and the visible first-screen CMS components.
+6. Redesign `ProductCard`, `CatalogToolbar`, and `CatalogFilters`.
+7. Redesign product detail page visual structure.
 
 This order gives visible progress fast and creates reusable patterns for the rest of the redesign.
 
