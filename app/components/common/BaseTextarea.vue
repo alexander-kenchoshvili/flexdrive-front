@@ -39,10 +39,10 @@ const textareaId = computed(() => props.id || props.name || `textarea-${uid}`);
 
 const textareaClasses = computed(() => {
   const base =
-    "w-full rounded-md border bg-surface-2 px-3 py-3 text-text-primary placeholder:text-text-muted transition-[border-color,background-color,box-shadow] duration-200 ease-out focus:bg-surface focus-visible:shadow-[0_0_0_3px_rgba(255,107,53,0.18)] focus-visible:outline-none focus-visible:[outline-offset:0]";
+    "w-full rounded-lg border bg-surface px-3 py-3 text-sm leading-6 text-text-primary placeholder:text-text-muted shadow-[0_1px_0_rgba(17,24,39,0.03)] transition-[border-color,background-color,box-shadow] duration-200 ease-out disabled:cursor-not-allowed disabled:bg-bg-muted disabled:text-text-muted disabled:opacity-80 focus:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary";
   const withError = "border-error focus:border-error focus-visible:border-error";
   const normal =
-    "border-border-default focus:border-accent-primary focus-visible:border-accent-primary";
+    "border-border-default hover:border-border-muted focus:border-accent-primary focus-visible:border-accent-primary";
 
   return `${base} ${props.error ? withError : normal}`;
 });
@@ -87,12 +87,12 @@ const textareaAttrs = computed(() => {
       @input="onInput"
     />
 
-    <p v-if="error" class="mt-2 text-sm text-error">
+    <p v-if="error" class="mt-2 text-sm font-medium text-error">
       {{ error }}
     </p>
     <p
       v-else-if="hint"
-      class="mt-2 text-xs text-text-muted dark:text-text-primary"
+      class="mt-2 text-xs leading-5 text-text-muted"
     >
       {{ hint }}
     </p>

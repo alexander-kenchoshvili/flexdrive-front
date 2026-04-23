@@ -10,16 +10,16 @@ const props = withDefaults(
   }>(),
   {
     tone: "default",
-    radius: "xl",
+    radius: "lg",
   },
 );
 
 const radiusClassMap: Record<SkeletonRadius, string> = {
   md: "rounded-md",
   lg: "rounded-lg",
-  xl: "rounded-[14px]",
-  "2xl": "rounded-[20px]",
-  "3xl": "rounded-[24px]",
+  xl: "rounded-xl",
+  "2xl": "rounded-2xl",
+  "3xl": "rounded-3xl",
 };
 </script>
 

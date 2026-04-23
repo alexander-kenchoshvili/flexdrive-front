@@ -39,7 +39,7 @@ const attrs = useAttrs();
 const isDisabled = computed(() => props.disabled || props.loading);
 
 const baseClasses =
-  "btn-min-h-44 inline-flex items-center justify-center gap-2 rounded-md border font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60";
+  "btn-min-h-44 inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition-[border-color,background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:cursor-not-allowed disabled:opacity-60";
 
 const widthClasses = computed(() => (props.fullWidth ? "w-full" : ""));
 
@@ -51,14 +51,15 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "border-accent-primary bg-accent-primary text-text-invert hover:border-accent-hover hover:bg-accent-hover active:border-accent-pressed active:bg-accent-pressed",
+    "border-accent-primary bg-accent-primary text-text-invert shadow-[0_10px_24px_-18px_var(--shadow-color)] hover:border-accent-hover hover:bg-accent-hover active:border-accent-pressed active:bg-accent-pressed",
   secondary:
-    "border-border-default bg-surface text-text-primary hover:border-accent-primary hover:text-accent-primary active:border-accent-primary active:bg-accent-primary active:text-text-invert",
+    "border-border-default bg-surface text-text-primary hover:border-accent-primary hover:bg-surface-2 hover:text-accent-primary active:border-accent-primary active:bg-accent-primary active:text-text-invert",
   "accent-outline":
     "border-accent-primary bg-transparent text-accent-primary hover:bg-accent-primary hover:text-text-invert active:border-accent-pressed active:bg-accent-pressed active:text-text-invert",
   ghost:
-    "border-transparent bg-transparent text-text-secondary hover:bg-surface-2 hover:text-text-primary",
-  danger: "border-error bg-error text-text-invert hover:brightness-95 active:brightness-90",
+    "border-transparent bg-transparent text-text-secondary hover:border-border-default hover:bg-surface-2 hover:text-text-primary",
+  danger:
+    "border-error bg-error text-text-invert hover:brightness-95 active:brightness-90",
 };
 
 const computedClasses = computed(() => [

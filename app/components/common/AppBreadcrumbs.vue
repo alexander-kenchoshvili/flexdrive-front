@@ -15,20 +15,21 @@ const props = defineProps<{
   <nav
     v-if="items.length"
     aria-label="Breadcrumb"
-    class="flex flex-wrap items-center gap-2 text-sm text-text-secondary"
+    class="flex flex-wrap items-center gap-1.5 text-sm text-text-secondary"
   >
     <template v-for="(item, index) in items" :key="`${item.label}-${index}`">
       <NuxtLink
         v-if="item.to && index < items.length - 1"
         :to="item.to"
-        class="transition-colors duration-200 hover:text-accent-primary"
+        class="rounded-md px-1 py-1 font-medium transition-colors duration-200 hover:bg-accent-soft hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
       >
         {{ item.label }}
       </NuxtLink>
 
       <span
         v-else
-        :class="index === items.length - 1 ? 'text-text-primary' : ''"
+        class="px-1 py-1"
+        :class="index === items.length - 1 ? 'font-semibold text-text-primary' : ''"
       >
         {{ item.label }}
       </span>

@@ -22,7 +22,7 @@ const props = withDefaults(
 const attrs = useAttrs();
 
 const toneClassMap: Record<SkeletonTone, string> = {
-  default: "bg-surface-2",
+  default: "bg-bg-muted",
   muted: "bg-surface-3",
 };
 

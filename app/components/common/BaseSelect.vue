@@ -62,14 +62,15 @@ const rootStyle = computed(() => (attrs.style as any) ?? undefined);
 
 const controlClasses = computed(() => {
   const base =
-    "relative w-full rounded-md border bg-surface-2 pl-3 pr-10 py-3 text-left text-text-primary transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:shadow-[0_0_0_3px_rgba(255,107,53,0.18)] focus-visible:outline-none focus-visible:[outline-offset:0] disabled:cursor-not-allowed disabled:opacity-60";
+    "relative min-h-11 w-full rounded-lg border bg-surface py-3 pl-3 pr-10 text-left text-sm text-text-primary shadow-[0_1px_0_rgba(17,24,39,0.03)] transition-[border-color,background-color,box-shadow] duration-200 ease-out disabled:cursor-not-allowed disabled:bg-bg-muted disabled:text-text-muted disabled:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary";
   const withError = "border-error focus-visible:border-error";
-  const normal = "border-border-default focus-visible:border-accent-primary";
+  const normal =
+    "border-border-default hover:border-border-muted focus-visible:border-accent-primary";
   return `${base} ${props.error ? withError : normal}`;
 });
 
 const optionsPanelClasses =
-  "absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-default bg-surface py-1 shadow-lg focus:outline-none";
+  "absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-border-default bg-surface py-1 shadow-[0_22px_48px_-30px_var(--shadow-color)] focus:outline-none";
 
 const optionClasses = (active: boolean, selected: boolean, disabled?: boolean) => {
   const base =
@@ -80,11 +81,11 @@ const optionClasses = (active: boolean, selected: boolean, disabled?: boolean) =
   }
 
   if (active) {
-    return `${base} bg-surface-2 text-text-primary`;
+    return `${base} bg-accent-soft text-text-primary`;
   }
 
   if (selected) {
-    return `${base} bg-surface-3 text-text-primary`;
+    return `${base} bg-accent-soft text-text-primary`;
   }
 
   return `${base} text-text-primary hover:bg-surface-2`;
@@ -153,7 +154,7 @@ const updateValue = (value: string | number) => {
       </div>
     </Listbox>
 
-    <p v-if="error" class="mt-2 text-sm text-error">{{ error }}</p>
-    <p v-else-if="hint" class="mt-2 text-xs text-text-muted">{{ hint }}</p>
+    <p v-if="error" class="mt-2 text-sm font-medium text-error">{{ error }}</p>
+    <p v-else-if="hint" class="mt-2 text-xs leading-5 text-text-muted">{{ hint }}</p>
   </div>
 </template>

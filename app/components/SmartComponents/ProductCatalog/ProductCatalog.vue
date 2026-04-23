@@ -697,7 +697,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-7xl px-4 py-4 md:py-10">
+  <section class="mx-auto w-full max-w-[1440px] px-4 py-4 md:px-6 md:py-10 lg:px-8 2xl:px-0">
     <AppBreadcrumbs :items="breadcrumbItems" />
 
     <div class="my-2 md:my-5">

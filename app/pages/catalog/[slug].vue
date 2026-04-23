@@ -1004,7 +1004,7 @@ const handleBuyNow = async () => {
       class="fixed inset-x-0 bottom-0 z-30 border-t border-[#17345f] bg-[#020c1d] px-3 py-3 shadow-[0_-10px_34px_rgba(2,6,23,0.28)] md:px-6 lg:hidden"
     >
       <div
-        class="mx-auto flex max-w-7xl flex-col gap-3 rounded-[20px] border border-[#17345f] bg-[#081a38] px-4 py-3"
+        class="mx-auto flex max-w-[1440px] flex-col gap-3 rounded-[20px] border border-[#17345f] bg-[#081a38] px-4 py-3"
       >
         <div class="min-w-0">
           <p

@@ -16,9 +16,9 @@ if (!footer.value) {
 
 const fallbackFooter: FooterPayload = {
   brand: {
-    name: "AutoMate",
+    name: "FlexDrive",
     description:
-      "AutoMate გაძლევს ავტომობილის აქსესუარების დათვალიერებისა და შეძენის მარტივ, გასაგებ და სანდო გზას.",
+      "FlexDrive გეხმარება ავტონაწილების მარტივად მოძებნაში, შედარებასა და შეძენაში.",
   },
   trust_items: ["მარტივი შეკვეთა", "სწრაფი მიწოდება", "უსაფრთხო გადახდა"],
   groups: {
@@ -33,28 +33,10 @@ const fallbackFooter: FooterPayload = {
     city: null,
   },
   socials: [],
-  copyright_text: "© 2026 AutoMate. ყველა უფლება დაცულია.",
+  copyright_text: "© 2026 FlexDrive. ყველა უფლება დაცულია.",
 };
 
 const footerData = computed(() => footer.value ?? fallbackFooter);
-
-const brandName = computed(
-  () => sanitizeText(footerData.value.brand?.name) || "AutoMate",
-);
-
-const brandPrefix = computed(() => {
-  const value = brandName.value;
-  const mateIndex = value.toLowerCase().indexOf("mate");
-  if (mateIndex <= 0) return value;
-  return value.slice(0, mateIndex);
-});
-
-const brandAccentPart = computed(() => {
-  const value = brandName.value;
-  const mateIndex = value.toLowerCase().indexOf("mate");
-  if (mateIndex <= 0) return "";
-  return value.slice(mateIndex);
-});
 
 const brandDescription = computed(
   () =>
@@ -166,24 +148,14 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
         class="grid gap-10 py-12 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-10 xl:grid-cols-[1.2fr_0.9fr_0.9fr_1fr] xl:gap-x-14 xl:py-16"
       >
         <section aria-labelledby="footer-brand-heading">
-          <h2 id="footer-brand-heading" class="sr-only">AutoMate Footer</h2>
+          <h2 id="footer-brand-heading" class="sr-only">FlexDrive Footer</h2>
 
           <NuxtLink
             to="/"
-            class="inline-flex items-center gap-3 rounded-xl transition-colors duration-200 hover:text-accent-primary"
+            class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-90"
+            aria-label="FlexDrive"
           >
-            <BaseIcon name="logo" :size="34" class="text-accent-primary" />
-            <span
-              class="text-[19px] font-bold leading-none text-footer-text-primary"
-            >
-              <template v-if="brandAccentPart">
-                {{ brandPrefix
-                }}<span class="text-accent-primary">{{ brandAccentPart }}</span>
-              </template>
-              <template v-else>
-                {{ brandName }}
-              </template>
-            </span>
+            <FlexdriveLogo variant="on-dark" class="h-[72px] w-24" />
           </NuxtLink>
 
           <p

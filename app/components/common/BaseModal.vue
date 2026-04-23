@@ -26,24 +26,24 @@ const closeModal = () => {
     <Transition name="modal">
       <div
         v-if="show"
-        class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-[color:rgba(8,12,24,0.58)] p-4 backdrop-blur-md"
+        class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-[color:rgba(14,22,11,0.62)] p-4 backdrop-blur-sm"
         @click.self="closeModal"
       >
         <div
-          class="modal-panel w-full max-w-lg rounded-[28px] border border-border-default bg-surface p-5 shadow-[0_36px_80px_-48px_var(--shadow-color)] md:p-6"
+          class="modal-panel w-full max-w-lg rounded-xl border border-border-default bg-surface p-5 shadow-[0_32px_72px_-44px_var(--shadow-color)] md:p-6"
         >
           <div
             class="flex items-start justify-between gap-4 border-b border-border-default pb-4"
           >
             <slot name="header">
-              <h2 class="text-xl font-extrabold text-text-primary md:text-2xl">
+              <h2 class="text-xl font-bold leading-8 text-text-primary md:text-2xl">
                 {{ title }}
               </h2>
             </slot>
 
             <button
               type="button"
-              class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border-default bg-surface-2 text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
+              class="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-border-default bg-surface-2 text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-soft hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
               aria-label="Close modal"
               @click="closeModal"
             >

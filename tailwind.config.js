@@ -14,7 +14,7 @@ export default {
         lg: "32px",
       },
       screens: {
-        "2xl": "1280px",
+        "2xl": "1440px",
       },
     },
     extend: {
@@ -47,9 +47,11 @@ export default {
         "text-invert": "var(--text-invert)",
         "border-default": "var(--border-default)",
         "border-muted": "var(--border-muted)",
+        "brand-primary": "var(--brand-primary)",
         "accent-primary": "var(--accent-primary)",
         "accent-hover": "var(--accent-hover)",
         "accent-pressed": "var(--accent-pressed)",
+        "accent-soft": "var(--accent-soft)",
         link: "var(--link)",
         "link-hover": "var(--link-hover)",
         success: "var(--success)",

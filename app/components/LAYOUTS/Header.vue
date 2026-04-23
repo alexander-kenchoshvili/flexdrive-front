@@ -137,16 +137,10 @@ onBeforeUnmount(() => {
       <div class="mb-3 flex items-center gap-3">
         <NuxtLink
           to="/"
-          class="site-logo-link mr-auto inline-flex items-center gap-2 no-underline sm:mr-0"
+          class="site-logo-link mr-auto inline-flex shrink-0 items-center no-underline sm:mr-0"
+          aria-label="FlexDrive"
         >
-          <BaseIcon
-            name="logo"
-            size="var(--header-logo-size)"
-            class="text-accent-primary"
-          />
-          <span class="site-logo-text font-bold leading-none text-text-primary">
-            Auto<span class="text-accent-primary">Mate</span>
-          </span>
+          <FlexdriveLogo variant="auto" class="site-logo-image" />
         </NuxtLink>
 
         <nav class="hidden items-center lg:ml-8 lg:flex xl:ml-10">
@@ -408,13 +402,11 @@ onBeforeUnmount(() => {
         >
           <NuxtLink
             to="/"
-            class="inline-flex items-center gap-2 no-underline"
+            class="inline-flex shrink-0 items-center no-underline"
+            aria-label="FlexDrive"
             @click="closeMobileMenu"
           >
-            <BaseIcon name="logo" :size="28" class="text-accent-primary" />
-            <span class="text-[17px] font-bold leading-none text-text-primary">
-              Auto<span class="text-accent-primary">Mate</span>
-            </span>
+            <FlexdriveLogo variant="auto" class="mobile-drawer-logo" />
           </NuxtLink>
 
           <div class="flex items-center gap-2">
@@ -473,20 +465,23 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .site-logo-link {
-  --header-logo-size: 32px;
+  min-width: 72px;
 }
 
-.site-logo-text {
-  font-size: 18px;
+.site-logo-image {
+  height: 54px;
+  width: 72px;
+}
+
+.mobile-drawer-logo {
+  height: 52px;
+  width: 70px;
 }
 
 @media (max-width: 399px) {
-  .site-logo-link {
-    --header-logo-size: 24px;
-  }
-
-  .site-logo-text {
-    font-size: 14px;
+  .site-logo-image {
+    height: 46px;
+    width: 62px;
   }
 }
 

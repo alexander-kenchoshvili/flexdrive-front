@@ -19,12 +19,12 @@ const PRESET_WIDTHS: Record<CloudinaryImagePreset, CloudinaryImageWidths> = {
   default: {
     mobile: 640,
     tablet: 960,
-    desktop: 1280,
+    desktop: 1440,
   },
   hero: {
     mobile: 640,
     tablet: 960,
-    desktop: 1400,
+    desktop: 1440,
   },
   card: {
     mobile: 420,
@@ -49,7 +49,7 @@ const PRESET_WIDTHS: Record<CloudinaryImagePreset, CloudinaryImageWidths> = {
   blog: {
     mobile: 640,
     tablet: 960,
-    desktop: 1280,
+    desktop: 1440,
   },
 };
 
