@@ -68,13 +68,12 @@ export default defineNuxtConfig({
       siteUrl: publicSiteUrl,
       siteEnv: env.NUXT_PUBLIC_SITE_ENV || env.NODE_ENV || "development",
       allowIndexing,
-      siteName: env.NUXT_PUBLIC_SITE_NAME || "FlexDrive",
+      siteName: env.NUXT_PUBLIC_SITE_NAME || "Auto Accessories Store",
       defaultSeoTitle:
-        env.NUXT_PUBLIC_DEFAULT_SEO_TITLE ||
-        "პრემიუმ ხარისხის ავტონაწილების ონლაინ მაღაზია საქართველოში",
+        env.NUXT_PUBLIC_DEFAULT_SEO_TITLE || "ავტომობილის აქსესუარების მაღაზია",
       defaultSeoDescription:
         env.NUXT_PUBLIC_DEFAULT_SEO_DESCRIPTION ||
-        "შეიძინე ხარისხიანი ტაივანური ანალოგი ავტონაწილები FlexDrive-ზე. ონლაინ შეკვეთა, ნაღდი ან ბარათით გადახდა, ონლაინ განვადება და 0% ნაწილ-ნაწილ გადახდა.",
+        "იპოვეთ ხარისხიანი ავტომობილის აქსესუარები ყოველდღიური გამოყენებისა და ავტომობილის გაუმჯობესებისთვის.",
       defaultSeoImage: env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || "/favicon.ico",
       recaptchaSiteKey: env.NUXT_PUBLIC_RECAPTCHA_SITE_KEY,
     },
@@ -86,21 +85,6 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: "ka",
       },
-      link: [
-        { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
-        {
-          rel: "icon",
-          type: "image/svg+xml",
-          href: "/favicon-light.svg",
-          media: "(prefers-color-scheme: light)",
-        },
-        {
-          rel: "icon",
-          type: "image/svg+xml",
-          href: "/favicon-dark.svg",
-          media: "(prefers-color-scheme: dark)",
-        },
-      ],
       script: [
         {
           id: "theme-init",

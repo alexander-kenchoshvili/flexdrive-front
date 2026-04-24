@@ -54,7 +54,7 @@ const accountLinks = [
 ];
 
 const dialogTitle = computed(() =>
-  props.isAuthenticated ? "ჩემი ანგარიში" : "შესვლა FlexDrive-ში",
+  props.isAuthenticated ? "ჩემი ანგარიში" : "პირადი სივრცე",
 );
 
 const closeDialog = () => {
@@ -94,7 +94,7 @@ onBeforeUnmount(() => {
               </p>
               <h2
                 id="header-account-dialog-title"
-                class="mt-1 text-xl font-extrabold leading-7 text-text-primary"
+                class="upper mt-1 text-xl font-extrabold leading-7 text-text-primary"
               >
                 {{ dialogTitle }}
               </h2>
@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
                 </span>
                 <div class="min-w-0">
                   <p class="text-base font-bold text-text-primary">
-                    გააგრძელე ანგარიშით
+                    შედი ანგარიშზე
                   </p>
                   <p class="mt-1 text-sm leading-6 text-text-secondary">
                     შეკვეთები, სურვილების სია და კალათა ერთ სივრცეში იქნება.
@@ -144,12 +144,15 @@ onBeforeUnmount(() => {
                 as="nuxt-link"
                 to="/login"
                 full-width
-                class="rounded-[14px]"
+                class="upper rounded-[14px]"
                 @click="closeDialog"
               >
-                შესვლა
+                <span class="leading-none">შესვლა</span>
                 <template #right>
-                  <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+                  <ArrowRightIcon
+                    class="h-4 w-4 shrink-0 self-center"
+                    aria-hidden="true"
+                  />
                 </template>
               </BaseButton>
 
@@ -158,10 +161,10 @@ onBeforeUnmount(() => {
                 to="/register"
                 variant="secondary"
                 full-width
-                class="rounded-[14px]"
+                class="upper rounded-[14px]"
                 @click="closeDialog"
               >
-                რეგისტრაცია
+                <span class="leading-none">რეგისტრაცია</span>
               </BaseButton>
             </div>
           </div>
