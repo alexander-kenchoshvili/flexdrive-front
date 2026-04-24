@@ -184,7 +184,7 @@ const categorySeoDescription = computed(() => {
 
   return (
     selectedCategorySeo.value?.description ||
-    `დაათვალიერე ${selectedCategory.value.name} კატეგორიის პროდუქტები AutoMate-ში.`
+    `დაათვალიერე ${selectedCategory.value.name} კატეგორიის ხარისხიანი ავტონაწილები FlexDrive-ზე.`
   );
 });
 const categorySeoImage = computed(

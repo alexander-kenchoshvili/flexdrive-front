@@ -99,7 +99,7 @@ onMounted(() => {
 useNoindexPage({
   title: "ჩემი შეკვეთები",
   description:
-    "გადახედე შეკვეთების ისტორიას და მიმდინარე tracking სტატუსებს AutoMate-ის პროფილში.",
+    "გადახედე შეკვეთების ისტორიას და მიმდინარე tracking სტატუსებს FlexDrive-ის პროფილში.",
 });
 </script>
 

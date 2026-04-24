@@ -6,7 +6,7 @@ const props = defineProps<{
   role?: string | null;
 }>();
 
-const authorName = computed(() => sanitizeText(props.name) || "AutoMate");
+const authorName = computed(() => sanitizeText(props.name) || "FlexDrive");
 const authorRole = computed(() => sanitizeText(props.role) || "რედაქცია");
 const initials = computed(() => {
   const letters = authorName.value
@@ -21,7 +21,7 @@ const initials = computed(() => {
 
 const description = computed(
   () =>
-    `${authorName.value} არის AutoMate-ის ${authorRole.value.toLowerCase()} და აქვეყნებს პრაქტიკულ სტატიებს ავტომობილის მოვლის, აქსესუარებისა და ყოველდღიური გამოყენების შესახებ.`,
+    `${authorName.value} აქვეყნებს პრაქტიკულ სტატიებს ავტომობილის მოვლის, ავტონაწილების შერჩევისა და ონლაინ შეძენის შესახებ.`,
 );
 </script>
 

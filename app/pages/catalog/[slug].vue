@@ -367,7 +367,7 @@ const { robots: productRobots } = useIndexingPolicy({
   pageNoindex: computed(() => Boolean(product.value?.seo?.noindex)),
 });
 const siteName = computed(
-  () => settings.value?.site_name || String(config.public.siteName || "AutoMate"),
+  () => settings.value?.site_name || String(config.public.siteName || "FlexDrive"),
 );
 const breadcrumbSchema = computed(() =>
   buildBreadcrumbStructuredData({

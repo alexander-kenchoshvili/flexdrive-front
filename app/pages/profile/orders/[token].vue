@@ -72,7 +72,7 @@ onMounted(() => {
 useNoindexPage({
   title: "შეკვეთის დეტალი",
   description:
-    "იხილე შეკვეთის დეტალები და მიმდინარე tracking სტატუსი AutoMate-ის პროფილის გვერდიდან.",
+    "იხილე შეკვეთის დეტალები და მიმდინარე tracking სტატუსი FlexDrive-ის პროფილის გვერდიდან.",
 });
 </script>
 

@@ -42,7 +42,7 @@ const articleCategory = computed(
   () => sanitizeText(article.value.blog_meta?.category) || "ბლოგი",
 );
 const authorName = computed(
-  () => sanitizeText(article.value.blog_meta?.author_name) || "AutoMate",
+  () => sanitizeText(article.value.blog_meta?.author_name) || "FlexDrive",
 );
 const authorRole = computed(
   () => sanitizeText(article.value.blog_meta?.author_role) || "რედაქცია",
@@ -77,7 +77,7 @@ const siteUrl = computed(() =>
 );
 const shareUrl = computed(() => `${siteUrl.value}${route.path || ""}`);
 const siteName = computed(
-  () => settings.value?.site_name || config.public.siteName || "AutoMate",
+  () => settings.value?.site_name || config.public.siteName || "FlexDrive",
 );
 const publisherImage = computed(
   () =>

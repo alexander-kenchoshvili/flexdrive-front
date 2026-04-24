@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { CreditCardIcon, TruckIcon } from "@heroicons/vue/24/outline";
+import {
+  CreditCardIcon,
+  ReceiptPercentIcon,
+  TruckIcon,
+} from "@heroicons/vue/24/outline";
 import { sanitizeText } from "~/composables/helpers";
 import type { HeroSectionData } from "~/types/page";
 
@@ -23,6 +27,14 @@ const hasHeroImage = computed(() =>
 const heroImageAlt = computed(() => heroTitle.value || "FlexDrive hero image");
 
 const trustItems = [
+  {
+    label: "0% ნაწილ-ნაწილ გადახდა",
+    icon: ReceiptPercentIcon,
+  },
+  {
+    label: "ონლაინ განვადება",
+    icon: CreditCardIcon,
+  },
   {
     label: "სწრაფი მიტანა",
     icon: TruckIcon,
@@ -64,9 +76,9 @@ const trustItems = [
           class="hero-copy max-w-[560px] py-8 sm:py-10 md:py-12 lg:max-w-[620px]"
         >
           <p
-            class="mb-3 inline-flex min-h-[32px] items-center rounded-full border border-accent-primary/25 bg-surface/80 px-3 text-[12px] font-bold leading-[18px] text-accent-primary shadow-[0_12px_28px_-24px_var(--shadow-color)] backdrop-blur"
+            class="upper mb-3 inline-flex min-h-[32px] items-center rounded-full border border-accent-primary/25 bg-surface/80 px-3 text-[14px] font-bold leading-5 text-accent-primary shadow-[0_12px_28px_-24px_var(--shadow-color)] backdrop-blur"
           >
-            ავტონაწილების ონლაინ მაღაზია
+            პრემიუმ ხარისხის ავტონაწილები
           </p>
 
           <h1
@@ -91,27 +103,27 @@ const trustItems = [
               as="nuxt-link"
               to="/catalog"
               variant="primary"
-              class="rounded-[8px] px-5 py-3 text-[14px] leading-5"
+              class="upper rounded-[8px] px-5 py-3 text-[14px] leading-5"
             >
               {{ heroPrimaryCtaText }}
             </BaseButton>
           </div>
 
           <ul
-            class="mt-5 hidden max-w-[560px] gap-2 sm:flex sm:flex-wrap"
+            class="mt-5 hidden max-w-[560px] gap-2 sm:grid sm:grid-cols-2"
             aria-label="FlexDrive trust benefits"
           >
             <li
               v-for="item in trustItems"
               :key="item.label"
-              class="inline-flex min-h-[38px] items-center gap-2 rounded-full border border-border-default bg-surface/75 px-3 text-[12px] font-semibold leading-[18px] text-text-secondary shadow-[0_10px_24px_-24px_var(--shadow-color)] backdrop-blur"
+              class="flex min-h-[48px] items-center justify-start gap-2 rounded-full border border-border-default bg-surface/75 px-3 py-2 text-left text-[12px] font-semibold leading-[18px] text-text-secondary shadow-[0_10px_24px_-24px_var(--shadow-color)] backdrop-blur"
             >
               <component
                 :is="item.icon"
                 class="h-4 w-4 shrink-0 text-accent-primary"
                 aria-hidden="true"
               />
-              <span class="truncate">{{ item.label }}</span>
+              <span>{{ item.label }}</span>
             </li>
           </ul>
         </div>
@@ -165,7 +177,7 @@ const trustItems = [
 
 @media (min-width: 768px) {
   .hero-section {
-    aspect-ratio: 768 / 400;
+    aspect-ratio: 768 / 470;
   }
 }
 
@@ -178,7 +190,7 @@ const trustItems = [
 
 @media (min-width: 1024px) {
   .hero-section {
-    aspect-ratio: 1440 / 620;
+    aspect-ratio: 1440 / 660;
   }
 
   :deep(.hero-image img) {
@@ -201,7 +213,7 @@ const trustItems = [
 
 @media (min-width: 1440px) {
   .hero-section {
-    aspect-ratio: 1920 / 680;
+    aspect-ratio: 1920 / 768;
   }
 
   .hero-title {

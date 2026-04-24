@@ -23,13 +23,13 @@ export const useSeoDefaults = () => {
   const siteUrl = normalizeUrl(
     String(config.public.siteUrl || "https://localhost:3000"),
   );
-  const fallbackSiteName = String(config.public.siteName || "AutoMate");
+  const fallbackSiteName = String(config.public.siteName || "FlexDrive");
   const fallbackDefaultTitle = String(
     config.public.defaultSeoTitle || fallbackSiteName,
   );
   const fallbackDefaultDescription = String(
     config.public.defaultSeoDescription ||
-      "იპოვეთ ხარისხიანი ავტომობილის აქსესუარები ყოველდღიური გამოყენებისა და გაუმჯობესებისთვის.",
+      "შეიძინე ხარისხიანი ტაივანური ანალოგი ავტონაწილები FlexDrive-ზე. ონლაინ შეკვეთა, ნაღდი ან ბარათით გადახდა, ონლაინ განვადება და 0% ნაწილ-ნაწილ გადახდა.",
   );
   const fallbackDefaultImage = String(
     config.public.defaultSeoImage || "/favicon.ico",
@@ -65,7 +65,7 @@ export const useSeoDefaults = () => {
       return `${titleChunk} | ${siteName.value}`;
     },
     link: [{ rel: "canonical", href: canonicalUrl.value }],
-    meta: [{ name: "theme-color", content: "#FF6B35" }],
+    meta: [{ name: "theme-color", content: "#4F6F1F" }],
   }));
 
   useSeoMeta({

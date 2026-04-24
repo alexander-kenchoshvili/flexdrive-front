@@ -17,7 +17,8 @@ const devProtocol = devUseHttps ? "https" : "http";
 const localBackendApiUrl = `${devProtocol}://localhost:8000/api`;
 const publicApiUrl = env.NUXT_BASE_API_URL || "/api";
 const internalApiUrl = env.NUXT_INTERNAL_API_URL || localBackendApiUrl;
-const publicSiteUrl = env.NUXT_PUBLIC_SITE_URL || `${devProtocol}://localhost:${devPort}`;
+const publicSiteUrl =
+  env.NUXT_PUBLIC_SITE_URL || `${devProtocol}://localhost:${devPort}`;
 const allowIndexing = parseBoolean(env.NUXT_PUBLIC_ALLOW_INDEXING, false);
 const shouldTrustLocalTls =
   !isProduction &&
@@ -67,14 +68,14 @@ export default defineNuxtConfig({
       siteUrl: publicSiteUrl,
       siteEnv: env.NUXT_PUBLIC_SITE_ENV || env.NODE_ENV || "development",
       allowIndexing,
-      siteName: env.NUXT_PUBLIC_SITE_NAME || "Auto Accessories Store",
+      siteName: env.NUXT_PUBLIC_SITE_NAME || "FlexDrive",
       defaultSeoTitle:
-        env.NUXT_PUBLIC_DEFAULT_SEO_TITLE || "ავტომობილის აქსესუარების მაღაზია",
+        env.NUXT_PUBLIC_DEFAULT_SEO_TITLE ||
+        "პრემიუმ ხარისხის ავტონაწილების ონლაინ მაღაზია საქართველოში",
       defaultSeoDescription:
         env.NUXT_PUBLIC_DEFAULT_SEO_DESCRIPTION ||
-        "იპოვეთ ხარისხიანი ავტომობილის აქსესუარები ყოველდღიური გამოყენებისა და ავტომობილის გაუმჯობესებისთვის.",
-      defaultSeoImage:
-        env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || "/favicon.ico",
+        "შეიძინე ხარისხიანი ტაივანური ანალოგი ავტონაწილები FlexDrive-ზე. ონლაინ შეკვეთა, ნაღდი ან ბარათით გადახდა, ონლაინ განვადება და 0% ნაწილ-ნაწილ გადახდა.",
+      defaultSeoImage: env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || "/favicon.ico",
       recaptchaSiteKey: env.NUXT_PUBLIC_RECAPTCHA_SITE_KEY,
     },
   },
@@ -85,6 +86,21 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: "ka",
       },
+      link: [
+        { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/favicon-light.svg",
+          media: "(prefers-color-scheme: light)",
+        },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/favicon-dark.svg",
+          media: "(prefers-color-scheme: dark)",
+        },
+      ],
       script: [
         {
           id: "theme-init",

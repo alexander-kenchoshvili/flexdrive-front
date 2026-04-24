@@ -53,7 +53,7 @@ const title = computed(
 const subtitle = computed(
   () =>
     (props.data?.subtitle as string) ||
-    "იხილეთ ექსპერტული რჩევები, გზამკვლევები და სიახლეები ავტო აქსესუარებზე.",
+    "იხილეთ ექსპერტული რჩევები, გზამკვლევები და სიახლეები ავტონაწილებზე, ავტომობილის მოვლასა და სწორ არჩევანზე.",
 );
 
 const breadcrumbItems = computed(() => [

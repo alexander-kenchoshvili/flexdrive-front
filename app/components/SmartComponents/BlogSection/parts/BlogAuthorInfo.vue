@@ -6,7 +6,7 @@ const props = defineProps<{
   role?: string | null;
 }>();
 
-const authorName = computed(() => sanitizeText(props.name) || "AutoMate");
+const authorName = computed(() => sanitizeText(props.name) || "FlexDrive");
 const authorRole = computed(() => sanitizeText(props.role) || "რედაქცია");
 
 const initials = computed(() => {

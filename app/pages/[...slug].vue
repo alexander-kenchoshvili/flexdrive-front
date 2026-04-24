@@ -30,7 +30,7 @@ const siteUrl = computed(() =>
 );
 const hasCollectionQuery = computed(() => Object.keys(route.query || {}).length > 0);
 const siteName = computed(() =>
-  String(settings.value?.site_name || config.public.siteName || "AutoMate"),
+  String(settings.value?.site_name || config.public.siteName || "FlexDrive"),
 );
 const collectionSeoPolicy = computed(() =>
   resolveCmsCollectionSeoPolicy(route.path || "/", route.query),

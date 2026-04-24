@@ -45,7 +45,7 @@ const displayName = computed(() => {
 
   if (email) return email;
   if (username) return username;
-  return "AutoMate";
+  return "FlexDrive";
 });
 
 const displayInitial = computed(() =>

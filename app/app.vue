@@ -21,12 +21,17 @@ const siteUrl = computed(() =>
   String(config.public.siteUrl || "https://localhost:3000").replace(/\/+$/, ""),
 );
 const siteName = computed(
-  () => settings.value?.site_name || footer.value?.brand?.name || "AutoMate",
+  () =>
+    settings.value?.site_name ||
+    config.public.siteName ||
+    footer.value?.brand?.name ||
+    "FlexDrive",
 );
 const organizationDescription = computed(
   () =>
-    footer.value?.brand?.description ||
     settings.value?.default_seo_description ||
+    footer.value?.brand?.description ||
+    config.public.defaultSeoDescription ||
     null,
 );
 const organizationImage = computed(

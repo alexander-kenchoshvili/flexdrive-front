@@ -28,7 +28,7 @@ const sectionTitle = computed(
 const sectionSubtitle = computed(
   () =>
     sanitizeText(props.data?.subtitle) ||
-    "იხილეთ ექსპერტული რჩევები და გზამკვლევები ავტო აქსესუარებზე.",
+    "იხილეთ ექსპერტული რჩევები და გზამკვლევები ავტონაწილებზე, ავტომობილის მოვლასა და სწორ არჩევანზე.",
 );
 const ctaLabel = computed(
   () => sanitizeText(props.data?.buttonText) || "ყველა სტატია",
