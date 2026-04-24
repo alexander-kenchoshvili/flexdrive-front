@@ -118,13 +118,6 @@ const availability = computed(() => {
         {{ badge.label }}
       </span>
 
-      <span
-        v-if="product.inStock === false"
-        class="absolute bottom-2.5 left-2.5 z-[2] inline-flex min-h-7 items-center gap-1.5 rounded-md border border-error bg-surface px-2 py-1 text-[11px] font-bold leading-[14px] text-error shadow-[0_10px_24px_-20px_var(--shadow-color)]"
-      >
-        <XCircleIcon class="h-3.5 w-3.5" aria-hidden="true" />
-        არ არის მარაგში
-      </span>
     </NuxtLink>
 
     <div class="flex flex-1 flex-col p-3 sm:p-4">

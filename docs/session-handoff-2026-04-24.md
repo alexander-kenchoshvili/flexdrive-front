@@ -167,6 +167,24 @@ python manage.py seed_staging_demo --products 300
   - Specs created: `976`, updated: `524`
   - FeaturedProducts component: `created`
 
+### 6. Staging Catalog Page Route
+
+2026-04-25-ზე staging Neon/Postgres DB-ში შეიქმნა/განახლდა catalog CMS route:
+
+- `Page(slug="catalog")` განახლდა
+- `show_in_menu=True`
+- `show_in_footer=True`
+- `footer_group="navigation"`
+- `ComponentType(name="ProductCatalog")`
+- `Component(page=catalog, component_type=ProductCatalog)` შეიქმნა:
+  - position: `10`
+  - title: `კატალოგი`
+  - subtitle: `აირჩიე სასურველი პროდუქტი კატეგორიისა და ფასის მიხედვით.`
+  - enabled: `True`
+- `/pages/menu/` cache გასუფთავდა და staging DB-ში menu list დადასტურდა:
+  - `main`
+  - `catalog`
+
 ## Current Known Open Items
 
 ### High Priority
