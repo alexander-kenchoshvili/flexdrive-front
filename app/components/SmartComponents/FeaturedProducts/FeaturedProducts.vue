@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowRightIcon } from "@heroicons/vue/20/solid";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import type { Swiper as SwiperInstance } from "swiper";
@@ -23,7 +24,7 @@ const productsError = ref<unknown>(null);
 const swiperProgress = ref(0);
 
 const sectionTitle = computed(
-  () => (props.data?.title as string) || "გამორჩეული პროდუქტები",
+  () => (props.data?.title as string) || "გამორჩეული ავტონაწილები",
 );
 const sectionSubtitle = computed(() => (props.data?.subtitle as string) || "");
 const sectionButtonText = computed(
@@ -91,22 +92,22 @@ await loadFeaturedProducts();
 
 <template>
   <section
-    class="overflow-hidden border-y border-border-default bg-section-soft py-10 md:py-12"
+    class="overflow-hidden border-y border-border-default bg-bg-primary py-8 md:py-10 lg:py-12"
   >
     <div class="container-fluid">
-      <div class="mb-6 md:mb-8">
+      <div class="mb-5 md:mb-7">
         <div
           class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
           <div class="min-w-0">
             <h2
-              class="title-under-xs text-[28px] font-extrabold text-text-primary sm:text-[32px] md:text-[36px] upper"
+              class="title-under-xs upper text-[22px] font-extrabold leading-[30px] text-text-primary sm:text-[26px] sm:leading-[34px] md:text-[30px] md:leading-[38px]"
             >
               {{ sectionTitle }}
             </h2>
             <p
               v-if="sectionSubtitle"
-              class="subtitle-under-xs mt-3 max-w-2xl text-sm text-text-secondary md:text-base"
+              class="subtitle-under-xs mt-2 max-w-2xl text-[14px] font-medium leading-[22px] text-text-secondary md:text-[15px] md:leading-6"
             >
               {{ sectionSubtitle }}
             </p>
@@ -116,36 +117,40 @@ await loadFeaturedProducts();
             as="nuxt-link"
             to="/catalog"
             variant="accent-outline"
-            class="w-full px-5 py-3 text-sm upper lg:w-auto lg:shrink-0"
+            size="sm"
+            class="upper w-full !rounded-lg px-4 text-[13px] leading-5 lg:w-auto lg:shrink-0"
           >
             {{ sectionButtonText }}
+            <template #right>
+              <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+            </template>
           </BaseButton>
         </div>
       </div>
 
       <div
         v-if="productsPending"
-        class="rounded-xl border border-border-default bg-surface p-6 text-center text-sm text-text-secondary"
+        class="rounded-lg border border-border-default bg-surface p-4 text-center text-[14px] font-medium leading-5 text-text-secondary"
       >
         პროდუქტები იტვირთება...
       </div>
 
       <div
         v-else-if="productsError"
-        class="rounded-xl border border-error/30 bg-surface p-6 text-center text-sm text-text-secondary"
+        class="rounded-lg border border-error/35 bg-surface p-4 text-center text-[14px] font-medium leading-5 text-text-secondary"
       >
         გამორჩეული პროდუქტების ჩატვირთვა ვერ მოხერხდა.
       </div>
 
       <div
         v-else-if="!featuredProducts.length"
-        class="rounded-xl border border-dashed border-border-default bg-surface p-6 text-center text-sm text-text-muted"
+        class="rounded-lg border border-dashed border-border-default bg-surface p-4 text-center text-[14px] font-medium leading-5 text-text-muted"
       >
         ამ ეტაპზე გამორჩეული პროდუქტები არ არის.
       </div>
 
       <div v-else>
-        <div class="hidden gap-4 xl:grid xl:grid-cols-4">
+        <div class="hidden gap-3 xl:grid xl:grid-cols-4 2xl:gap-4">
           <ProductCard
             v-for="product in featuredProducts"
             :key="product.id"
@@ -156,14 +161,16 @@ await loadFeaturedProducts();
         <ClientOnly>
           <div class="xl:hidden">
             <Swiper
-              :slides-per-view="1.1"
+              :slides-per-view="1.08"
               :space-between="12"
+              :watch-overflow="true"
               @swiper="handleSwiperInit"
               @slide-change="handleSwiperChange"
               @progress="handleSwiperProgress"
               :breakpoints="{
-                520: { slidesPerView: 1.4, spaceBetween: 14 },
-                640: { slidesPerView: 1.8, spaceBetween: 16 },
+                480: { slidesPerView: 1.35, spaceBetween: 12 },
+                640: { slidesPerView: 2.05, spaceBetween: 14 },
+                900: { slidesPerView: 3.05, spaceBetween: 16 },
               }"
             >
               <SwiperSlide
@@ -176,7 +183,7 @@ await loadFeaturedProducts();
 
             <div
               v-if="featuredProducts.length > 1"
-              class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-border-default/70"
+              class="mt-3 h-1 w-full overflow-hidden rounded-full bg-border-default/70"
               aria-hidden="true"
             >
               <span

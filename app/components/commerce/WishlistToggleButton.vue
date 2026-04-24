@@ -31,12 +31,12 @@ const sizeClasses = computed(() =>
 const iconClasses = computed(() => (props.size === "sm" ? "h-5 w-5" : "h-6 w-6"));
 
 const buttonClasses = computed(() => [
-  "inline-flex items-center justify-center border transition-colors duration-200",
+  "inline-flex items-center justify-center border shadow-[0_10px_22px_-18px_var(--shadow-color)] transition-[border-color,background-color,color,box-shadow] duration-200",
   sizeClasses.value,
   isSaved.value
-    ? "border-accent-primary/30 bg-accent-primary/12 text-accent-primary hover:bg-accent-primary/18"
-    : "border-border-default bg-surface-2 text-text-secondary hover:border-accent-primary/30 hover:bg-surface hover:text-accent-primary",
-  isPending.value ? "cursor-wait opacity-70" : "",
+    ? "border-accent-primary/35 bg-surface text-accent-primary hover:border-accent-primary/50 hover:bg-accent-soft"
+    : "border-border-default bg-surface text-text-secondary hover:border-accent-primary/40 hover:bg-surface hover:text-accent-primary",
+  isPending.value ? "cursor-default opacity-80" : "cursor-pointer",
 ]);
 
 const handleClick = async () => {
@@ -64,12 +64,7 @@ const handleClick = async () => {
     :class="buttonClasses"
     @click.prevent.stop="handleClick"
   >
-    <span
-      v-if="isPending"
-      class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-      aria-hidden="true"
-    />
-    <HeartSolidIcon v-else-if="isSaved" :class="iconClasses" aria-hidden="true" />
+    <HeartSolidIcon v-if="isSaved" :class="iconClasses" aria-hidden="true" />
     <HeartOutlineIcon v-else :class="iconClasses" aria-hidden="true" />
   </button>
 </template>
