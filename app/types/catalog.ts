@@ -85,6 +85,7 @@ export interface CatalogCategoryItem {
   parent: number | null;
   sort_order: number;
   product_count: number;
+  image?: CatalogImageAsset | null;
   seo?: SeoPayload | null;
 }
 

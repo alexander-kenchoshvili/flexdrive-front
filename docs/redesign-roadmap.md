@@ -284,7 +284,7 @@ Primary files:
 - `app/components/ComponentsLoader.vue`
 - `app/components/SmartComponents/HeroSection/HeroSection.vue`
 - `app/components/SmartComponents/FeaturedProducts/FeaturedProducts.vue`
-- `app/components/SmartComponents/ProblemSolving/*`
+- `app/components/SmartComponents/CategoryShortcuts/*`
 - `app/components/SmartComponents/HowItWorks/*`
 - `app/components/SmartComponents/OrderConfidence/*`
 - `app/components/SmartComponents/BlogSection/*`
@@ -308,7 +308,7 @@ Tasks:
 Potential replacements:
 
 - Old generic hero -> catalog/search/finder hero.
-- Generic problem-solving section -> parts categories / common repairs / popular needs.
+- Generic problem-solving section -> category shortcuts / parts categories.
 - Generic how-it-works -> ordering, delivery, compatibility support.
 - Generic confidence cards -> stock, warranty/returns, payment, support.
 

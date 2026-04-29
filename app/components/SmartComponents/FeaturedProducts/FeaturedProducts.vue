@@ -21,7 +21,9 @@ const { getCatalogProducts } = useCatalogApi();
 const productsResponse = ref<CatalogListResponse | null>(null);
 const productsPending = ref(false);
 const productsError = ref<unknown>(null);
-const swiperProgress = ref(0);
+const swiperInstance = ref<SwiperInstance | null>(null);
+const activeDotIndex = ref(0);
+const dotCount = ref(1);
 
 const sectionTitle = computed(
   () => (props.data?.title as string) || "გამორჩეული ავტონაწილები",
@@ -48,23 +50,28 @@ const featuredProducts = computed<CatalogProductCardData[]>(() => {
   }));
 });
 
-const mobileProgressPercent = computed(() => {
-  const progress = Number.isFinite(swiperProgress.value)
-    ? swiperProgress.value
-    : 0;
-  return Math.min(100, Math.max(0, progress * 100));
-});
+const showDots = computed(() => dotCount.value > 1);
 
 const handleSwiperInit = (swiper: SwiperInstance) => {
-  swiperProgress.value = swiper.progress ?? 0;
+  swiperInstance.value = swiper;
+  updateSwiperDots(swiper);
 };
 
 const handleSwiperChange = (swiper: SwiperInstance) => {
-  swiperProgress.value = swiper.progress ?? 0;
+  updateSwiperDots(swiper);
 };
 
-const handleSwiperProgress = (_swiper: SwiperInstance, progress: number) => {
-  swiperProgress.value = progress ?? 0;
+const updateSwiperDots = (swiper: SwiperInstance) => {
+  const snaps = Array.isArray(swiper.snapGrid) ? swiper.snapGrid.length : 1;
+  dotCount.value = Math.max(1, snaps);
+  activeDotIndex.value = Math.min(
+    Math.max(swiper.snapIndex ?? swiper.activeIndex ?? 0, 0),
+    dotCount.value - 1,
+  );
+};
+
+const goToDot = (index: number) => {
+  swiperInstance.value?.slideTo(index);
 };
 
 const loadFeaturedProducts = async () => {
@@ -97,7 +104,7 @@ await loadFeaturedProducts();
     <div class="container-fluid">
       <div class="mb-5 md:mb-7">
         <div
-          class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+          class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div class="min-w-0">
             <h2
@@ -118,7 +125,7 @@ await loadFeaturedProducts();
             to="/catalog"
             variant="accent-outline"
             size="sm"
-            class="upper w-full !rounded-lg px-4 text-[13px] leading-5 lg:w-auto lg:shrink-0"
+            class="upper hidden !rounded-lg px-4 text-[13px] leading-5 sm:inline-flex sm:w-auto sm:shrink-0"
           >
             {{ sectionButtonText }}
             <template #right>
@@ -166,7 +173,7 @@ await loadFeaturedProducts();
               :watch-overflow="true"
               @swiper="handleSwiperInit"
               @slide-change="handleSwiperChange"
-              @progress="handleSwiperProgress"
+              @resize="handleSwiperChange"
               :breakpoints="{
                 480: { slidesPerView: 1.35, spaceBetween: 12 },
                 640: { slidesPerView: 2.05, spaceBetween: 14 },
@@ -181,16 +188,38 @@ await loadFeaturedProducts();
               </SwiperSlide>
             </Swiper>
 
-            <div
-              v-if="featuredProducts.length > 1"
-              class="mt-3 h-1 w-full overflow-hidden rounded-full bg-border-default/70"
-              aria-hidden="true"
-            >
-              <span
-                class="block h-full rounded-full bg-accent-primary transition-[width] duration-300 ease-out"
-                :style="{ width: `${mobileProgressPercent}%` }"
+            <div v-if="showDots" class="mt-4 flex justify-center gap-2">
+              <button
+                v-for="dotIndex in dotCount"
+                :key="dotIndex"
+                type="button"
+                class="h-2 rounded-full transition-[width,background-color] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-primary"
+                :class="
+                  dotIndex - 1 === activeDotIndex
+                    ? 'w-6 bg-accent-primary'
+                    : 'w-2 bg-border-muted hover:bg-accent-primary/60'
+                "
+                :aria-label="`გამორჩეული პროდუქტების სლაიდი ${dotIndex}`"
+                :aria-current="
+                  dotIndex - 1 === activeDotIndex ? 'true' : undefined
+                "
+                @click="goToDot(dotIndex - 1)"
               />
             </div>
+
+            <BaseButton
+              as="nuxt-link"
+              to="/catalog"
+              variant="accent-outline"
+              size="sm"
+              :full-width="true"
+              class="upper mt-4 !rounded-lg text-[13px] leading-5 sm:hidden"
+            >
+              {{ sectionButtonText }}
+              <template #right>
+                <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+              </template>
+            </BaseButton>
           </div>
         </ClientOnly>
       </div>

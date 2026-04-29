@@ -208,7 +208,7 @@ SmartComponents are CMS-driven page sections.
 | `HeroSection` | Homepage hero | Very high | Replace current split text/media with catalog/search-first hero |
 | `FeaturedProducts` | Featured products section | High | Keep logic, redesign product carousel/grid around new `ProductCard` |
 | `ProductCatalog` | Catalog listing and filters | Very high | Keep logic, redesign listing/filter UI |
-| `ProblemSolving` | Marketing/category problem cards | Medium | Probably replace with parts-category/use-case modules |
+| `CategoryShortcuts` | Homepage category shortcut carousel | Medium | Replaces old `ProblemSolving` component |
 | `HowItWorks` | Ordering process explanation | Medium | Can stay if redesigned around buying parts |
 | `OrderConfidence` | Trust/confidence cards | Medium | Keep concept, redesign as compact ecommerce trust strip/cards |
 | `BlogSection` | Homepage blog preview | Low/medium | Keep later, redesign after catalog/commerce |
