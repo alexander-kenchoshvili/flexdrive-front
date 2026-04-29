@@ -1,6 +1,6 @@
 # FlexDrive Redesign Roadmap
 
-Last updated: 2026-04-23
+Last updated: 2026-04-30
 
 ## Current Phase
 
@@ -16,6 +16,40 @@ Scope მკაფიოდ არის შეზღუდული:
 - ვიზუალური კომპონენტები შეიძლება გადავაკეთოთ, ჩავანაცვლოთ ან ამოვიღოთ, მაგრამ არსებული data flow და user behavior უნდა შენარჩუნდეს.
 
 ეს roadmap არის იმისთვის, რომ redesign წავიდეს ეტაპობრივად და არა ქაოსურად.
+
+## Current Implementation Status
+
+### 2026-04-30 Redesign Slice
+
+Completed frontend work:
+
+- Replaced the old homepage `ProblemSolving` SmartComponent with `CategoryShortcuts`.
+- `CategoryShortcuts` now renders real catalog categories from the catalog API instead of four static problem cards.
+- Category shortcuts use a Swiper carousel, custom dot navigation, contained right edge, and left overflow behavior aligned with the redesigned featured sections.
+- Category shortcut cards show category image + category name only. Image frame uses `aspect-[4/3]`, `cover` fit, and a small scale-up to reduce visible baked-in image margins.
+- `FeaturedProducts` carousel was updated to use dot navigation instead of a progress bar, with button placement aligned to `CategoryShortcuts` on mobile/desktop.
+- Added `app/router.options.ts` to control Nuxt/Vue Router scroll behavior. The goal is to avoid the visible "old page jumps to top before new page renders" issue on CMS route changes while preserving browser back/forward saved scroll positions.
+- User preference was recorded in `AGENTS.md`: do not start temporary dev servers and do not run Playwright/browser automation unless explicitly requested.
+
+Paired backend work completed in `C:\Users\kench\Desktop\flexdriveback`:
+
+- Added category image fields to `Category`: original, desktop, tablet, mobile, and alt text.
+- Added category image admin support and serializer output.
+- Added/applied migration `catalog 0004_category_images`.
+- Renamed CMS component type from `ProblemSolving` to `CategoryShortcuts` via `pages 0038`.
+- Cleaned old problem-solving content binding via `pages 0039`.
+- Added/applied `pages 0040_alter_footersettings_brand_name_and_more` for FlexDrive defaults.
+
+Staging/database status noted during the session:
+
+- Staging migrations were checked and `catalog 0004`, `pages 0038`, `pages 0039`, and `pages 0040` were applied.
+- No additional frontend migration exists.
+- Browser verification was intentionally not run because the user requested Playwright/dev-server checks only on explicit request.
+
+Relevant follow-up items:
+
+- If category images still show internal white padding, the cleaner long-term fix is to change backend category image variant generation from contain-on-white-canvas to cover/crop variants. The current frontend scale-up is a visual mitigation.
+- `app/router.options.ts` was type-checked with `vue-tsc --noEmit`; full `npm run build` could not be completed in the local tool environment because Vite build hit `spawn EPERM`/timeout.
 
 ## Product Direction
 

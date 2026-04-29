@@ -1,6 +1,6 @@
 # FlexDrive UI Inventory
 
-Last updated: 2026-04-23
+Last updated: 2026-04-30
 
 ## Purpose
 
@@ -58,6 +58,14 @@ This route renders dynamic CMS components through:
 `ComponentsLoader` dynamically imports components by CMS component name:
 
 `./SmartComponents/${name}/${name}.vue`
+
+Current route/scroll note:
+
+- `app/router.options.ts` exists and customizes Nuxt/Vue Router scroll behavior.
+- Browser back/forward should use saved scroll positions.
+- Same-path query changes are not globally forced to top by the router.
+- New path navigation delays the top scroll briefly to avoid showing the old CMS page jumping to the top during `ComponentsLoader` content transitions.
+- Component-level pagination scroll behavior in `BlogList` and `ProductCatalog` is intentionally preserved.
 
 Redesign implication:
 
@@ -208,7 +216,7 @@ SmartComponents are CMS-driven page sections.
 | `HeroSection` | Homepage hero | Very high | Replace current split text/media with catalog/search-first hero |
 | `FeaturedProducts` | Featured products section | High | Keep logic, redesign product carousel/grid around new `ProductCard` |
 | `ProductCatalog` | Catalog listing and filters | Very high | Keep logic, redesign listing/filter UI |
-| `CategoryShortcuts` | Homepage category shortcut carousel | Medium | Replaces old `ProblemSolving` component |
+| `CategoryShortcuts` | Homepage category shortcut carousel | Medium | Replaces old `ProblemSolving`; uses catalog API categories, category images, Swiper dots |
 | `HowItWorks` | Ordering process explanation | Medium | Can stay if redesigned around buying parts |
 | `OrderConfidence` | Trust/confidence cards | Medium | Keep concept, redesign as compact ecommerce trust strip/cards |
 | `BlogSection` | Homepage blog preview | Low/medium | Keep later, redesign after catalog/commerce |
