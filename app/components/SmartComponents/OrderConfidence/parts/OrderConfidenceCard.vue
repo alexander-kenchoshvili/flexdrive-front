@@ -1,47 +1,71 @@
 <script setup lang="ts">
+import {
+  ClipboardDocumentCheckIcon,
+  CreditCardIcon,
+  TruckIcon,
+  UserCircleIcon,
+} from "@heroicons/vue/24/outline";
+import type { Component } from "vue";
 import { sanitizeText } from "~/composables/helpers";
+
+export type OrderConfidenceIcon = "order" | "account" | "payment" | "delivery";
 
 type OrderConfidenceCardData = {
   id: number;
   title: string;
   description: string;
-  iconSvg: string;
   position: number;
+  step: string;
+  icon: OrderConfidenceIcon;
 };
 
 const props = defineProps<{
   item: OrderConfidenceCardData;
 }>();
 
+const iconMap: Record<OrderConfidenceIcon, Component> = {
+  order: ClipboardDocumentCheckIcon,
+  account: UserCircleIcon,
+  payment: CreditCardIcon,
+  delivery: TruckIcon,
+};
+
 const title = computed(() => sanitizeText(props.item.title));
 const description = computed(() => sanitizeText(props.item.description));
+const iconComponent = computed(() => iconMap[props.item.icon]);
 </script>
 
 <template>
   <article
-    class="group relative flex items-start gap-4 bg-surface px-5 py-[22px] text-left transition-colors duration-200 hover:bg-[#fff9f7] dark:hover:bg-surface-2 hover:after:scale-100 hover:after:opacity-100 md:flex-col md:gap-5 md:px-8 md:py-9 after:absolute after:right-5 after:top-5 after:h-1.5 after:w-1.5 after:scale-0 after:rounded-full after:bg-accent-primary after:opacity-0 after:transition-all after:duration-200 after:content-['']"
+    class="group relative flex h-full min-h-[190px] flex-col rounded-md bg-surface px-5 py-5 text-left transition-colors duration-200 hover:bg-surface-2 sm:px-6 sm:py-6 xl:min-h-[270px]"
   >
-    <span
-      class="flex shrink-0 items-center justify-center rounded-2xl bg-surface-2 p-3 text-accent-primary transition-colors duration-200 group-hover:bg-[#ffe8df] dark:group-hover:bg-surface-3 sm:p-4"
-    >
+    <div class="flex items-center justify-between gap-4">
       <span
-        v-if="item.iconSvg"
-        class="block text-accent-primary [&>svg]:block [&>svg]:transition-transform [&>svg]:duration-200 group-hover:[&>svg]:scale-110"
-        v-html="item.iconSvg"
-      />
-    </span>
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-accent-primary/20 bg-accent-primary/10 text-accent-primary transition-colors duration-200 group-hover:border-accent-primary/45 group-hover:bg-accent-primary/15"
+      >
+        <component :is="iconComponent" class="h-5 w-5" aria-hidden="true" />
+      </span>
 
-    <div class="min-w-0 flex-1 xl:max-w-[240px]">
-      <h3 class="text-base font-bold leading-6 text-text-primary">
+      <span class="text-[12px] font-extrabold leading-5 text-accent-primary/70">
+        {{ item.step }}
+      </span>
+    </div>
+
+    <div class="mt-4 min-w-0 flex-1">
+      <h3 class="text-[16px] font-extrabold leading-[24px] text-text-primary">
         {{ title }}
       </h3>
 
       <p
         v-if="description"
-        class="mt-1.5 text-[14px] leading-6 text-text-secondary sm:text-[15px] sm:leading-7"
+        class="mt-3 text-[14px] font-medium leading-[23px] text-text-secondary"
       >
         {{ description }}
       </p>
     </div>
+
+    <span
+      class="mt-6 block h-1 w-9 rounded-full bg-accent-primary/80 transition-[width,background-color] duration-200 group-hover:w-12 group-hover:bg-accent-primary"
+    />
   </article>
 </template>
