@@ -141,3 +141,23 @@ Frontend and backend are part of the same product effort. When a feature crosses
 ## Session Memory
 
 This file exists so the project context does not need to be re-explained in every Codex session. Treat it as the durable project brief for future work in this frontend repository.
+
+## Current Redesign State - 2026-05-01
+
+- Homepage redesign is in progress. Preserve existing ecommerce/auth/cart/checkout logic; continue replacing homepage visuals component by component.
+- `ProblemSolving` was replaced by `CategoryShortcuts`. It now renders catalog categories as image cards/slider with dots, category images coming from admin/backend category image fields.
+- `ValueProposition` was added after `CategoryShortcuts` and before `OrderConfidence`. Frontend files:
+  - `app/components/SmartComponents/ValueProposition/ValueProposition.vue`
+  - `app/components/SmartComponents/ValueProposition/parts/ValuePropositionCard.vue`
+  It renders 3 premium image cards from CMS content items. Card images are uploaded from admin.
+- `OrderConfidence` has been redesigned as a checkout confidence rail using frontend Heroicons and step numbers. It no longer visually uses backend `icon_svg`; backend still sends it for compatibility. Frontend files:
+  - `app/components/SmartComponents/OrderConfidence/OrderConfidence.vue`
+  - `app/components/SmartComponents/OrderConfidence/parts/OrderConfidenceCard.vue`
+- `splitAutoMateTitleParts` in `app/composables/helpers.ts` now supports both `Auto[[Mate]]` and `Flex[[Drive]]` bracket accent syntax, so `Flex[[Drive]]` renders like the upper homepage components.
+- `app/router.options.ts` exists to prevent visible pre-navigation scroll jumps during route transitions and browser back navigation.
+- Staging DB was updated for the new homepage data as of 2026-05-01:
+  - `ValueProposition` component/cards were seeded.
+  - `OrderConfidence` cards now use: `შეკვეთა მარტივად იწყება`, `რეგისტრაციის გარეშე`, `გადახდა შენზეა მორგებული`, `მიწოდება წინასწარ გასაგებია`.
+  - `OrderConfidence` title is `შეკვეთა Flex[[Drive]]-ზე მარტივად და გარკვევით`.
+  If staging UI still shows old content, suspect API/browser cache before changing code.
+- Likely next redesign target: continue homepage below `OrderConfidence` (`HowItWorks`, then `BlogSection`), unless the user redirects.
