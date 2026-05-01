@@ -5,6 +5,16 @@ import HowItWorksStepItem from "./parts/HowItWorksStepItem.vue";
 import { sanitizeText, splitAutoMateTitleParts } from "~/composables/helpers";
 
 type FlowKey = "guest" | "registered";
+type HowItWorksStepIcon =
+  | "search"
+  | "cart"
+  | "details"
+  | "confirm"
+  | "account"
+  | "wishlist"
+  | "checkout"
+  | "tracking";
+type HowItWorksCardIcon = "guest" | "wishlist" | "address" | "history";
 
 type FlowItem = {
   id: number;
@@ -12,12 +22,21 @@ type FlowItem = {
   title: string;
   description: string;
   position: number;
-  iconSvg: string;
 };
 
 const props = defineProps<{
   data?: SmartComponentData;
 }>();
+
+const stepIconOrder: Record<FlowKey, HowItWorksStepIcon[]> = {
+  guest: ["search", "cart", "details", "confirm"],
+  registered: ["account", "wishlist", "checkout", "tracking"],
+};
+
+const cardIconOrder: Record<FlowKey, HowItWorksCardIcon[]> = {
+  guest: ["guest"],
+  registered: ["wishlist", "address", "history"],
+};
 
 const toNumber = (value: unknown, fallback = 0) => {
   const parsed = Number(value);
@@ -37,7 +56,6 @@ const items = computed<FlowItem[]>(() =>
       title: sanitizeText(item.title),
       description: sanitizeText(item.description),
       position: toNumber(item.position, toNumber(item.id, index + 1)),
-      iconSvg: sanitizeText(item.icon_svg),
     }))
     .filter((item) => item.contentType.length > 0),
 );
@@ -46,7 +64,9 @@ const byOrder = (a: FlowItem, b: FlowItem) =>
   a.position === b.position ? a.id - b.id : a.position - b.position;
 
 const sectionTitle = computed(
-  () => sanitizeText(props.data?.title) || "How Auto[[Mate]] Works?",
+  () =>
+    sanitizeText(props.data?.title) ||
+    "აირჩიე გზა შეკვეთამდე Flex[[Drive]]-ზე",
 );
 const sectionSubtitle = computed(() => sanitizeText(props.data?.subtitle));
 
@@ -56,14 +76,14 @@ const guestTabLabel = computed(() => {
   const tab = items.value
     .filter((item) => item.contentType === "guest_tab")
     .sort(byOrder)[0];
-  return tab?.title || "სტუმარი შეკვეთა";
+  return tab?.title || "სტუმრად ყიდვა";
 });
 
 const registeredTabLabel = computed(() => {
   const tab = items.value
     .filter((item) => item.contentType === "registered_tab")
     .sort(byOrder)[0];
-  return tab?.title || "რეგისტრირებული";
+  return tab?.title || "ანგარიშით ყიდვა";
 });
 
 const tabs = computed(() => [
@@ -79,20 +99,39 @@ const steps = computed(() =>
     .sort(byOrder),
 );
 
+const mappedSteps = computed(() =>
+  steps.value.map((step, index) => ({
+    ...step,
+    icon: stepIconOrder[activeFlow.value][index] || "confirm",
+    stepLabel: String(index + 1).padStart(2, "0"),
+  })),
+);
+
 const cards = computed(() =>
   items.value
     .filter((item) => item.contentType === `${activeFlow.value}_card`)
     .sort(byOrder),
 );
+
+const mappedCards = computed(() =>
+  cards.value.map((card, index) => ({
+    ...card,
+    icon: cardIconOrder[activeFlow.value][index] || "history",
+  })),
+);
+
+const activeTabLabel = computed(
+  () => tabs.value.find((tab) => tab.key === activeFlow.value)?.label || "",
+);
 </script>
 
 <template>
-  <section class="py-10 md:py-12">
+  <section class="border-b border-border-default bg-bg-primary py-10 md:py-14 xl:py-16">
     <div class="container-fluid">
       <div>
-        <header class="text-center">
+        <header class="text-center lg:text-left">
           <h2
-            class="title-under-xs text-[28px] font-extrabold leading-[1.2] text-text-primary sm:text-[32px] md:text-[36px]"
+            class="title-under-xs text-[26px] font-extrabold leading-[1.16] text-text-primary sm:text-[28px] md:text-[30px] lg:text-[40px] lg:leading-[1.12]"
           >
             <span v-if="titleParts.upperLeadingPart" class="upper">
               {{ titleParts.upperLeadingPart }}
@@ -111,70 +150,99 @@ const cards = computed(() =>
           </h2>
           <p
             v-if="sectionSubtitle"
-            class="subtitle-under-xs mt-3 text-sm leading-6 text-text-secondary md:text-base"
+            class="subtitle-under-xs mt-3 w-full text-sm leading-7 text-text-secondary md:text-base lg:max-w-2xl"
           >
             {{ sectionSubtitle }}
           </p>
         </header>
 
-        <div class="flex justify-center mt-10">
-          <div class="flex w-full gap-2 bg-surface">
-            <BaseButton
-              v-for="tab in tabs"
+        <div class="mt-6 flex justify-end">
+          <div
+            class="grid w-full gap-2 rounded-md border border-border-default bg-surface p-1.5 shadow-[0_18px_48px_-40px_var(--shadow-color)] sm:grid-cols-2 lg:max-w-[520px]"
+            role="tablist"
+            aria-label="შეკვეთის გზა"
+          >
+            <button
+              v-for="(tab, tabIndex) in tabs"
               :key="tab.key"
               type="button"
-              size="sm"
-              :variant="activeFlow === tab.key ? 'primary' : 'accent-outline'"
-              class="flex-1 !px-3 !py-2 upper"
+              role="tab"
+              :aria-selected="activeFlow === tab.key"
+              :class="[
+                'btn-min-h-44 flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-extrabold transition-colors duration-200',
+                activeFlow === tab.key
+                  ? 'border-accent-primary bg-accent-primary text-text-invert shadow-[0_10px_24px_-20px_var(--shadow-color)]'
+                  : 'border-transparent bg-transparent text-text-secondary hover:border-border-default hover:bg-surface-2 hover:text-text-primary',
+              ]"
               @click="activeFlow = tab.key"
             >
+              <span
+                :class="[
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-black',
+                  activeFlow === tab.key
+                    ? 'bg-transparent text-text-invert ring-1 ring-inset ring-white/25 dark:ring-black/20'
+                    : 'bg-surface-2 text-accent-primary',
+                ]"
+                aria-hidden="true"
+              >
+                {{ tabIndex + 1 }}
+              </span>
               {{ tab.label }}
-            </BaseButton>
+            </button>
           </div>
         </div>
 
         <div
-          :class="[
-            'mt-8',
-            steps.length > 1
-              ? `relative xl:before:content-[''] xl:before:block xl:before:absolute xl:before:left-[12.5%] xl:before:right-[12.5%] xl:before:top-[45px] xl:before:h-[2px] xl:before:bg-accent-primary xl:before:z-0`
-              : '',
-          ]"
+          class="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start"
         >
-          <ol
-            v-if="steps.length"
-            class="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
+          <div class="min-w-0">
+            <div
+              class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border-default pb-3"
+            >
+              <p class="text-sm font-extrabold text-text-primary">
+                {{ activeTabLabel }}
+              </p>
+              <span
+                v-if="mappedSteps.length"
+                class="rounded-full border border-border-default bg-surface px-3 py-1 text-xs font-bold text-text-secondary"
+              >
+                {{ mappedSteps.length }} ნაბიჯი
+              </span>
+            </div>
+
+            <ol
+              v-if="mappedSteps.length"
+              class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"
+            >
+              <HowItWorksStepItem
+                v-for="(step, index) in mappedSteps"
+                :key="`${activeFlow}-step-${step.id}`"
+                :item="step"
+                :index="index"
+              />
+            </ol>
+
+            <div
+              v-else
+              class="rounded-md border border-dashed border-border-default bg-surface p-6 text-center text-sm text-text-muted"
+            >
+              ნაბიჯები დროებით არ არის დამატებული.
+            </div>
+          </div>
+
+          <aside
+            v-if="mappedCards.length"
+            :class="[
+              'grid gap-3',
+              mappedCards.length > 1 ? 'md:grid-cols-3 xl:grid-cols-1' : '',
+            ]"
           >
-            <HowItWorksStepItem
-              v-for="(step, index) in steps"
-              :key="`${activeFlow}-step-${step.id}`"
-              :item="step"
-              :index="index"
+            <HowItWorksCardItem
+              v-for="card in mappedCards"
+              :key="`${activeFlow}-card-${card.id}`"
+              :item="card"
             />
-          </ol>
-
-          <div
-            v-else
-            class="rounded-xl border border-dashed border-border-default bg-surface p-6 text-center text-sm text-text-muted"
-          >
-            ნაბიჯები დროებით არ არის დამატებული.
-          </div>
-        </div>
-
-        <div
-          v-if="cards.length"
-          :class="[
-            'mt-6 grid',
-            activeFlow === 'registered'
-              ? ' gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-              : 'grid-cols-1',
-          ]"
-        >
-          <HowItWorksCardItem
-            v-for="card in cards"
-            :key="`${activeFlow}-card-${card.id}`"
-            :item="card"
-          />
+          </aside>
         </div>
       </div>
     </div>

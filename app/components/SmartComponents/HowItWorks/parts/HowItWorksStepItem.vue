@@ -1,18 +1,50 @@
 <script setup lang="ts">
-import { MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
+import {
+  ArchiveBoxIcon,
+  BoltIcon,
+  CheckCircleIcon,
+  ClipboardDocumentListIcon,
+  HeartIcon,
+  MagnifyingGlassIcon,
+  ShoppingCartIcon,
+  UserCircleIcon,
+} from "@heroicons/vue/24/outline";
+import type { Component } from "vue";
 import { sanitizeText, splitBracketAccentSegments } from "~/composables/helpers";
+
+type HowItWorksStepIcon =
+  | "search"
+  | "cart"
+  | "details"
+  | "confirm"
+  | "account"
+  | "wishlist"
+  | "checkout"
+  | "tracking";
 
 type HowItWorksItem = {
   id: number;
   title: string;
   description: string;
-  iconSvg: string;
+  icon: HowItWorksStepIcon;
+  stepLabel: string;
 };
 
 const props = defineProps<{
   item: HowItWorksItem;
   index: number;
 }>();
+
+const iconMap: Record<HowItWorksStepIcon, Component> = {
+  search: MagnifyingGlassIcon,
+  cart: ShoppingCartIcon,
+  details: ClipboardDocumentListIcon,
+  confirm: CheckCircleIcon,
+  account: UserCircleIcon,
+  wishlist: HeartIcon,
+  checkout: BoltIcon,
+  tracking: ArchiveBoxIcon,
+};
 
 const title = computed(
   () => sanitizeText(props.item.title) || `ნაბიჯი ${props.index + 1}`,
@@ -21,50 +53,37 @@ const descriptionSegments = computed(() =>
   splitBracketAccentSegments(props.item.description),
 );
 const enterDelay = computed(() => `${props.index * 130}ms`);
-const usesHeroSearchIcon = computed(() => {
-  const svg = props.item.iconSvg;
-  return (
-    svg.includes('circle cx="20" cy="20" r="11"') &&
-    svg.includes('line x1="28.5" y1="28.5" x2="38" y2="38"')
-  );
-});
+const iconComponent = computed(() => iconMap[props.item.icon] || CheckCircleIcon);
 </script>
 
 <template>
   <li
-    class="how-it-works-step-enter rounded-xl border border-border-default bg-surface p-4 flex flex-col items-center text-center xl:border-none xl:bg-transparent xl:p-0"
+    class="how-it-works-step-enter group flex h-full min-h-[206px] flex-col rounded-md border border-border-default bg-surface p-4 text-left shadow-[0_18px_48px_-42px_var(--shadow-color)] transition-colors duration-200 hover:border-accent-primary/45 hover:bg-surface-2 md:p-5"
     :style="{ '--how-step-delay': enterDelay }"
   >
-    <div
-      class="gap-3 rounded-full border border-border-default bg-bg-secondary p-5 relative hover:border-accent-primary transition-all duration-300 hover:-translate-y-[5px]"
-    >
-      <span class="h-12 w-12 items-center text-accent-primary">
-        <MagnifyingGlassIcon
-          v-if="usesHeroSearchIcon"
-          class="block h-12 w-12 stroke-[1.9]"
-        />
-        <span
-          v-else-if="item.iconSvg"
-          class="how-it-works-icon-svg block h-12 w-12"
-          v-html="item.iconSvg"
-        />
-        <span v-else class="text-xs font-bold">{{ index + 1 }}</span>
+    <div class="flex items-center justify-between gap-3">
+      <span
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-accent-primary/20 bg-accent-primary/10 text-accent-primary transition-colors duration-200 group-hover:border-accent-primary/45 group-hover:bg-accent-primary/15"
+      >
+        <component :is="iconComponent" class="h-6 w-6" aria-hidden="true" />
       </span>
 
       <span
-        class="inline-flex absolute h-6 min-w-6 items-center justify-center rounded-full bg-accent-primary px-2 text-xs font-bold text-text-invert top-0 right-0"
+        class="shrink-0 rounded-full border border-border-default bg-surface-2 px-2.5 py-1 text-[11px] font-black leading-none text-accent-primary"
       >
-        {{ index + 1 }}
+        {{ item.stepLabel }}
       </span>
     </div>
 
-    <h3 class="text-lg font-bold leading-6 text-text-primary mt-3">
+    <h3
+      class="mt-4 break-words text-[16px] font-extrabold leading-[24px] text-text-primary"
+    >
       {{ title }}
     </h3>
 
     <p
       v-if="descriptionSegments.length"
-      class="mt-3 text-sm leading-6 text-text-secondary"
+      class="mt-3 break-words text-[14px] font-medium leading-[23px] text-text-secondary"
     >
       <template
         v-for="(segment, segmentIndex) in descriptionSegments"
@@ -77,6 +96,12 @@ const usesHeroSearchIcon = computed(() => {
         </span>
       </template>
     </p>
+
+    <span class="mt-auto block pt-5" aria-hidden="true">
+      <span
+        class="block h-1 w-10 rounded-full bg-accent-primary/70 transition-[width,background-color] duration-200 group-hover:w-12 group-hover:bg-accent-primary"
+      />
+    </span>
   </li>
 </template>
 
@@ -100,12 +125,6 @@ const usesHeroSearchIcon = computed(() => {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.how-it-works-icon-svg :deep(svg) {
-  width: 48px !important;
-  height: 48px !important;
-  display: block;
 }
 
 @media (prefers-reduced-motion: reduce) {

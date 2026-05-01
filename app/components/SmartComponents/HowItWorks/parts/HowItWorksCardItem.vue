@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
+import {
+  ClockIcon,
+  HeartIcon,
+  MapPinIcon,
+  UserPlusIcon,
+} from "@heroicons/vue/24/outline";
+import type { Component } from "vue";
 import { sanitizeText, splitBracketAccentSegments } from "~/composables/helpers";
+
+type HowItWorksCardIcon = "guest" | "wishlist" | "address" | "history";
 
 type HowItWorksItem = {
   id: number;
   title: string;
   description: string;
-  iconSvg: string;
+  icon: HowItWorksCardIcon;
 };
 
 type AccentSegment = {
@@ -25,44 +33,37 @@ const isRegisterSegment = (segment: AccentSegment) =>
   segment.accent &&
   normalizeText(segment.text) === normalizeText(REGISTER_CTA_TEXT);
 
+const iconMap: Record<HowItWorksCardIcon, Component> = {
+  guest: UserPlusIcon,
+  wishlist: HeartIcon,
+  address: MapPinIcon,
+  history: ClockIcon,
+};
+
 const title = computed(() => sanitizeText(props.item.title));
 const descriptionSegments = computed(() =>
   splitBracketAccentSegments(props.item.description),
 );
-const usesHeroSearchIcon = computed(() => {
-  const svg = props.item.iconSvg;
-  return (
-    svg.includes('circle cx="20" cy="20" r="11"') &&
-    svg.includes('line x1="28.5" y1="28.5" x2="38" y2="38"')
-  );
-});
+const iconComponent = computed(() => iconMap[props.item.icon] || UserPlusIcon);
 </script>
 
 <template>
   <article
-    class="flex items-start gap-3 rounded-xl border border-border-default bg-surface p-4"
+    class="group flex h-full min-h-[130px] items-start gap-3 rounded-md border border-border-default bg-surface p-4 shadow-[0_18px_48px_-42px_var(--shadow-color)] transition-colors duration-200 hover:border-accent-primary/45 hover:bg-surface-2"
   >
     <span
-      class="flex h-12 w-12 shrink-0 items-center justify-center text-accent-primary"
+      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent-primary/20 bg-accent-primary/10 text-accent-primary transition-colors duration-200 group-hover:border-accent-primary/45 group-hover:bg-accent-primary/15"
     >
-      <MagnifyingGlassIcon
-        v-if="usesHeroSearchIcon"
-        class="block h-12 w-12 stroke-[1.9]"
-      />
-      <span
-        v-else-if="item.iconSvg"
-        class="how-it-works-icon-svg block h-12 w-12"
-        v-html="item.iconSvg"
-      />
+      <component :is="iconComponent" class="h-5 w-5" aria-hidden="true" />
     </span>
 
     <div class="min-w-0">
-      <h4 class="text-base font-bold leading-6 text-text-primary">
+      <h4 class="break-words text-[15px] font-extrabold leading-6 text-text-primary">
         {{ title }}
       </h4>
       <p
         v-if="descriptionSegments.length"
-        class="mt-1 text-sm leading-6 text-text-secondary"
+        class="mt-2 break-words text-[14px] font-medium leading-[23px] text-text-secondary"
       >
         <template
           v-for="(segment, segmentIndex) in descriptionSegments"
@@ -71,7 +72,7 @@ const usesHeroSearchIcon = computed(() => {
           <NuxtLink
             v-if="isRegisterSegment(segment)"
             to="/register"
-            class="font-semibold text-accent-primary"
+            class="font-bold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
           >
             {{ segment.text }}
           </NuxtLink>
@@ -86,11 +87,3 @@ const usesHeroSearchIcon = computed(() => {
     </div>
   </article>
 </template>
-
-<style scoped>
-.how-it-works-icon-svg :deep(svg) {
-  width: 48px !important;
-  height: 48px !important;
-  display: block;
-}
-</style>
