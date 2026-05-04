@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { sanitizeText } from "~/composables/helpers";
-import type {
-  FooterLinkItem,
-  FooterPayload,
-  FooterSocialItem,
-} from "~/types/footer";
+import type { FooterLinkItem, FooterSocialItem } from "~/types/footer";
 
 const footerStore = useFooter();
 const { footer } = storeToRefs(footerStore);
@@ -14,38 +10,8 @@ if (!footer.value) {
   await footerStore.fetchFooter();
 }
 
-const fallbackFooter: FooterPayload = {
-  brand: {
-    name: "FlexDrive",
-    description:
-      "FlexDrive გეხმარება ავტონაწილების მარტივად მოძებნაში, შედარებასა და შეძენაში.",
-  },
-  trust_items: ["მარტივი შეკვეთა", "სწრაფი მიწოდება", "უსაფრთხო გადახდა"],
-  groups: {
-    navigation: [],
-    help: [],
-    legal: [],
-  },
-  contact: {
-    phone: null,
-    email: null,
-    working_hours: null,
-    city: null,
-  },
-  socials: [],
-  copyright_text: "© 2026 FlexDrive. ყველა უფლება დაცულია.",
-};
-
-const footerData = computed(() => footer.value ?? fallbackFooter);
-
 const brandDescription = computed(
-  () =>
-    sanitizeText(footerData.value.brand?.description) ||
-    fallbackFooter.brand.description,
-);
-
-const trustItems = computed(() =>
-  (footerData.value.trust_items || []).map(sanitizeText).filter(Boolean),
+  () => sanitizeText(footer.value?.brand?.description),
 );
 
 const sortLinks = (links: FooterLinkItem[] = []) =>
@@ -54,23 +20,23 @@ const sortLinks = (links: FooterLinkItem[] = []) =>
     .sort((a, b) => a.footer_order - b.footer_order || a.id - b.id);
 
 const navigationLinks = computed(() =>
-  sortLinks(footerData.value.groups?.navigation || []),
+  sortLinks(footer.value?.groups?.navigation || []),
 );
 
 const helpLinks = computed(() =>
-  sortLinks(footerData.value.groups?.help || []),
+  sortLinks(footer.value?.groups?.help || []),
 );
 
 const legalLinks = computed(() =>
-  sortLinks(footerData.value.groups?.legal || []),
+  sortLinks(footer.value?.groups?.legal || []),
 );
 
 const toPhoneHref = (value: string) => `tel:${value.replace(/[^\d+]/g, "")}`;
 
 const contactItems = computed(() => {
-  const phone = sanitizeText(footerData.value.contact?.phone);
-  const workingHours = sanitizeText(footerData.value.contact?.working_hours);
-  const city = sanitizeText(footerData.value.contact?.city);
+  const phone = sanitizeText(footer.value?.contact?.phone);
+  const workingHours = sanitizeText(footer.value?.contact?.working_hours);
+  const city = sanitizeText(footer.value?.contact?.city);
 
   return [
     phone
@@ -112,7 +78,7 @@ const socialIconMap: Record<string, string> = {
 };
 
 const socials = computed(() =>
-  (footerData.value.socials || [])
+  (footer.value?.socials || [])
     .map((item) => ({
       ...item,
       label: sanitizeText(item.label),
@@ -123,10 +89,7 @@ const socials = computed(() =>
 );
 
 const copyrightText = computed(
-  () =>
-    sanitizeText(footerData.value.copyright_text) ||
-    fallbackFooter.copyright_text ||
-    "",
+  () => sanitizeText(footer.value?.copyright_text),
 );
 
 const isExternalUrl = (url: string) =>
@@ -155,28 +118,15 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
             class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-90"
             aria-label="FlexDrive"
           >
-            <FlexdriveLogo variant="on-dark" class="h-[72px] w-24" />
+            <FlexdriveLogoHorizontal variant="on-dark" class="h-12 w-auto" />
           </NuxtLink>
 
           <p
+            v-if="brandDescription"
             class="mt-5 text-[14px] leading-7 text-footer-text-secondary xl:max-w-[280px]"
           >
             {{ brandDescription }}
           </p>
-          <!-- 
-          <ul
-            v-if="trustItems.length"
-            class="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap xl:flex-col"
-          >
-            <li
-              v-for="item in trustItems"
-              :key="item"
-              class="inline-flex w-full sm:w-fit items-center gap-2.5 rounded-full border border-footer-border bg-footer-surface px-3.5 py-2 text-[12px] font-medium leading-none text-footer-text-secondary"
-            >
-              <span class="h-2 w-2 rounded-full bg-accent-primary" />
-              <span>{{ item }}</span>
-            </li>
-          </ul> -->
         </section>
 
         <nav
@@ -285,7 +235,10 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
           <div
             class="grid gap-4 sm:grid-cols-2 sm:gap-x-8 xl:grid-cols-[minmax(0,1fr)_auto_auto] xl:items-center"
           >
-            <p class="text-[12px] leading-5 text-footer-text-muted">
+            <p
+              v-if="copyrightText"
+              class="text-[12px] leading-5 text-footer-text-muted"
+            >
               {{ copyrightText }}
             </p>
 
