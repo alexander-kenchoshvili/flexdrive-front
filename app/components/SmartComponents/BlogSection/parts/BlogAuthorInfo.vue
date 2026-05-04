@@ -24,7 +24,7 @@ const initials = computed(() => {
 <template>
   <div class="flex min-w-0 items-center gap-3">
     <div
-      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#ff6b35_0%,#ff9b66_100%)] text-sm font-bold text-text-invert"
+      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-primary/20 bg-accent-primary/10 text-sm font-bold text-accent-primary"
     >
       {{ initials }}
     </div>

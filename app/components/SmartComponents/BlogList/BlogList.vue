@@ -354,7 +354,7 @@ useHead(() => ({
 
         <div
           v-else
-          class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3"
+          class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
         >
           <BlogCard
             v-for="post in posts"

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Swiper, SwiperSlide } from "swiper/vue";
+import "swiper/css";
 import BaseButton from "~/components/common/BaseButton.vue";
 import { useBlogApi } from "~/composables/blog/useBlogApi";
 import { sanitizeText } from "~/composables/helpers";
@@ -36,25 +38,21 @@ const ctaLabel = computed(
 
 const posts = computed<BlogListItem[]>(() => {
   const items = blogResponse.value?.results;
-  return Array.isArray(items) ? items : [];
+  return Array.isArray(items) ? items.slice(0, 4) : [];
 });
-
-const featuredPost = computed(() => posts.value[0] ?? null);
-const regularPosts = computed(() => posts.value.slice(1, 5));
-const hasPosts = computed(() => Boolean(featuredPost.value || regularPosts.value.length));
 </script>
 
 <template>
   <section class="border-y border-border-default bg-section-soft py-10 md:py-12">
     <div class="container-fluid">
-      <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-        <div class="max-w-2xl">
+      <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div>
           <h2
-            class="title-under-xs upper text-[28px] font-extrabold leading-[1.15] text-text-primary sm:text-[32px] md:text-[36px]"
+            class="title-under-xs upper text-[26px] font-extrabold leading-[1.15] text-text-primary sm:text-[30px] md:text-[34px]"
           >
             {{ sectionTitle }}
           </h2>
-          <p class="subtitle-under-xs mt-3 text-sm leading-6 text-text-secondary md:text-base">
+          <p class="subtitle-under-xs mt-3 max-w-2xl text-sm leading-6 text-text-secondary md:text-base">
             {{ sectionSubtitle }}
           </p>
         </div>
@@ -94,29 +92,28 @@ const hasPosts = computed(() => Boolean(featuredPost.value || regularPosts.value
       </div>
 
       <div
-        v-else-if="!hasPosts"
+        v-else-if="!posts.length"
         class="mt-10 rounded-[20px] border border-dashed border-border-default bg-surface p-6 text-sm text-text-secondary"
       >
         სტატიები ჯერ არ დამატებულა.
       </div>
 
-      <div
+      <Swiper
         v-else
-        class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+        class="mt-8"
+        :slides-per-view="1.12"
+        :space-between="12"
+        :watch-overflow="true"
+        :breakpoints="{
+          640: { slidesPerView: 2, spaceBetween: 14 },
+          900: { slidesPerView: 3, spaceBetween: 16 },
+          1200: { slidesPerView: 4, spaceBetween: 16 },
+        }"
       >
-        <BlogCard
-          v-if="featuredPost"
-          :post="featuredPost"
-          variant="featured"
-          class="lg:col-span-2"
-        />
-
-        <BlogCard
-          v-for="post in regularPosts"
-          :key="post.id"
-          :post="post"
-        />
-      </div>
+        <SwiperSlide v-for="post in posts" :key="post.id" class="h-auto">
+          <BlogCard :post="post" />
+        </SwiperSlide>
+      </Swiper>
     </div>
   </section>
 </template>
