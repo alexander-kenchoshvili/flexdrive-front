@@ -14,6 +14,13 @@ export interface CatalogListParams {
   page_size?: number;
   q?: string;
   category?: string | number;
+  make?: string | number;
+  model?: string | number;
+  year?: number;
+  engine?: string | number;
+  brand?: string | number;
+  placement?: string;
+  side?: string;
   min_price?: number;
   max_price?: number;
   is_new?: boolean;
@@ -36,19 +43,44 @@ export interface CatalogCategoryRef {
   slug: string;
 }
 
+export interface CatalogBrandRef {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export type CatalogCompatibilityMatchType =
+  | "universal"
+  | "engine"
+  | "vehicle_year"
+  | "none";
+
+export interface CatalogProductCompatibility {
+  matched: boolean;
+  match_type: CatalogCompatibilityMatchType;
+  notes: string;
+}
+
 export interface CatalogProductListItem {
   id: number;
   name: string;
   slug: string;
+  sku: string;
+  manufacturer_part_number: string;
   short_description: string;
   price: string;
   old_price: string | null;
   on_sale: boolean;
   is_new: boolean;
   is_featured: boolean;
+  is_universal_fitment: boolean;
   in_stock: boolean;
+  brand: CatalogBrandRef | null;
   category: CatalogCategoryRef;
+  placement: string;
+  side: string;
   primary_image: CatalogImageAsset;
+  compatibility: CatalogProductCompatibility | null;
   seo?: SeoPayload | null;
 }
 
@@ -59,8 +91,24 @@ export interface CatalogFacetCategory {
   count: number;
 }
 
+export interface CatalogFacetBrand {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+export interface CatalogFacetOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
 export interface CatalogFacets {
   categories: CatalogFacetCategory[];
+  brands?: CatalogFacetBrand[];
+  placements?: CatalogFacetOption[];
+  sides?: CatalogFacetOption[];
   price: {
     min: string | null;
     max: string | null;
@@ -87,6 +135,39 @@ export interface CatalogCategoryItem {
   product_count: number;
   image?: CatalogImageAsset | null;
   seo?: SeoPayload | null;
+}
+
+export interface CatalogVehicleMake {
+  id: number;
+  name: string;
+  slug: string;
+  sort_order: number;
+}
+
+export interface CatalogVehicleModel {
+  id: number;
+  name: string;
+  slug: string;
+  sort_order: number;
+  make: CatalogVehicleMake;
+}
+
+export interface CatalogVehicleEngine {
+  id: number;
+  name: string;
+  slug: string;
+  sort_order: number;
+}
+
+export interface CatalogVehicleYear {
+  year: number;
+}
+
+export interface CatalogVehicleSelection {
+  make: string;
+  model: string;
+  year: string;
+  engine: string;
 }
 
 export interface CatalogProductSpec {
@@ -127,22 +208,32 @@ export interface CatalogProductCardData {
   id: number;
   slug: string;
   name: string;
+  sku?: string;
+  manufacturerPartNumber?: string;
   subtitle?: string;
   category?: string;
+  brand?: string;
+  placement?: string;
+  side?: string;
   price: number;
   oldPrice?: number | null;
   image?: CatalogImageAsset | null;
   isNew?: boolean;
   inStock?: boolean;
   onSale?: boolean;
+  isUniversalFitment?: boolean;
+  compatibility?: CatalogProductCompatibility | null;
 }
 
 export interface CatalogProductSuggestion {
   id: number;
   slug: string;
   name: string;
+  sku: string;
+  manufacturer_part_number: string;
   price: string;
   in_stock: boolean;
+  brand: CatalogBrandRef | null;
   category: CatalogCategoryRef;
   primary_image: CatalogImageAsset;
 }

@@ -1,6 +1,10 @@
 import type { RouterConfig } from "@nuxt/schema";
 
 const ROUTE_SCROLL_DELAY_MS = 320;
+const CATALOG_ROOT_PATH = "/catalog";
+
+const isCatalogListingPath = (path: string) =>
+  path === CATALOG_ROOT_PATH || /^\/catalog\/category\/[^/]+$/.test(path);
 
 const delayScroll = <T>(position: T) =>
   new Promise<T>((resolve) => {
@@ -22,6 +26,10 @@ export default {
     }
 
     if (to.path === from.path) {
+      return false;
+    }
+
+    if (isCatalogListingPath(to.path) && isCatalogListingPath(from.path)) {
       return false;
     }
 

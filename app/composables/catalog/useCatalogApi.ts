@@ -4,6 +4,10 @@ import type {
   CatalogListResponse,
   CatalogProductDetail,
   CatalogProductSuggestion,
+  CatalogVehicleEngine,
+  CatalogVehicleMake,
+  CatalogVehicleModel,
+  CatalogVehicleYear,
 } from "~/types/catalog";
 import { apiFetchRaw } from "~/composables/apiFetch";
 
@@ -17,6 +21,7 @@ const BOOL_PARAM_KEYS: Array<keyof CatalogListParams> = [
 const NUMBER_PARAM_KEYS: Array<keyof CatalogListParams> = [
   "page",
   "page_size",
+  "year",
   "min_price",
   "max_price",
 ];
@@ -37,6 +42,19 @@ const buildListQuery = (params: CatalogListParams = {}) => {
     if (NUMBER_PARAM_KEYS.includes(key) && typeof rawValue !== "number") return;
 
     query.set(rawKey, toQueryValue(rawValue));
+  });
+
+  return query.toString();
+};
+
+const buildQuery = (
+  params: Record<string, string | number | null | undefined> = {},
+) => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    query.set(key, String(value));
   });
 
   return query.toString();
@@ -63,6 +81,38 @@ export const useCatalogApi = () => {
     return apiFetchRaw<CatalogCategoryItem[]>("/catalog/categories/");
   };
 
+  const getVehicleMakes = async () => {
+    return apiFetchRaw<CatalogVehicleMake[]>("/catalog/vehicles/makes/");
+  };
+
+  const getVehicleModels = async (make: string | number) => {
+    const query = buildQuery({ make });
+    return apiFetchRaw<CatalogVehicleModel[]>(
+      `/catalog/vehicles/models/?${query}`,
+    );
+  };
+
+  const getVehicleYears = async (
+    make: string | number,
+    model?: string | number,
+  ) => {
+    const query = buildQuery({ make, model });
+    return apiFetchRaw<CatalogVehicleYear[]>(
+      `/catalog/vehicles/years/?${query}`,
+    );
+  };
+
+  const getVehicleEngines = async (
+    make: string | number,
+    model: string | number,
+    year: number,
+  ) => {
+    const query = buildQuery({ make, model, year });
+    return apiFetchRaw<CatalogVehicleEngine[]>(
+      `/catalog/vehicles/engines/?${query}`,
+    );
+  };
+
   const getCatalogProductSuggestions = async (query: string) => {
     const normalizedQuery = query.trim();
     const endpoint = normalizedQuery
@@ -81,6 +131,10 @@ export const useCatalogApi = () => {
     getCatalogProductsRaw,
     getCatalogCategories,
     getCatalogCategoriesRaw,
+    getVehicleMakes,
+    getVehicleModels,
+    getVehicleYears,
+    getVehicleEngines,
     getCatalogProductSuggestions,
     getCatalogProduct,
   };

@@ -1,0 +1,332 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "FlexDrive" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img [ref=e9]
+      - generic [ref=e29]:
+        - img [ref=e32]
+        - searchbox "მოძებნე ნაწილი, OEM, SKU ან VIN" [ref=e35]
+        - button "ძებნა" [ref=e36] [cursor=pointer]
+      - generic [ref=e37]:
+        - button "შესვლა ან რეგისტრაცია" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]
+        - link "Wishlist" [ref=e41] [cursor=pointer]:
+          - /url: /wishlist
+          - img [ref=e43]
+        - link "კალათა" [ref=e45] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e47]
+        - button "მენიუ" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+  - main [ref=e54]:
+    - generic [ref=e57]:
+      - navigation "Breadcrumb" [ref=e58]:
+        - link "მთავარი" [ref=e59] [cursor=pointer]:
+          - /url: /
+        - img [ref=e60]
+        - generic [ref=e62]: კატალოგი
+      - generic [ref=e63]:
+        - heading "კატალოგი" [level=1] [ref=e64]
+        - paragraph [ref=e65]: აირჩიე სასურველი პროდუქტი კატეგორიისა და ფასის მიხედვით.
+      - generic [ref=e67]:
+        - generic [ref=e70]:
+          - button "ფილტრი და დალაგება" [ref=e71] [cursor=pointer]:
+            - img [ref=e72]
+            - generic [ref=e74]: ფილტრი და დალაგება
+          - paragraph [ref=e75]: ნაპოვნია 360 პროდუქტი
+        - generic [ref=e78]:
+          - article [ref=e79]:
+            - button "სასურველებში შენახვა" [ref=e81] [cursor=pointer]:
+              - img [ref=e82]
+            - link "სავარძლის საფარი Nissan Tiida ფასდაკლება" [ref=e84] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0300-interior-parts
+              - img "სავარძლის საფარი Nissan Tiida" [ref=e88]
+              - generic [ref=e89]:
+                - img [ref=e90]
+                - text: ფასდაკლება
+            - generic [ref=e92]:
+              - generic [ref=e93]:
+                - paragraph [ref=e94]: ინტერიერი
+                - generic [ref=e95]:
+                  - img [ref=e96]
+                  - text: მარაგშია
+              - heading "სავარძლის საფარი Nissan Tiida" [level=3] [ref=e98]:
+                - link "სავარძლის საფარი Nissan Tiida" [ref=e99] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0300-interior-parts
+              - paragraph [ref=e100]: "FlexDrive Select ანალოგი. თავსებადობა: Nissan Tiida 2007-2018, ძრავი: 1.5 Petrol."
+              - paragraph [ref=e102]: "ბრენდი: FlexDrive Select · კოდი: FLEXDRIVESELECT-00360"
+              - generic [ref=e103]:
+                - generic [ref=e104]: 379.32 GEL
+                - generic [ref=e105]: 494.77 GEL
+              - link "დეტალების ნახვა" [ref=e106] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0300-interior-parts
+                - text: დეტალების ნახვა
+                - img [ref=e107]
+          - article [ref=e109]:
+            - button "სასურველებში შენახვა" [ref=e111] [cursor=pointer]:
+              - img [ref=e112]
+            - link "სამუხრუჭე სითხე Honda CR-V ახალი" [ref=e114] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0299-oils-fluids
+              - img "სამუხრუჭე სითხე Honda CR-V" [ref=e118]
+              - generic [ref=e119]:
+                - img [ref=e120]
+                - text: ახალი
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - paragraph [ref=e124]: ზეთები და სითხეები
+                - generic [ref=e125]:
+                  - img [ref=e126]
+                  - text: მარაგშია
+              - heading "სამუხრუჭე სითხე Honda CR-V" [level=3] [ref=e128]:
+                - link "სამუხრუჭე სითხე Honda CR-V" [ref=e129] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0299-oils-fluids
+              - paragraph [ref=e130]: "PartsPro ანალოგი. თავსებადობა: Honda CR-V 2012-2024."
+              - paragraph [ref=e132]: "ბრენდი: PartsPro · კოდი: PARTSPRO-00359"
+              - generic [ref=e134]: 709.98 GEL
+              - link "დეტალების ნახვა" [ref=e135] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0299-oils-fluids
+                - text: დეტალების ნახვა
+                - img [ref=e136]
+          - article [ref=e138]:
+            - button "სასურველებში შენახვა" [ref=e140] [cursor=pointer]:
+              - img [ref=e141]
+            - link "კაპოტის საკეტი Honda Civic" [ref=e143] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0298-body-parts
+              - img "კაპოტის საკეტი Honda Civic" [ref=e147]
+            - generic [ref=e148]:
+              - generic [ref=e149]:
+                - paragraph [ref=e150]: კუზაოს ნაწილები
+                - generic [ref=e151]:
+                  - img [ref=e152]
+                  - text: მარაგშია
+              - heading "კაპოტის საკეტი Honda Civic" [level=3] [ref=e154]:
+                - link "კაპოტის საკეტი Honda Civic" [ref=e155] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0298-body-parts
+              - paragraph [ref=e156]: "DriveTech ანალოგი. თავსებადობა: Honda Civic 2010-2024, ძრავი: 1.8 Petrol."
+              - paragraph [ref=e158]: "ბრენდი: DriveTech · კოდი: DRIVETECH-00358"
+              - generic [ref=e160]: 727.71 GEL
+              - link "დეტალების ნახვა" [ref=e161] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0298-body-parts
+                - text: დეტალების ნახვა
+                - img [ref=e162]
+          - article [ref=e164]:
+            - button "სასურველებში შენახვა" [ref=e166] [cursor=pointer]:
+              - img [ref=e167]
+            - link "წინა ფარი Honda Fit ფასდაკლება" [ref=e169] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0297-lighting
+              - img "წინა ფარი Honda Fit" [ref=e173]
+              - generic [ref=e174]:
+                - img [ref=e175]
+                - text: ფასდაკლება
+            - generic [ref=e177]:
+              - generic [ref=e178]:
+                - paragraph [ref=e179]: განათება
+                - generic [ref=e180]:
+                  - img [ref=e181]
+                  - text: მარაგშია
+              - heading "წინა ფარი Honda Fit" [level=3] [ref=e183]:
+                - link "წინა ფარი Honda Fit" [ref=e184] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0297-lighting
+              - paragraph [ref=e185]: "RoadMax Taiwan ანალოგი. თავსებადობა: Honda Fit 2008-2020."
+              - paragraph [ref=e187]: "ბრენდი: RoadMax Taiwan · კოდი: ROADMAXTAIWAN-00357"
+              - generic [ref=e188]:
+                - generic [ref=e189]: 180.59 GEL
+                - generic [ref=e190]: 305.83 GEL
+              - link "დეტალების ნახვა" [ref=e191] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0297-lighting
+                - text: დეტალების ნახვა
+                - img [ref=e192]
+          - article [ref=e194]:
+            - button "სასურველებში შენახვა" [ref=e196] [cursor=pointer]:
+              - img [ref=e197]
+            - link "ანთების კოჭა Toyota RAV4" [ref=e199] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0296-electrical
+              - img "ანთების კოჭა Toyota RAV4" [ref=e203]
+            - generic [ref=e204]:
+              - generic [ref=e205]:
+                - paragraph [ref=e206]: ელექტროობა
+                - generic [ref=e207]:
+                  - img [ref=e208]
+                  - text: მარაგშია
+              - heading "ანთების კოჭა Toyota RAV4" [level=3] [ref=e210]:
+                - link "ანთების კოჭა Toyota RAV4" [ref=e211] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0296-electrical
+              - paragraph [ref=e212]: "CTR ანალოგი. თავსებადობა: Toyota RAV4 2013-2024, ძრავი: 2.0 Petrol."
+              - paragraph [ref=e214]: "ბრენდი: CTR · კოდი: CTR-00356"
+              - generic [ref=e216]: 878.26 GEL
+              - link "დეტალების ნახვა" [ref=e217] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0296-electrical
+                - text: დეტალების ნახვა
+                - img [ref=e218]
+          - article [ref=e220]:
+            - button "სასურველებში შენახვა" [ref=e222] [cursor=pointer]:
+              - img [ref=e223]
+            - link "გაგრილების მილი Toyota Prius ფასდაკლება" [ref=e225] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0295-cooling-system
+              - img "გაგრილების მილი Toyota Prius" [ref=e229]
+              - generic [ref=e230]:
+                - img [ref=e231]
+                - text: ფასდაკლება
+            - generic [ref=e233]:
+              - generic [ref=e234]:
+                - paragraph [ref=e235]: გაგრილების სისტემა
+                - generic [ref=e236]:
+                  - img [ref=e237]
+                  - text: მარაგშია
+              - heading "გაგრილების მილი Toyota Prius" [level=3] [ref=e239]:
+                - link "გაგრილების მილი Toyota Prius" [ref=e240] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0295-cooling-system
+              - paragraph [ref=e241]: "GMB ანალოგი. თავსებადობა: Toyota Prius 2010-2022."
+              - paragraph [ref=e243]: "ბრენდი: GMB · კოდი: GMB-00355"
+              - generic [ref=e244]:
+                - generic [ref=e245]: 76.23 GEL
+                - generic [ref=e246]: 265.52 GEL
+              - link "დეტალების ნახვა" [ref=e247] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0295-cooling-system
+                - text: დეტალების ნახვა
+                - img [ref=e248]
+          - article [ref=e250]:
+            - button "სასურველებში შენახვა" [ref=e252] [cursor=pointer]:
+              - img [ref=e253]
+            - link "გენერატორის ღვედი Toyota Camry" [ref=e255] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0294-engine-parts
+              - img "გენერატორის ღვედი Toyota Camry" [ref=e259]
+            - generic [ref=e260]:
+              - generic [ref=e261]:
+                - paragraph [ref=e262]: ძრავის ნაწილები
+                - generic [ref=e263]:
+                  - img [ref=e264]
+                  - text: მარაგშია
+              - heading "გენერატორის ღვედი Toyota Camry" [level=3] [ref=e266]:
+                - link "გენერატორის ღვედი Toyota Camry" [ref=e267] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0294-engine-parts
+              - paragraph [ref=e268]: "Sakura Filter ანალოგი. თავსებადობა: Toyota Camry 2012-2024, ძრავი: 2.5 Hybrid."
+              - paragraph [ref=e270]: "ბრენდი: Sakura Filter · კოდი: SAKURAFILTER-00354"
+              - generic [ref=e272]: 127.97 GEL
+              - link "დეტალების ნახვა" [ref=e273] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0294-engine-parts
+                - text: დეტალების ნახვა
+                - img [ref=e274]
+          - article [ref=e276]:
+            - button "სასურველებში შენახვა" [ref=e278] [cursor=pointer]:
+              - img [ref=e279]
+            - link "ამორტიზატორი Toyota Corolla" [ref=e281] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0293-suspension
+              - img "ამორტიზატორი Toyota Corolla" [ref=e285]
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - paragraph [ref=e288]: სავალი ნაწილი
+                - generic [ref=e289]:
+                  - img [ref=e290]
+                  - text: მარაგშია
+              - heading "ამორტიზატორი Toyota Corolla" [level=3] [ref=e292]:
+                - link "ამორტიზატორი Toyota Corolla" [ref=e293] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0293-suspension
+              - paragraph [ref=e294]: "Eagle Eyes ანალოგი. თავსებადობა: Toyota Corolla 2008-2024."
+              - paragraph [ref=e296]: "ბრენდი: Eagle Eyes · კოდი: EAGLEEYES-00353"
+              - generic [ref=e298]: 243.88 GEL
+              - link "დეტალების ნახვა" [ref=e299] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0293-suspension
+                - text: დეტალების ნახვა
+                - img [ref=e300]
+          - article [ref=e302]:
+            - button "სასურველებში შენახვა" [ref=e304] [cursor=pointer]:
+              - img [ref=e305]
+            - link "სამუხრუჭე ცილინდრი Volkswagen Jetta" [ref=e307] [cursor=pointer]:
+              - /url: /catalog/fd-demo-0292-brake-system
+              - img "სამუხრუჭე ცილინდრი Volkswagen Jetta" [ref=e311]
+            - generic [ref=e312]:
+              - generic [ref=e313]:
+                - paragraph [ref=e314]: სამუხრუჭე სისტემა
+                - generic [ref=e315]:
+                  - img [ref=e316]
+                  - text: მარაგშია
+              - heading "სამუხრუჭე ცილინდრი Volkswagen Jetta" [level=3] [ref=e318]:
+                - link "სამუხრუჭე ცილინდრი Volkswagen Jetta" [ref=e319] [cursor=pointer]:
+                  - /url: /catalog/fd-demo-0292-brake-system
+              - paragraph [ref=e320]: "DEPO ანალოგი. თავსებადობა: Volkswagen Jetta 2010-2022, ძრავი: 1.4 TSI."
+              - paragraph [ref=e322]: "ბრენდი: DEPO · კოდი: DEPO-00352"
+              - generic [ref=e324]: 854.62 GEL
+              - link "დეტალების ნახვა" [ref=e325] [cursor=pointer]:
+                - /url: /catalog/fd-demo-0292-brake-system
+                - text: დეტალების ნახვა
+                - img [ref=e326]
+  - contentinfo [ref=e328]:
+    - generic [ref=e329]:
+      - generic [ref=e330]:
+        - region "FlexDrive Footer" [ref=e331]:
+          - heading "FlexDrive Footer" [level=2] [ref=e332]
+          - link "FlexDrive" [ref=e333] [cursor=pointer]:
+            - /url: /
+            - img "FlexDrive" [ref=e334]
+          - paragraph [ref=e350]: FlexDrive გეხმარება ავტონაწილების მარტივად მოძებნასა და შეძენაში.
+        - navigation "ნავიგაცია" [ref=e351]:
+          - heading "ნავიგაცია" [level=3] [ref=e352]
+          - list [ref=e353]:
+            - listitem [ref=e354]:
+              - link "მთავარი" [ref=e355] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e356]:
+              - link "კატალოგი" [ref=e357] [cursor=pointer]:
+                - /url: /catalog/
+            - listitem [ref=e358]:
+              - link "ბლოგი" [ref=e359] [cursor=pointer]:
+                - /url: /blogs/
+            - listitem [ref=e360]:
+              - link "კონტაქტი" [ref=e361] [cursor=pointer]:
+                - /url: /contact/
+        - navigation "მომსახურება" [ref=e362]:
+          - heading "მომსახურება" [level=3] [ref=e363]
+          - list [ref=e364]:
+            - listitem [ref=e365]:
+              - link "მიწოდება" [ref=e366] [cursor=pointer]:
+                - /url: /delivery/
+            - listitem [ref=e367]:
+              - link "გადახდის მეთოდები" [ref=e368] [cursor=pointer]:
+                - /url: /payment-methods/
+            - listitem [ref=e369]:
+              - link "დაბრუნება" [ref=e370] [cursor=pointer]:
+                - /url: /returns/
+        - region "კონტაქტი" [ref=e371]:
+          - heading "კონტაქტი" [level=3] [ref=e372]
+          - list [ref=e373]:
+            - listitem [ref=e374]:
+              - img [ref=e377]
+              - link "+995 5XX XX XX XX" [ref=e379] [cursor=pointer]:
+                - /url: tel:+9955
+            - listitem [ref=e380]:
+              - img [ref=e383]
+              - generic [ref=e386]: ორშ-პარ, 10:00 - 19:00
+            - listitem [ref=e387]:
+              - img [ref=e390]
+              - generic [ref=e393]: თბილისი, საქართველო
+      - generic [ref=e395]:
+        - generic [ref=e396]:
+          - paragraph [ref=e397]: © 2026 FlexDrive. ყველა უფლება დაცულია.
+          - navigation "Footer legal links" [ref=e398]:
+            - link "კონფიდენციალურობა" [ref=e399] [cursor=pointer]:
+              - /url: /privacy-policy/
+            - link "წესები და პირობები" [ref=e400] [cursor=pointer]:
+              - /url: /terms/
+          - generic [ref=e401]:
+            - link "support@flexdrive.ge" [ref=e402] [cursor=pointer]:
+              - /url: mailto:support@flexdrive.ge
+              - img [ref=e404]
+              - generic [ref=e407]: support@flexdrive.ge
+            - link "Instagram" [ref=e408] [cursor=pointer]:
+              - /url: https://www.instagram.com/automateshop.ge/
+              - img [ref=e410]
+              - generic [ref=e414]: Instagram
+            - link "Facebook" [ref=e415] [cursor=pointer]:
+              - /url: https://www.facebook.com/AutoMateShop
+              - img [ref=e417]
+              - generic [ref=e419]: Facebook
+        - paragraph [ref=e421]:
+          - text: This site is protected by reCAPTCHA and the Google
+          - link "Privacy Policy" [ref=e422] [cursor=pointer]:
+            - /url: https://policies.google.com/privacy
+          - text: and
+          - link "Terms of Service" [ref=e423] [cursor=pointer]:
+            - /url: https://policies.google.com/terms
+          - text: apply.

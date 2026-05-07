@@ -14,11 +14,18 @@ import { buildBreadcrumbStructuredData } from "~/utils/structuredData";
 import type { SmartComponentData } from "~/types/page";
 import type {
   CatalogCategoryItem,
+  CatalogFacetBrand,
+  CatalogFacetOption,
   CatalogFilterCategory,
   CatalogListParams,
   CatalogListResponse,
   CatalogProductCardData,
   CatalogSort,
+  CatalogVehicleEngine,
+  CatalogVehicleMake,
+  CatalogVehicleModel,
+  CatalogVehicleSelection,
+  CatalogVehicleYear,
 } from "~/types/catalog";
 import CatalogFilters from "./parts/CatalogFilters.vue";
 import CatalogMobileFilterSheet from "./parts/CatalogMobileFilterSheet.vue";
@@ -30,6 +37,20 @@ type CatalogSortOption = {
   label: string;
   value: CatalogSort;
   disabled?: boolean;
+};
+type CatalogActiveFilterKey =
+  | "vehicle"
+  | "category"
+  | "brand"
+  | "placement"
+  | "side"
+  | "price"
+  | "in_stock"
+  | "on_sale";
+type CatalogActiveFilter = {
+  key: CatalogActiveFilterKey;
+  label: string;
+  value?: string;
 };
 
 const props = defineProps<{
@@ -46,6 +67,10 @@ const {
   getCatalogProductsRaw,
   getCatalogCategories,
   getCatalogCategoriesRaw,
+  getVehicleMakes,
+  getVehicleModels,
+  getVehicleYears,
+  getVehicleEngines,
 } = useCatalogApi();
 
 const PAGE_SIZE = 9;
@@ -64,31 +89,92 @@ const sortOptions: CatalogSortOption[] = [
   { value: "price_asc", label: "ფასი: ზრდადობით" },
   { value: "price_desc", label: "ფასი: კლებადობით" },
 ];
+const PLACEMENT_LABELS: Record<string, string> = {
+  front: "წინა",
+  rear: "უკანა",
+  upper: "ზედა",
+  lower: "ქვედა",
+  inner: "შიდა",
+  outer: "გარე",
+};
+const SIDE_LABELS: Record<string, string> = {
+  left: "მარცხენა",
+  right: "მარჯვენა",
+  both: "ორივე",
+  center: "ცენტრი",
+};
 
 const productsResponse = ref<CatalogListResponse | null>(null);
 const categoriesResponse = ref<CatalogCategoryItem[]>([]);
+const vehicleMakesResponse = ref<CatalogVehicleMake[]>([]);
+const vehicleModelsResponse = ref<CatalogVehicleModel[]>([]);
+const vehicleYearsResponse = ref<CatalogVehicleYear[]>([]);
+const vehicleEnginesResponse = ref<CatalogVehicleEngine[]>([]);
 
 const productsPending = ref(false);
 const categoriesPending = ref(false);
+const vehicleOptionsPending = ref(false);
 
 const productsError = ref<unknown>(null);
 const categoriesError = ref<unknown>(null);
+const vehicleOptionsError = ref<unknown>(null);
 const latestProductsRequestId = ref(0);
 const latestCategoriesRequestId = ref(0);
+const latestVehicleOptionsRequestId = ref(0);
 const hasInitialized = ref(false);
 
 const selectedSort = ref<CatalogSort>("recommended");
 const searchQuery = ref("");
 const selectedCategoryId = ref<number | null>(null);
 const selectedCategorySlug = ref<string | null>(null);
+const selectedBrand = ref("");
+const selectedPlacement = ref("");
+const selectedSide = ref("");
+const selectedInStock = ref(false);
+const selectedOnSale = ref(false);
+const selectedVehicleMake = ref("");
+const selectedVehicleModel = ref("");
+const selectedVehicleYear = ref("");
+const selectedVehicleEngine = ref("");
+const draftVehicleMake = ref("");
+const draftVehicleModel = ref("");
+const draftVehicleYear = ref("");
+const draftVehicleEngine = ref("");
 const minPrice = ref("");
 const maxPrice = ref("");
 const currentPage = ref(1);
 const isMobilePagination = useMediaQuery("(max-width: 640px)");
 const isDesktopCatalogLayout = useMediaQuery("(min-width: 1024px)");
 const isMobileFilterSheetOpen = ref(false);
+const hasHydrated = ref(false);
+const resultsStartRef = ref<HTMLElement | null>(null);
 const normalizedSearchQuery = computed(() => searchQuery.value.trim());
 const hasActiveSearch = computed(() => Boolean(normalizedSearchQuery.value));
+const draftVehicle = computed<CatalogVehicleSelection>(() => ({
+  make: draftVehicleMake.value,
+  model: draftVehicleModel.value,
+  year: draftVehicleYear.value,
+  engine: draftVehicleEngine.value,
+}));
+const selectedVehicleYearNumber = computed(() => {
+  if (!selectedVehicleYear.value) return null;
+  const parsed = Number(selectedVehicleYear.value);
+  return Number.isInteger(parsed) ? parsed : null;
+});
+const hasActiveVehicleFilter = computed(() =>
+  Boolean(selectedVehicleMake.value),
+);
+const hasInvalidDraftVehicle = computed(
+  () =>
+    Boolean(draftVehicleModel.value && !draftVehicleMake.value) ||
+    Boolean(draftVehicleYear.value && !draftVehicleMake.value) ||
+    Boolean(
+      draftVehicleEngine.value &&
+        (!draftVehicleMake.value ||
+          !draftVehicleModel.value ||
+          !draftVehicleYear.value),
+    ),
+);
 
 const normalizeUrl = (value: string) => value.replace(/\/+$/, "");
 const toAbsoluteUrl = (siteUrl: string, pathOrUrl: string) => {
@@ -128,6 +214,91 @@ const selectedCategoryLabel = computed(() => {
     )?.name || ""
   );
 });
+const resolveFacetLabel = (
+  options: CatalogFacetOption[],
+  value: string,
+  fallbackLabels: Record<string, string> = {},
+) =>
+  options.find((option) => option.value === value)?.label ||
+  fallbackLabels[value] ||
+  value;
+const toPlacementLabel = (value: string, fallback = "") =>
+  PLACEMENT_LABELS[value] || fallback || value;
+const toSideLabel = (value: string, fallback = "") =>
+  SIDE_LABELS[value] || fallback || value;
+const selectedBrandLabel = computed(() => {
+  if (!selectedBrand.value) return "";
+  return (
+    productsResponse.value?.facets?.brands?.find(
+      (brand) => brand.slug === selectedBrand.value,
+    )?.name || selectedBrand.value
+  );
+});
+const selectedPlacementLabel = computed(() => {
+  if (!selectedPlacement.value) return "";
+  return resolveFacetLabel(
+    mappedPlacementOptions.value,
+    selectedPlacement.value,
+    PLACEMENT_LABELS,
+  );
+});
+const selectedSideLabel = computed(() => {
+  if (!selectedSide.value) return "";
+  return resolveFacetLabel(mappedSideOptions.value, selectedSide.value, SIDE_LABELS);
+});
+const vehicleMakeLabel = computed(() => {
+  if (!selectedVehicleMake.value) return "";
+  return (
+    vehicleMakesResponse.value.find(
+      (make) => make.slug === selectedVehicleMake.value,
+    )?.name || selectedVehicleMake.value
+  );
+});
+const vehicleModelLabel = computed(() => {
+  if (!selectedVehicleModel.value) return "";
+  return (
+    vehicleModelsResponse.value.find(
+      (model) => model.slug === selectedVehicleModel.value,
+    )?.name || selectedVehicleModel.value
+  );
+});
+const vehicleEngineLabel = computed(() => {
+  if (!selectedVehicleEngine.value) return "";
+
+  if (!hasHydrated.value) {
+    return selectedVehicleEngine.value;
+  }
+
+  return (
+    vehicleEnginesResponse.value.find(
+      (engine) => engine.slug === selectedVehicleEngine.value,
+    )?.name || selectedVehicleEngine.value
+  );
+});
+const selectedVehicleLabel = computed(() => {
+  if (!hasActiveVehicleFilter.value) return "";
+
+  return [
+    vehicleMakeLabel.value,
+    vehicleModelLabel.value,
+    selectedVehicleYear.value,
+    vehicleEngineLabel.value,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+});
+const selectedVehicleCardFilter = computed(() => ({
+  make: vehicleMakeLabel.value,
+  model: vehicleModelLabel.value,
+  year: selectedVehicleYear.value,
+  engine: vehicleEngineLabel.value,
+}));
+const draftVehicleEngineDisplayValue = computed(() =>
+  !hasHydrated.value && draftVehicleEngine.value ? draftVehicleEngine.value : "",
+);
+const showVehicleOptionsError = computed(
+  () => hasHydrated.value && Boolean(vehicleOptionsError.value),
+);
 
 const selectedCategory = computed(
   () =>
@@ -224,6 +395,12 @@ const paginationShowEndingButtons = computed(() => !isMobilePagination.value);
 const hasActiveFilterSelection = computed(
   () =>
     selectedCategorySlug.value !== null ||
+    hasActiveVehicleFilter.value ||
+    Boolean(selectedBrand.value) ||
+    Boolean(selectedPlacement.value) ||
+    Boolean(selectedSide.value) ||
+    selectedInStock.value ||
+    selectedOnSale.value ||
     Boolean(minPrice.value.trim()) ||
     Boolean(maxPrice.value.trim()),
 );
@@ -259,14 +436,21 @@ const mappedProducts = computed<CatalogProductCardData[]>(() => {
     id: item.id,
     slug: item.slug,
     name: item.name,
+    sku: item.sku,
+    manufacturerPartNumber: item.manufacturer_part_number,
     subtitle: item.short_description,
     category: item.category?.name,
+    brand: item.brand?.name,
+    placement: item.placement ? toPlacementLabel(item.placement) : "",
+    side: item.side ? toSideLabel(item.side) : "",
     price: Number(item.price),
     oldPrice: item.old_price ? Number(item.old_price) : null,
     image: item.primary_image,
     isNew: item.is_new,
     inStock: item.in_stock,
     onSale: item.on_sale,
+    isUniversalFitment: item.is_universal_fitment,
+    compatibility: item.compatibility,
   }));
 });
 
@@ -288,6 +472,84 @@ const mappedCategories = computed<CatalogFilterCategory[]>(() => {
     count: category.count,
   }));
 });
+const mappedBrands = computed<CatalogFacetBrand[]>(
+  () => productsResponse.value?.facets?.brands ?? [],
+);
+const mappedPlacementOptions = computed<CatalogFacetOption[]>(() =>
+  (productsResponse.value?.facets?.placements ?? []).map((option) => ({
+    ...option,
+    label: toPlacementLabel(option.value, option.label),
+  })),
+);
+const mappedSideOptions = computed<CatalogFacetOption[]>(() =>
+  (productsResponse.value?.facets?.sides ?? []).map((option) => ({
+    ...option,
+    label: toSideLabel(option.value, option.label),
+  })),
+);
+const activeFilterChips = computed<CatalogActiveFilter[]>(() => {
+  const chips: CatalogActiveFilter[] = [];
+
+  if (selectedVehicleLabel.value) {
+    chips.push({
+      key: "vehicle",
+      label: "მანქანა",
+      value: selectedVehicleLabel.value,
+    });
+  }
+
+  if (selectedCategoryLabel.value) {
+    chips.push({
+      key: "category",
+      label: "კატეგორია",
+      value: selectedCategoryLabel.value,
+    });
+  }
+
+  if (selectedBrandLabel.value) {
+    chips.push({
+      key: "brand",
+      label: "ბრენდი",
+      value: selectedBrandLabel.value,
+    });
+  }
+
+  if (selectedPlacementLabel.value) {
+    chips.push({
+      key: "placement",
+      label: "მდებარეობა",
+      value: selectedPlacementLabel.value,
+    });
+  }
+
+  if (selectedSideLabel.value) {
+    chips.push({
+      key: "side",
+      label: "მხარე",
+      value: selectedSideLabel.value,
+    });
+  }
+
+  if (minPrice.value.trim() || maxPrice.value.trim()) {
+    chips.push({
+      key: "price",
+      label: "ფასი",
+      value: `${minPrice.value.trim() || "0"} - ${
+        maxPrice.value.trim() || "..."
+      } GEL`,
+    });
+  }
+
+  if (selectedInStock.value) {
+    chips.push({ key: "in_stock", label: "მარაგშია" });
+  }
+
+  if (selectedOnSale.value) {
+    chips.push({ key: "on_sale", label: "ფასდაკლება" });
+  }
+
+  return chips;
+});
 
 const hasError = computed(() =>
   Boolean(productsError.value || categoriesError.value),
@@ -308,7 +570,6 @@ const hasNonBlockingError = computed(
 const isRefreshingProducts = computed(
   () => hasInitialized.value && productsPending.value,
 );
-const showRefreshLoader = false;
 
 const firstQueryValue = (
   value: LocationQueryValue | LocationQueryValue[] | undefined,
@@ -346,6 +607,91 @@ const toOptionalNumber = (value: string): number | undefined => {
   if (!Number.isFinite(parsed) || parsed < 0) return undefined;
   return parsed;
 };
+const toCleanQueryString = (value: string | undefined): string =>
+  (value || "").trim();
+const toBooleanFromQuery = (value: string | undefined): boolean => {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+};
+const toYearString = (value: string | undefined): string => {
+  if (!value) return "";
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1900 || parsed > 2100) return "";
+  return String(parsed);
+};
+const hasVehicleSelection = (vehicle: CatalogVehicleSelection) =>
+  Boolean(vehicle.make || vehicle.model || vehicle.year || vehicle.engine);
+const normalizeVehicleSelection = (
+  vehicle: CatalogVehicleSelection,
+): CatalogVehicleSelection => {
+  if (!vehicle.make) {
+    return { make: "", model: "", year: "", engine: "" };
+  }
+
+  if (!vehicle.model || !vehicle.year) {
+    return { ...vehicle, engine: "" };
+  }
+
+  return vehicle;
+};
+const isVehicleSelectionValid = (vehicle: CatalogVehicleSelection) => {
+  if (!hasVehicleSelection(vehicle)) return true;
+  if (!vehicle.make) return false;
+  if (vehicle.engine && (!vehicle.model || !vehicle.year)) return false;
+  return true;
+};
+const readVehicleSelectionFromQuery = (
+  query: LocationQuery,
+): CatalogVehicleSelection =>
+  normalizeVehicleSelection({
+    make: toCleanQueryString(firstQueryValue(query.make)),
+    model: toCleanQueryString(firstQueryValue(query.model)),
+    year: toYearString(firstQueryValue(query.year)),
+    engine: toCleanQueryString(firstQueryValue(query.engine)),
+  });
+const hasVehicleRouteChanged = (query: LocationQuery) => {
+  const routeVehicle = readVehicleSelectionFromQuery(query);
+  return (
+    routeVehicle.make !== selectedVehicleMake.value ||
+    routeVehicle.model !== selectedVehicleModel.value ||
+    routeVehicle.year !== selectedVehicleYear.value ||
+    routeVehicle.engine !== selectedVehicleEngine.value
+  );
+};
+const syncDraftVehicleFromApplied = () => {
+  draftVehicleMake.value = selectedVehicleMake.value;
+  draftVehicleModel.value = selectedVehicleModel.value;
+  draftVehicleYear.value = selectedVehicleYear.value;
+  draftVehicleEngine.value = selectedVehicleEngine.value;
+};
+const clearAppliedVehicleFilter = () => {
+  selectedVehicleMake.value = "";
+  selectedVehicleModel.value = "";
+  selectedVehicleYear.value = "";
+  selectedVehicleEngine.value = "";
+};
+const clearDraftVehicleFilter = () => {
+  draftVehicleMake.value = "";
+  draftVehicleModel.value = "";
+  draftVehicleYear.value = "";
+  draftVehicleEngine.value = "";
+};
+const applyVehicleSelection = (vehicle: CatalogVehicleSelection) => {
+  const normalizedVehicle = normalizeVehicleSelection(vehicle);
+
+  if (!hasVehicleSelection(normalizedVehicle)) {
+    clearAppliedVehicleFilter();
+    return;
+  }
+
+  if (!isVehicleSelectionValid(normalizedVehicle)) return;
+
+  selectedVehicleMake.value = normalizedVehicle.make;
+  selectedVehicleModel.value = normalizedVehicle.model;
+  selectedVehicleYear.value = normalizedVehicle.year;
+  selectedVehicleEngine.value = normalizedVehicle.engine;
+};
 
 const syncSelectedCategoryFromRoute = (query: LocationQuery) => {
   const categorySlugFromPath = getCatalogCategorySlugFromPath(
@@ -379,11 +725,30 @@ const syncSelectedCategoryFromRoute = (query: LocationQuery) => {
     )?.id || null;
 };
 
-const syncControlsFromRoute = (query: LocationQuery) => {
+const syncControlsFromRoute = (
+  query: LocationQuery,
+  options?: { syncVehicleDraft?: boolean },
+) => {
   searchQuery.value = firstQueryValue(query.q) || "";
   selectedSort.value = toSortValue(firstQueryValue(query.ordering));
   minPrice.value = toNumericString(firstQueryValue(query.min_price));
   maxPrice.value = toNumericString(firstQueryValue(query.max_price));
+  selectedBrand.value = toCleanQueryString(firstQueryValue(query.brand));
+  selectedPlacement.value = toCleanQueryString(firstQueryValue(query.placement));
+  selectedSide.value = toCleanQueryString(firstQueryValue(query.side));
+  selectedInStock.value = toBooleanFromQuery(firstQueryValue(query.in_stock));
+  selectedOnSale.value = toBooleanFromQuery(firstQueryValue(query.on_sale));
+
+  const routeVehicle = readVehicleSelectionFromQuery(query);
+  selectedVehicleMake.value = routeVehicle.make;
+  selectedVehicleModel.value = routeVehicle.model;
+  selectedVehicleYear.value = routeVehicle.year;
+  selectedVehicleEngine.value = routeVehicle.engine;
+
+  if (options?.syncVehicleDraft) {
+    syncDraftVehicleFromApplied();
+  }
+
   currentPage.value = toPositiveIntOrNull(firstQueryValue(query.page)) ?? 1;
   syncSelectedCategoryFromRoute(query);
 };
@@ -415,6 +780,45 @@ const buildParamsFromControls = (): CatalogListParams => {
     params.category = selectedCategoryId.value;
   }
 
+  if (hasActiveVehicleFilter.value) {
+    params.make = selectedVehicleMake.value;
+
+    if (selectedVehicleModel.value) {
+      params.model = selectedVehicleModel.value;
+    }
+
+    if (selectedVehicleYearNumber.value !== null) {
+      params.year = selectedVehicleYearNumber.value;
+    }
+
+    if (
+      selectedVehicleEngine.value &&
+      selectedVehicleYearNumber.value !== null
+    ) {
+      params.engine = selectedVehicleEngine.value;
+    }
+  }
+
+  if (selectedBrand.value) {
+    params.brand = selectedBrand.value;
+  }
+
+  if (selectedPlacement.value) {
+    params.placement = selectedPlacement.value;
+  }
+
+  if (selectedSide.value) {
+    params.side = selectedSide.value;
+  }
+
+  if (selectedInStock.value) {
+    params.in_stock = true;
+  }
+
+  if (selectedOnSale.value) {
+    params.on_sale = true;
+  }
+
   const min = toOptionalNumber(minPrice.value);
   const max = toOptionalNumber(maxPrice.value);
 
@@ -441,6 +845,42 @@ const buildRouteQueryFromControls = (page: number): Record<string, string> => {
 
   if (maxPrice.value.trim()) {
     query.max_price = maxPrice.value.trim();
+  }
+
+  if (hasActiveVehicleFilter.value) {
+    query.make = selectedVehicleMake.value;
+
+    if (selectedVehicleModel.value) {
+      query.model = selectedVehicleModel.value;
+    }
+
+    if (selectedVehicleYear.value) {
+      query.year = selectedVehicleYear.value;
+    }
+
+    if (selectedVehicleEngine.value && selectedVehicleYear.value) {
+      query.engine = selectedVehicleEngine.value;
+    }
+  }
+
+  if (selectedBrand.value) {
+    query.brand = selectedBrand.value;
+  }
+
+  if (selectedPlacement.value) {
+    query.placement = selectedPlacement.value;
+  }
+
+  if (selectedSide.value) {
+    query.side = selectedSide.value;
+  }
+
+  if (selectedInStock.value) {
+    query.in_stock = "true";
+  }
+
+  if (selectedOnSale.value) {
+    query.on_sale = "true";
   }
 
   if (page > 1) {
@@ -498,6 +938,32 @@ const pushQueryFromControls = async (options?: { resetPage?: boolean }) => {
   }
 
   await router.push({ path: targetPath, query: targetQuery });
+};
+
+const scrollToResultsStart = async () => {
+  if (!import.meta.client) return;
+
+  await nextTick();
+
+  window.requestAnimationFrame(() => {
+    const target = resultsStartRef.value;
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    const viewportHeight =
+      window.innerHeight || document.documentElement.clientHeight;
+    const isComfortablyVisible =
+      rect.top >= 120 && rect.top <= viewportHeight * 0.6;
+
+    if (isComfortablyVisible) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+};
+
+const pushQueryAndScrollToResults = async (options?: { resetPage?: boolean }) => {
+  await pushQueryFromControls(options);
+  await scrollToResultsStart();
 };
 
 const loadProducts = async () => {
@@ -569,22 +1035,155 @@ const loadCategories = async () => {
   categoriesResponse.value = responseData;
 };
 
-const openMobileFilterSheet = () => {
+const loadVehicleMakes = async () => {
+  try {
+    vehicleMakesResponse.value = await getVehicleMakes();
+  } catch (error) {
+    vehicleOptionsError.value = error;
+  }
+};
+
+const loadVehicleOptionsForDraft = async () => {
+  const requestId = ++latestVehicleOptionsRequestId.value;
+  vehicleOptionsPending.value = true;
+  vehicleOptionsError.value = null;
+
+  try {
+    if (!draftVehicleMake.value) {
+      vehicleModelsResponse.value = [];
+      vehicleYearsResponse.value = [];
+      vehicleEnginesResponse.value = [];
+      return;
+    }
+
+    const models = await getVehicleModels(draftVehicleMake.value);
+    if (requestId !== latestVehicleOptionsRequestId.value) return;
+    vehicleModelsResponse.value = models;
+
+    const years = await getVehicleYears(
+      draftVehicleMake.value,
+      draftVehicleModel.value || undefined,
+    );
+    if (requestId !== latestVehicleOptionsRequestId.value) return;
+    vehicleYearsResponse.value = years;
+
+    if (!draftVehicleModel.value || !draftVehicleYear.value) {
+      vehicleEnginesResponse.value = [];
+      return;
+    }
+
+    const parsedYear = Number(draftVehicleYear.value);
+    if (!Number.isInteger(parsedYear)) {
+      vehicleEnginesResponse.value = [];
+      return;
+    }
+
+    const engines = await getVehicleEngines(
+      draftVehicleMake.value,
+      draftVehicleModel.value,
+      parsedYear,
+    );
+    if (requestId !== latestVehicleOptionsRequestId.value) return;
+    vehicleEnginesResponse.value = engines;
+  } catch (error) {
+    if (requestId === latestVehicleOptionsRequestId.value) {
+      vehicleOptionsError.value = error;
+    }
+  } finally {
+    if (requestId === latestVehicleOptionsRequestId.value) {
+      vehicleOptionsPending.value = false;
+    }
+  }
+};
+
+const openMobileFilterSheet = async () => {
   if (productsPending.value) return;
+  syncDraftVehicleFromApplied();
+  await loadVehicleOptionsForDraft();
   isMobileFilterSheetOpen.value = true;
 };
 
-const closeMobileFilterSheet = () => {
+const closeMobileFilterSheet = (options?: { resetVehicleDraft?: boolean }) => {
   isMobileFilterSheetOpen.value = false;
+  if (options?.resetVehicleDraft) {
+    syncDraftVehicleFromApplied();
+  }
+};
+
+const handleMobileFilterClose = () => {
+  closeMobileFilterSheet({ resetVehicleDraft: true });
+};
+
+const handleDraftVehicleMakeUpdate = async (value: string) => {
+  draftVehicleMake.value = value;
+  draftVehicleModel.value = "";
+  draftVehicleYear.value = "";
+  draftVehicleEngine.value = "";
+  await loadVehicleOptionsForDraft();
+};
+
+const handleDraftVehicleModelUpdate = async (value: string) => {
+  draftVehicleModel.value = value;
+  draftVehicleYear.value = "";
+  draftVehicleEngine.value = "";
+  await loadVehicleOptionsForDraft();
+};
+
+const handleDraftVehicleYearUpdate = async (value: string) => {
+  draftVehicleYear.value = value;
+  draftVehicleEngine.value = "";
+  await loadVehicleOptionsForDraft();
+};
+
+const handleDraftVehicleEngineUpdate = (value: string) => {
+  draftVehicleEngine.value = value;
+};
+
+const applyDraftVehicleFilter = async () => {
+  if (!isVehicleSelectionValid(draftVehicle.value)) return;
+  applyVehicleSelection(draftVehicle.value);
+  await pushQueryAndScrollToResults({ resetPage: true });
+};
+
+const handleDesktopVehicleMakeUpdate = async (value: string) => {
+  await handleDraftVehicleMakeUpdate(value);
+  await applyDraftVehicleFilter();
+};
+
+const handleDesktopVehicleModelUpdate = async (value: string) => {
+  await handleDraftVehicleModelUpdate(value);
+  await applyDraftVehicleFilter();
+};
+
+const handleDesktopVehicleYearUpdate = async (value: string) => {
+  await handleDraftVehicleYearUpdate(value);
+  await applyDraftVehicleFilter();
+};
+
+const handleDesktopVehicleEngineUpdate = async (value: string) => {
+  handleDraftVehicleEngineUpdate(value);
+  await applyDraftVehicleFilter();
+};
+
+const handleResetVehicleDraft = async () => {
+  clearDraftVehicleFilter();
+  await loadVehicleOptionsForDraft();
+};
+
+const handleResetVehicleFilter = async () => {
+  clearDraftVehicleFilter();
+  clearAppliedVehicleFilter();
+  await loadVehicleOptionsForDraft();
+  await pushQueryAndScrollToResults({ resetPage: true });
 };
 
 const handleSortUpdate = async (value: string) => {
   selectedSort.value = toSortValue(value);
-  await pushQueryFromControls({ resetPage: true });
+  await pushQueryAndScrollToResults({ resetPage: true });
 };
 
 const handleApplyFilters = async () => {
-  await pushQueryFromControls({ resetPage: true });
+  await pushQueryAndScrollToResults({ resetPage: true });
 };
 
 const handleMobileFilterApply = async (value: {
@@ -592,30 +1191,85 @@ const handleMobileFilterApply = async (value: {
   minPrice: string;
   maxPrice: string;
   sort: CatalogSort;
+  selectedBrand: string;
+  selectedPlacement: string;
+  selectedSide: string;
+  inStock: boolean;
+  onSale: boolean;
+  vehicle: CatalogVehicleSelection;
 }) => {
+  if (!isVehicleSelectionValid(value.vehicle)) return;
+
   setSelectedCategoryId(value.selectedCategoryId);
   minPrice.value = value.minPrice;
   maxPrice.value = value.maxPrice;
   selectedSort.value = value.sort;
+  selectedBrand.value = value.selectedBrand;
+  selectedPlacement.value = value.selectedPlacement;
+  selectedSide.value = value.selectedSide;
+  selectedInStock.value = value.inStock;
+  selectedOnSale.value = value.onSale;
+  applyVehicleSelection(value.vehicle);
   closeMobileFilterSheet();
-  await pushQueryFromControls({ resetPage: true });
+  await pushQueryAndScrollToResults({ resetPage: true });
 };
 
 const handleResetFilters = async () => {
   setSelectedCategoryId(null);
+  selectedBrand.value = "";
+  selectedPlacement.value = "";
+  selectedSide.value = "";
+  selectedInStock.value = false;
+  selectedOnSale.value = false;
+  clearDraftVehicleFilter();
+  clearAppliedVehicleFilter();
   minPrice.value = "";
   maxPrice.value = "";
-  await pushQueryFromControls({ resetPage: true });
+  await loadVehicleOptionsForDraft();
+  await pushQueryAndScrollToResults({ resetPage: true });
 };
 
 const handleClearCatalogState = async () => {
   searchQuery.value = "";
   selectedSort.value = "recommended";
   setSelectedCategoryId(null);
+  selectedBrand.value = "";
+  selectedPlacement.value = "";
+  selectedSide.value = "";
+  selectedInStock.value = false;
+  selectedOnSale.value = false;
+  clearDraftVehicleFilter();
+  clearAppliedVehicleFilter();
   minPrice.value = "";
   maxPrice.value = "";
   currentPage.value = 1;
-  await pushQueryFromControls({ resetPage: true });
+  await loadVehicleOptionsForDraft();
+  await pushQueryAndScrollToResults({ resetPage: true });
+};
+
+const handleRemoveActiveFilter = async (key: CatalogActiveFilterKey) => {
+  if (key === "vehicle") {
+    clearDraftVehicleFilter();
+    clearAppliedVehicleFilter();
+    await loadVehicleOptionsForDraft();
+  } else if (key === "category") {
+    setSelectedCategoryId(null);
+  } else if (key === "brand") {
+    selectedBrand.value = "";
+  } else if (key === "placement") {
+    selectedPlacement.value = "";
+  } else if (key === "side") {
+    selectedSide.value = "";
+  } else if (key === "price") {
+    minPrice.value = "";
+    maxPrice.value = "";
+  } else if (key === "in_stock") {
+    selectedInStock.value = false;
+  } else if (key === "on_sale") {
+    selectedOnSale.value = false;
+  }
+
+  await pushQueryAndScrollToResults({ resetPage: true });
 };
 
 const handlePageClick = async (page: number) => {
@@ -631,15 +1285,26 @@ const retryLoad = async () => {
   await Promise.all([loadCategories(), loadProducts()]);
 };
 
-syncControlsFromRoute(route.query);
-await Promise.all([loadCategories(), loadProducts()]);
+syncControlsFromRoute(route.query, { syncVehicleDraft: true });
+await Promise.all([
+  loadCategories(),
+  loadVehicleMakes(),
+  loadVehicleOptionsForDraft(),
+  loadProducts(),
+]);
 hasInitialized.value = true;
 
 watch(
   () => route.fullPath,
   async () => {
+    const shouldSyncVehicleDraft = hasVehicleRouteChanged(route.query);
     closeMobileFilterSheet();
-    syncControlsFromRoute(route.query);
+    syncControlsFromRoute(route.query, {
+      syncVehicleDraft: shouldSyncVehicleDraft,
+    });
+    if (shouldSyncVehicleDraft) {
+      await loadVehicleOptionsForDraft();
+    }
     await loadProducts();
   },
 );
@@ -656,6 +1321,10 @@ watch(isDesktopCatalogLayout, (isDesktop) => {
   if (isDesktop) {
     closeMobileFilterSheet();
   }
+});
+
+onMounted(() => {
+  hasHydrated.value = true;
 });
 
 useHead(() => {
@@ -755,20 +1424,55 @@ useSeoMeta({
         <div class="hidden lg:block lg:sticky lg:top-40 lg:self-start">
           <CatalogFilters
             :categories="mappedCategories"
+            :brands="mappedBrands"
+            :placements="mappedPlacementOptions"
+            :sides="mappedSideOptions"
+            :vehicle-makes="vehicleMakesResponse"
+            :vehicle-models="vehicleModelsResponse"
+            :vehicle-years="vehicleYearsResponse"
+            :vehicle-engines="vehicleEnginesResponse"
+            :vehicle-make="draftVehicleMake"
+            :vehicle-model="draftVehicleModel"
+            :vehicle-year="draftVehicleYear"
+            :vehicle-engine="draftVehicleEngine"
+            :vehicle-engine-display-value="draftVehicleEngineDisplayValue"
+            :vehicle-engine-options-ready="hasHydrated"
+            :vehicle-options-pending="vehicleOptionsPending"
+            :vehicle-options-error="showVehicleOptionsError"
+            :has-invalid-vehicle="hasInvalidDraftVehicle"
+            :has-applied-vehicle="hasActiveVehicleFilter"
             :selected-category-id="selectedCategoryId"
             :selected-category-slug="selectedCategorySlug"
+            :selected-brand="selectedBrand"
+            :selected-placement="selectedPlacement"
+            :selected-side="selectedSide"
+            :in-stock="selectedInStock"
+            :on-sale="selectedOnSale"
             :min-price="minPrice"
             :max-price="maxPrice"
             :disabled="productsPending"
+            @update:vehicle-make="handleDesktopVehicleMakeUpdate"
+            @update:vehicle-model="handleDesktopVehicleModelUpdate"
+            @update:vehicle-year="handleDesktopVehicleYearUpdate"
+            @update:vehicle-engine="handleDesktopVehicleEngineUpdate"
             @update:selected-category-id="setSelectedCategoryId"
+            @update:selected-brand="selectedBrand = $event"
+            @update:selected-placement="selectedPlacement = $event"
+            @update:selected-side="selectedSide = $event"
+            @update:in-stock="selectedInStock = $event"
+            @update:on-sale="selectedOnSale = $event"
             @update:min-price="minPrice = $event"
             @update:max-price="maxPrice = $event"
+            @reset-vehicle="handleResetVehicleFilter"
             @apply="handleApplyFilters"
             @reset="handleResetFilters"
           />
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div
+          ref="resultsStartRef"
+          class="flex flex-col gap-2 scroll-mt-28 lg:scroll-mt-40"
+        >
           <div class="lg:hidden">
             <CatalogMobileToolbar
               :result-count="resultCount"
@@ -783,8 +1487,11 @@ useSeoMeta({
               :result-count="resultCount"
               :sort="selectedSort"
               :sort-options="sortOptions"
+              :active-filters="activeFilterChips"
               :disabled="productsPending"
               @update:sort="handleSortUpdate"
+              @remove-filter="handleRemoveActiveFilter"
+              @clear-all="handleClearCatalogState"
             />
           </div>
 
@@ -796,25 +1503,11 @@ useSeoMeta({
             შედეგები.
           </div>
 
-          <div class="relative">
-            <transition
-              enter-active-class="transition-opacity duration-150"
-              enter-from-class="opacity-0"
-              enter-to-class="opacity-100"
-              leave-active-class="transition-opacity duration-150"
-              leave-from-class="opacity-100"
-              leave-to-class="opacity-0"
-            >
-              <div
-                v-if="showRefreshLoader && isRefreshingProducts"
-                class="catalog-refresh-track pointer-events-none absolute left-0 right-0 -top-2 z-10 h-1 overflow-hidden rounded-full"
-              >
-                <span class="catalog-refresh-bar block h-full w-1/3" />
-              </div>
-            </transition>
-
+          <div>
             <ProductGrid
               :products="mappedProducts"
+              :vehicle-filter="selectedVehicleCardFilter"
+              :loading="isRefreshingProducts"
               :empty-title="emptyStateTitle"
               :empty-description="emptyStateDescription"
             />
@@ -851,14 +1544,40 @@ useSeoMeta({
       <CatalogMobileFilterSheet
         :open="isMobileFilterSheetOpen"
         :categories="mappedCategories"
+        :brands="mappedBrands"
+        :placements="mappedPlacementOptions"
+        :sides="mappedSideOptions"
+        :vehicle-makes="vehicleMakesResponse"
+        :vehicle-models="vehicleModelsResponse"
+        :vehicle-years="vehicleYearsResponse"
+        :vehicle-engines="vehicleEnginesResponse"
+        :vehicle-make="draftVehicleMake"
+        :vehicle-model="draftVehicleModel"
+        :vehicle-year="draftVehicleYear"
+        :vehicle-engine="draftVehicleEngine"
+        :vehicle-engine-display-value="draftVehicleEngineDisplayValue"
+        :vehicle-engine-options-ready="hasHydrated"
+        :vehicle-options-pending="vehicleOptionsPending"
+        :vehicle-options-error="showVehicleOptionsError"
+        :has-invalid-vehicle="hasInvalidDraftVehicle"
         :selected-category-id="selectedCategoryId"
         :selected-category-slug="selectedCategorySlug"
+        :selected-brand="selectedBrand"
+        :selected-placement="selectedPlacement"
+        :selected-side="selectedSide"
+        :in-stock="selectedInStock"
+        :on-sale="selectedOnSale"
         :min-price="minPrice"
         :max-price="maxPrice"
         :sort="selectedSort"
         :sort-options="sortOptions"
         :disabled="productsPending"
-        @close="closeMobileFilterSheet"
+        @update:vehicle-make="handleDraftVehicleMakeUpdate"
+        @update:vehicle-model="handleDraftVehicleModelUpdate"
+        @update:vehicle-year="handleDraftVehicleYearUpdate"
+        @update:vehicle-engine="handleDraftVehicleEngineUpdate"
+        @reset-vehicle-draft="handleResetVehicleDraft"
+        @close="handleMobileFilterClose"
         @apply="handleMobileFilterApply"
       />
     </template>
@@ -916,33 +1635,6 @@ useSeoMeta({
 :deep(.catalog-paginate-disabled) {
   cursor: not-allowed;
   opacity: 0.45;
-}
-
-.catalog-refresh-track {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 107, 53, 0.14) 0%,
-    rgba(255, 107, 53, 0.22) 100%
-  );
-}
-
-.catalog-refresh-bar {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 107, 53, 0) 0%,
-    var(--accent-primary) 45%,
-    rgba(255, 107, 53, 0) 100%
-  );
-  animation: catalog-refresh-slide 0.95s ease-in-out infinite;
-}
-
-@keyframes catalog-refresh-slide {
-  0% {
-    transform: translateX(-130%);
-  }
-  100% {
-    transform: translateX(340%);
-  }
 }
 
 @media (max-width: 640px) {

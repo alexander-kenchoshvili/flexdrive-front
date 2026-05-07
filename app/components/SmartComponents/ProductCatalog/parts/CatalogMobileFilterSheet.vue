@@ -3,11 +3,26 @@ import { XMarkIcon } from "@heroicons/vue/24/outline";
 import BaseButton from "~/components/common/BaseButton.vue";
 import BaseInput from "~/components/common/BaseInput.vue";
 import BaseSelect from "~/components/common/BaseSelect.vue";
-import type { CatalogFilterCategory, CatalogSort } from "~/types/catalog";
+import type {
+  CatalogFacetBrand,
+  CatalogFacetOption,
+  CatalogFilterCategory,
+  CatalogSort,
+  CatalogVehicleEngine,
+  CatalogVehicleMake,
+  CatalogVehicleModel,
+  CatalogVehicleSelection,
+  CatalogVehicleYear,
+} from "~/types/catalog";
 
 type CatalogSortOption = {
   label: string;
   value: CatalogSort;
+  disabled?: boolean;
+};
+type SelectOption = {
+  label: string;
+  value: string;
   disabled?: boolean;
 };
 
@@ -15,8 +30,29 @@ const props = withDefaults(
   defineProps<{
     open?: boolean;
     categories?: CatalogFilterCategory[];
+    brands?: CatalogFacetBrand[];
+    placements?: CatalogFacetOption[];
+    sides?: CatalogFacetOption[];
+    vehicleMakes?: CatalogVehicleMake[];
+    vehicleModels?: CatalogVehicleModel[];
+    vehicleYears?: CatalogVehicleYear[];
+    vehicleEngines?: CatalogVehicleEngine[];
+    vehicleMake?: string;
+    vehicleModel?: string;
+    vehicleYear?: string;
+    vehicleEngine?: string;
+    vehicleEngineDisplayValue?: string;
+    vehicleEngineOptionsReady?: boolean;
+    vehicleOptionsPending?: boolean;
+    vehicleOptionsError?: boolean;
+    hasInvalidVehicle?: boolean;
     selectedCategoryId?: number | null;
     selectedCategorySlug?: string | null;
+    selectedBrand?: string;
+    selectedPlacement?: string;
+    selectedSide?: string;
+    inStock?: boolean;
+    onSale?: boolean;
     minPrice?: string;
     maxPrice?: string;
     sort?: CatalogSort;
@@ -26,8 +62,29 @@ const props = withDefaults(
   {
     open: false,
     categories: () => [],
+    brands: () => [],
+    placements: () => [],
+    sides: () => [],
+    vehicleMakes: () => [],
+    vehicleModels: () => [],
+    vehicleYears: () => [],
+    vehicleEngines: () => [],
+    vehicleMake: "",
+    vehicleModel: "",
+    vehicleYear: "",
+    vehicleEngine: "",
+    vehicleEngineDisplayValue: "",
+    vehicleEngineOptionsReady: true,
+    vehicleOptionsPending: false,
+    vehicleOptionsError: false,
+    hasInvalidVehicle: false,
     selectedCategoryId: null,
     selectedCategorySlug: null,
+    selectedBrand: "",
+    selectedPlacement: "",
+    selectedSide: "",
+    inStock: false,
+    onSale: false,
     minPrice: "",
     maxPrice: "",
     sort: "recommended",
@@ -43,6 +100,11 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: "close"): void;
+  (e: "update:vehicleMake", value: string): void;
+  (e: "update:vehicleModel", value: string): void;
+  (e: "update:vehicleYear", value: string): void;
+  (e: "update:vehicleEngine", value: string): void;
+  (e: "resetVehicleDraft"): void;
   (
     e: "apply",
     value: {
@@ -50,6 +112,12 @@ const emit = defineEmits<{
       minPrice: string;
       maxPrice: string;
       sort: CatalogSort;
+      selectedBrand: string;
+      selectedPlacement: string;
+      selectedSide: string;
+      inStock: boolean;
+      onSale: boolean;
+      vehicle: CatalogVehicleSelection;
     },
   ): void;
 }>();
@@ -59,23 +127,177 @@ const draftSelectedCategoryId = ref<number | null>(props.selectedCategoryId);
 const draftMinPrice = ref(props.minPrice);
 const draftMaxPrice = ref(props.maxPrice);
 const draftSort = ref<CatalogSort>(props.sort);
+const draftSelectedBrand = ref(props.selectedBrand);
+const draftSelectedPlacement = ref(props.selectedPlacement);
+const draftSelectedSide = ref(props.selectedSide);
+const draftInStock = ref(props.inStock);
+const draftOnSale = ref(props.onSale);
 
 let previousBodyOverflow = "";
+
+const toStringValue = (value: string | number | null) =>
+  value === null ? "" : String(value);
+const prependAllOption = (label: string, options: SelectOption[]) => [
+  { label, value: "" },
+  ...options,
+];
+
+const vehicleMakeOptions = computed<SelectOption[]>(() =>
+  props.vehicleMakes.map((make) => ({ label: make.name, value: make.slug })),
+);
+const vehicleModelOptions = computed<SelectOption[]>(() =>
+  props.vehicleModels.map((model) => ({ label: model.name, value: model.slug })),
+);
+const vehicleYearOptions = computed<SelectOption[]>(() =>
+  props.vehicleYears.map((item) => ({
+    label: String(item.year),
+    value: String(item.year),
+  })),
+);
+const vehicleEngineOptions = computed<SelectOption[]>(() =>
+  props.vehicleEngines.map((engine) => ({
+    label: engine.name,
+    value: engine.slug,
+  })),
+);
+const brandOptions = computed<SelectOption[]>(() =>
+  props.brands.length
+    ? prependAllOption(
+        "ყველა ბრენდი",
+        props.brands.map((brand) => ({
+          label: `${brand.name} (${brand.count})`,
+          value: brand.slug,
+        })),
+      )
+    : [],
+);
+const placementOptions = computed<SelectOption[]>(() =>
+  props.placements.length
+    ? prependAllOption(
+        "ყველა მდებარეობა",
+        props.placements.map((option) => ({
+          label: `${option.label} (${option.count})`,
+          value: option.value,
+        })),
+      )
+    : [],
+);
+const sideOptions = computed<SelectOption[]>(() =>
+  props.sides.length
+    ? prependAllOption(
+        "ყველა მხარე",
+        props.sides.map((option) => ({
+          label: `${option.label} (${option.count})`,
+          value: option.value,
+        })),
+      )
+    : [],
+);
+
+const vehicleMakeModel = computed({
+  get: () => props.vehicleMake,
+  set: (value: string | number | null) =>
+    emit("update:vehicleMake", toStringValue(value)),
+});
+const vehicleModelModel = computed({
+  get: () => props.vehicleModel,
+  set: (value: string | number | null) =>
+    emit("update:vehicleModel", toStringValue(value)),
+});
+const vehicleYearModel = computed({
+  get: () => props.vehicleYear,
+  set: (value: string | number | null) =>
+    emit("update:vehicleYear", toStringValue(value)),
+});
+const vehicleEngineModel = computed({
+  get: () => props.vehicleEngine,
+  set: (value: string | number | null) =>
+    emit("update:vehicleEngine", toStringValue(value)),
+});
+const sortModel = computed({
+  get: () => draftSort.value,
+  set: (value: string | number | null) => {
+    if (typeof value === "string") {
+      draftSort.value = value as CatalogSort;
+    }
+  },
+});
+const brandModel = computed({
+  get: () => draftSelectedBrand.value,
+  set: (value: string | number | null) => {
+    draftSelectedBrand.value = toStringValue(value);
+  },
+});
+const placementModel = computed({
+  get: () => draftSelectedPlacement.value,
+  set: (value: string | number | null) => {
+    draftSelectedPlacement.value = toStringValue(value);
+  },
+});
+const sideModel = computed({
+  get: () => draftSelectedSide.value,
+  set: (value: string | number | null) => {
+    draftSelectedSide.value = toStringValue(value);
+  },
+});
 
 const hasDraftControls = computed(
   () =>
     draftSelectedCategoryId.value !== null ||
     Boolean(draftMinPrice.value.trim()) ||
     Boolean(draftMaxPrice.value.trim()) ||
-    draftSort.value !== "recommended",
+    draftSort.value !== "recommended" ||
+    Boolean(draftSelectedBrand.value) ||
+    Boolean(draftSelectedPlacement.value) ||
+    Boolean(draftSelectedSide.value) ||
+    draftInStock.value ||
+    draftOnSale.value ||
+    Boolean(
+      props.vehicleMake ||
+        props.vehicleModel ||
+        props.vehicleYear ||
+        props.vehicleEngine,
+    ),
 );
+const canApplyFilters = computed(
+  () =>
+    !props.disabled &&
+    !props.hasInvalidVehicle &&
+    !props.vehicleOptionsPending,
+);
+const vehicleHelperText = computed(() => {
+  if (props.vehicleOptionsError) {
+    return "მანქანის არჩევანის ჩატვირთვა ვერ მოხერხდა.";
+  }
+
+  if (props.hasInvalidVehicle) {
+    return "მანქანის ფილტრი არასწორი თანმიმდევრობით არის არჩეული.";
+  }
+
+  return (
+    "შეგიძლია დაიწყო მხოლოდ მარკით და შემდეგ დააზუსტო მოდელი, წელი ან ძრავი."
+  );
+});
 
 const applyFilters = () => {
+  if (!canApplyFilters.value) return;
+
   emit("apply", {
     selectedCategoryId: draftSelectedCategoryId.value,
     minPrice: draftMinPrice.value.trim(),
     maxPrice: draftMaxPrice.value.trim(),
     sort: draftSort.value,
+    selectedBrand: draftSelectedBrand.value,
+    selectedPlacement: draftSelectedPlacement.value,
+    selectedSide: draftSelectedSide.value,
+    inStock: draftInStock.value,
+    onSale: draftOnSale.value,
+    vehicle: {
+      make: props.vehicleMake,
+      model: props.vehicleModel,
+      year: props.vehicleYear,
+      engine: props.vehicleEngine,
+    },
   });
 };
 
@@ -84,6 +306,12 @@ const clearDraftFilters = () => {
   draftMinPrice.value = "";
   draftMaxPrice.value = "";
   draftSort.value = "recommended";
+  draftSelectedBrand.value = "";
+  draftSelectedPlacement.value = "";
+  draftSelectedSide.value = "";
+  draftInStock.value = false;
+  draftOnSale.value = false;
+  emit("resetVehicleDraft");
 };
 
 const selectCategory = (id: number) => {
@@ -93,15 +321,6 @@ const selectCategory = (id: number) => {
 const isCategorySelected = (category: CatalogFilterCategory) =>
   draftSelectedCategoryId.value === category.id ||
   props.selectedCategorySlug === category.slug;
-
-const sortModel = computed({
-  get: () => draftSort.value,
-  set: (value: string | number | null) => {
-    if (typeof value === "string") {
-      draftSort.value = value as CatalogSort;
-    }
-  },
-});
 
 const handleWindowKeydown = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
@@ -125,6 +344,11 @@ const syncDraftFromProps = () => {
   draftMinPrice.value = props.minPrice;
   draftMaxPrice.value = props.maxPrice;
   draftSort.value = props.sort;
+  draftSelectedBrand.value = props.selectedBrand;
+  draftSelectedPlacement.value = props.selectedPlacement;
+  draftSelectedSide.value = props.selectedSide;
+  draftInStock.value = props.inStock;
+  draftOnSale.value = props.onSale;
 };
 
 watch(
@@ -167,14 +391,11 @@ onBeforeUnmount(() => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="catalog-mobile-filter-title"
-        class="absolute inset-x-0 bottom-0 flex max-h-[85dvh] min-h-[min(68dvh,620px)] flex-col rounded-t-[28px] border-t border-border-default bg-surface shadow-[0_-18px_48px_rgba(2,6,23,0.38)] outline-none"
+        class="absolute inset-x-0 bottom-0 flex max-h-[88dvh] min-h-[min(72dvh,680px)] flex-col rounded-t-[22px] border-t border-border-default bg-surface shadow-[0_-18px_48px_rgba(2,6,23,0.38)] outline-none"
         @click.stop
       >
         <div class="flex justify-center px-4 pb-2 pt-3">
-          <span
-            class="h-1.5 w-12 rounded-full bg-border-default"
-            aria-hidden="true"
-          />
+          <span class="h-1.5 w-12 rounded-full bg-border-default" aria-hidden="true" />
         </div>
 
         <div
@@ -183,18 +404,18 @@ onBeforeUnmount(() => {
           <div>
             <h2
               id="catalog-mobile-filter-title"
-              class="text-lg font-semibold text-text-primary"
+              class="text-lg font-bold text-text-primary"
             >
               ფილტრები და დალაგება
             </h2>
-            <p class="mt-1 text-sm text-text-secondary">
-              აირჩიე კატეგორია, ფასის დიაპაზონი და შედეგების დალაგება.
+            <p class="mt-1 text-sm leading-5 text-text-secondary">
+              მოძებნე ნაწილი მანქანით, ბრენდით, ფასით ან კატეგორიით.
             </p>
           </div>
 
           <button
             type="button"
-            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-border-default bg-surface-2/70 text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-default bg-surface-2/70 text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
             aria-label="ფილტრის დახურვა"
             @click="emit('close')"
           >
@@ -202,33 +423,79 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-5">
-          <section
-            class="rounded-[22px] border border-border-default bg-surface-2/55 p-4"
-          >
-            <h3 class="text-sm font-semibold text-text-primary">დალაგება</h3>
+        <div class="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
+          <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
+            <h3 class="text-sm font-bold text-text-primary">მანქანით ძებნა</h3>
+            <div class="mt-3 grid gap-3 min-[520px]:grid-cols-2">
+              <BaseSelect
+                v-model="vehicleMakeModel"
+                :options="vehicleMakeOptions"
+                placeholder="მარკა"
+                empty-text="მარკები ჯერ არ არის დამატებული"
+                :disabled="disabled"
+              />
+              <BaseSelect
+                v-model="vehicleModelModel"
+                :options="vehicleModelOptions"
+                placeholder="მოდელი"
+                empty-text="ჯერ აირჩიე მარკა ან დაამატე მოდელები"
+                :disabled="disabled || vehicleOptionsPending || !vehicleMake"
+              />
+              <BaseSelect
+                v-model="vehicleYearModel"
+                :options="vehicleYearOptions"
+                placeholder="წელი"
+                empty-text="წლების დიაპაზონი ჯერ არ არის მიბმული"
+                :disabled="disabled || vehicleOptionsPending || !vehicleMake"
+              />
+              <BaseSelect
+                v-model="vehicleEngineModel"
+                :options="vehicleEngineOptions"
+                :display-value="vehicleEngineDisplayValue"
+                placeholder="ძრავი"
+                empty-text="ძრავის არჩევანი არ არის"
+                :disabled="
+                  disabled ||
+                  vehicleOptionsPending ||
+                  !vehicleModel ||
+                  !vehicleYear ||
+                  (vehicleEngineOptionsReady &&
+                    !vehicleEngine &&
+                    !vehicleEngineOptions.length)
+                "
+              />
+            </div>
+            <p
+              class="mt-2 text-xs leading-5"
+              :class="
+                hasInvalidVehicle || vehicleOptionsError
+                  ? 'text-warning'
+                  : 'text-text-muted'
+              "
+            >
+              {{ vehicleHelperText }}
+            </p>
+          </section>
 
+          <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
+            <h3 class="text-sm font-bold text-text-primary">დალაგება</h3>
             <BaseSelect
               v-model="sortModel"
               :options="props.sortOptions"
               placeholder="დალაგება"
               :disabled="disabled"
-              class="mt-4"
+              class="mt-3"
             />
           </section>
 
-          <section
-            class="rounded-[22px] border border-border-default bg-surface-2/55 p-4"
-          >
+          <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
             <div class="flex items-center justify-between gap-3">
-              <h3 class="text-sm font-semibold text-text-primary">კატეგორია</h3>
-              <span class="text-xs text-text-muted">
-                {{ categories.length }} არჩევა
-              </span>
+              <h3 class="text-sm font-bold text-text-primary">კატეგორია</h3>
+              <span class="text-xs text-text-muted">{{ categories.length }} არჩევანი</span>
             </div>
 
             <div
-              class="mt-4 flex flex-wrap gap-2"
+              class="mt-3 flex flex-wrap gap-2"
               role="radiogroup"
               aria-label="კატეგორიის ფილტრი"
             >
@@ -239,7 +506,7 @@ onBeforeUnmount(() => {
                 role="radio"
                 :aria-checked="isCategorySelected(category)"
                 :disabled="disabled"
-                class="inline-flex min-h-[42px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+                class="inline-flex min-h-[42px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
                 :class="
                   isCategorySelected(category)
                     ? 'border-accent-primary bg-accent-primary/10 text-accent-primary'
@@ -249,7 +516,7 @@ onBeforeUnmount(() => {
               >
                 <span>{{ category.name }}</span>
                 <span
-                  class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  class="rounded-full px-2 py-0.5 text-[11px] font-bold"
                   :class="
                     isCategorySelected(category)
                       ? 'bg-accent-primary/12 text-accent-primary'
@@ -262,14 +529,64 @@ onBeforeUnmount(() => {
             </div>
           </section>
 
-          <section
-            class="rounded-[22px] border border-border-default bg-surface-2/55 p-4"
-          >
-            <h3 class="text-sm font-semibold text-text-primary">
-              ფასის დიაპაზონი
-            </h3>
+          <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
+            <h3 class="text-sm font-bold text-text-primary">დაზუსტება</h3>
+            <div class="mt-3 grid gap-3 min-[520px]:grid-cols-2">
+              <BaseSelect
+                v-model="brandModel"
+                :options="brandOptions"
+                placeholder="ბრენდი"
+                empty-text="ბრენდები ჯერ არ არის შევსებული"
+                :disabled="disabled"
+              />
+              <BaseSelect
+                v-model="placementModel"
+                :options="placementOptions"
+                placeholder="მდებარეობა"
+                empty-text="მდებარეობის მონაცემი ჯერ არ არის შევსებული"
+                :disabled="disabled"
+              />
+              <BaseSelect
+                v-model="sideModel"
+                :options="sideOptions"
+                placeholder="მხარე"
+                empty-text="მხარის მონაცემი ჯერ არ არის შევსებული"
+                :disabled="disabled"
+              />
+            </div>
+          </section>
 
-            <div class="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+          <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
+            <h3 class="text-sm font-bold text-text-primary">სწრაფი ფილტრები</h3>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <label
+                class="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-border-default bg-surface px-3 py-2 text-sm font-semibold text-text-secondary"
+              >
+                <input
+                  v-model="draftInStock"
+                  type="checkbox"
+                  :disabled="disabled"
+                  class="h-4 w-4 accent-[var(--accent-primary)]"
+                />
+                მარაგშია
+              </label>
+              <label
+                class="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-border-default bg-surface px-3 py-2 text-sm font-semibold text-text-secondary"
+              >
+                <input
+                  v-model="draftOnSale"
+                  type="checkbox"
+                  :disabled="disabled"
+                  class="h-4 w-4 accent-[var(--accent-primary)]"
+                />
+                ფასდაკლება
+              </label>
+            </div>
+          </section>
+
+          <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
+            <h3 class="text-sm font-bold text-text-primary">ფასის დიაპაზონი</h3>
+            <div class="mt-3 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
               <BaseInput
                 v-model="draftMinPrice"
                 label="დან"
@@ -307,7 +624,8 @@ onBeforeUnmount(() => {
           <BaseButton
             type="button"
             :full-width="true"
-            :disabled="disabled"
+            :loading="vehicleOptionsPending"
+            :disabled="!canApplyFilters"
             @click="applyFilters"
           >
             ფილტრების გამოყენება

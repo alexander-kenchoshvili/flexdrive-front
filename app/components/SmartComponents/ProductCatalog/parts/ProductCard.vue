@@ -11,9 +11,22 @@ import WishlistToggleButton from "~/components/commerce/WishlistToggleButton.vue
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import type { CatalogProductCardData } from "~/types/catalog";
 
-const props = defineProps<{
-  product: CatalogProductCardData;
-}>();
+type VehicleFilterLabel = {
+  make?: string;
+  model?: string;
+  year?: string;
+  engine?: string;
+};
+
+const props = withDefaults(
+  defineProps<{
+    product: CatalogProductCardData;
+    vehicleFilter?: VehicleFilterLabel;
+  }>(),
+  {
+    vehicleFilter: () => ({}),
+  },
+);
 
 const hasDiscount = computed(
   () =>
@@ -67,6 +80,46 @@ const availability = computed(() => {
     class: "border-success/35 bg-surface text-success",
     icon: CheckCircleIcon,
   };
+});
+const productCode = computed(
+  () => props.product.manufacturerPartNumber || props.product.sku || "",
+);
+const productMetaItems = computed(() =>
+  [
+    props.product.brand ? `ბრენდი: ${props.product.brand}` : "",
+    productCode.value ? `კოდი: ${productCode.value}` : "",
+  ].filter(Boolean),
+);
+const vehicleFilterParts = computed(() =>
+  [
+    props.vehicleFilter.make,
+    props.vehicleFilter.model,
+    props.vehicleFilter.year,
+  ].filter(Boolean),
+);
+const vehicleFilterLabel = computed(() => vehicleFilterParts.value.join(" "));
+const compatibilityBadge = computed(() => {
+  const compatibility = props.product.compatibility;
+
+  if (!compatibility?.matched) return null;
+
+  if (compatibility.match_type === "universal") {
+    return "უნივერსალური თავსებადობა";
+  }
+
+  if (compatibility.match_type === "engine" && props.vehicleFilter.engine) {
+    return "ძრავი ემთხვევა";
+  }
+
+  if (vehicleFilterLabel.value) {
+    if (props.vehicleFilter.model && props.vehicleFilter.year) {
+      return `თავსებადია ${vehicleFilterLabel.value}-თან`;
+    }
+
+    return `შეესაბამება ${vehicleFilterLabel.value}-ის ფილტრს`;
+  }
+
+  return "თავსებადია არჩეულ მანქანასთან";
 });
 </script>
 
@@ -159,6 +212,26 @@ const availability = computed(() => {
       >
         {{ product.subtitle || " " }}
       </p>
+
+      <div
+        v-if="productMetaItems.length || compatibilityBadge"
+        class="mt-2 min-h-[26px] space-y-1"
+      >
+        <p
+          v-if="productMetaItems.length"
+          class="truncate text-[12px] font-semibold leading-[18px] text-text-muted"
+        >
+          {{ productMetaItems.join(" · ") }}
+        </p>
+        <span
+          v-if="compatibilityBadge"
+          class="inline-flex max-w-full items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-1 text-[11px] font-bold leading-[14px] text-success"
+          :title="compatibilityBadge"
+        >
+          <CheckCircleIcon class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span class="truncate">{{ compatibilityBadge }}</span>
+        </span>
+      </div>
 
       <div class="mt-3 flex items-end justify-between gap-2">
         <span

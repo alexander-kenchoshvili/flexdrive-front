@@ -782,9 +782,12 @@ const handleBuyNow = async () => {
                   შეგიძლია მაქსიმუმ {{ remainingAddableQuantity }} ცალი.
                 </p>
 
-                <p class="text-sm text-text-secondary">
+                <p v-if="product.in_stock" class="text-sm text-text-secondary">
                   სწრაფი ყიდვა იყენებს მიმდინარე მარაგს და შეგიძლია შეიძინო
                   მაქსიმუმ {{ maxSelectableQuantity }} ცალი.
+                </p>
+                <p v-else class="text-sm text-warning">
+                  პროდუქტი ამჟამად მარაგში არ არის.
                 </p>
               </div>
 
@@ -802,6 +805,7 @@ const handleBuyNow = async () => {
                 </BaseButton>
 
                 <BaseButton
+                  v-if="product.in_stock"
                   type="button"
                   variant="secondary"
                   class="px-6 py-3.5 text-sm upper"
@@ -1043,6 +1047,7 @@ const handleBuyNow = async () => {
           </BaseButton>
 
           <BaseButton
+            v-if="product.in_stock"
             type="button"
             variant="secondary"
             class="w-full px-5 py-3 text-sm upper"

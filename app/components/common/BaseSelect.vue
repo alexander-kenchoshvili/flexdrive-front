@@ -26,6 +26,8 @@ type BaseSelectProps = {
   disabled?: boolean;
   error?: string;
   hint?: string;
+  emptyText?: string;
+  displayValue?: string;
 };
 
 const props = withDefaults(defineProps<BaseSelectProps>(), {
@@ -38,6 +40,8 @@ const props = withDefaults(defineProps<BaseSelectProps>(), {
   disabled: false,
   error: "",
   hint: "",
+  emptyText: "არჩევანი არ არის",
+  displayValue: "",
 });
 
 const emit = defineEmits<{
@@ -53,8 +57,20 @@ const selectedOption = computed(() =>
   props.options.find((option) => option.value === props.modelValue),
 );
 
+const modelValueLabel = computed(() => {
+  if (props.modelValue === null || props.modelValue === undefined || props.modelValue === "") {
+    return "";
+  }
+
+  return String(props.modelValue);
+});
+
 const displayLabel = computed(
-  () => selectedOption.value?.label || props.placeholder,
+  () =>
+    props.displayValue ||
+    selectedOption.value?.label ||
+    modelValueLabel.value ||
+    props.placeholder,
 );
 
 const rootClass = computed(() => (attrs.class as any) ?? undefined);
@@ -70,7 +86,7 @@ const controlClasses = computed(() => {
 });
 
 const optionsPanelClasses =
-  "absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-border-default bg-surface py-1 shadow-[0_22px_48px_-30px_var(--shadow-color)] focus:outline-none";
+  "base-select-options-scroll absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-border-default bg-surface py-1 shadow-[0_22px_48px_-30px_var(--shadow-color)] focus:outline-none";
 
 const optionClasses = (active: boolean, selected: boolean, disabled?: boolean) => {
   const base =
@@ -131,6 +147,13 @@ const updateValue = (value: string | number) => {
           leave-to-class="scale-95 opacity-0"
         >
           <ListboxOptions :class="optionsPanelClasses">
+            <li
+              v-if="!options.length"
+              class="mx-1 select-none rounded-md px-3 py-2.5 text-sm text-text-muted"
+            >
+              {{ emptyText }}
+            </li>
+
             <ListboxOption
               v-for="option in options"
               :key="String(option.value)"
@@ -158,3 +181,46 @@ const updateValue = (value: string | number) => {
     <p v-else-if="hint" class="mt-2 text-xs leading-5 text-text-muted">{{ hint }}</p>
   </div>
 </template>
+
+<style scoped>
+:global(html.dark .base-select-options-scroll) {
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--accent-primary) 74%,
+      var(--surface-3)
+    )
+    transparent;
+  scrollbar-width: thin;
+}
+
+:global(html.dark .base-select-options-scroll::-webkit-scrollbar) {
+  width: 10px;
+}
+
+:global(html.dark .base-select-options-scroll::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+:global(html.dark .base-select-options-scroll::-webkit-scrollbar-thumb) {
+  border: 3px solid var(--surface);
+  border-radius: 999px;
+  background-color: color-mix(
+    in srgb,
+    var(--accent-primary) 76%,
+    var(--surface-3)
+  );
+  background-clip: padding-box;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(html.dark .base-select-options-scroll::-webkit-scrollbar-thumb:hover) {
+    background-color: var(--accent-hover);
+  }
+}
+
+:global(html.dark .base-select-options-scroll::-webkit-scrollbar-button) {
+  display: none;
+  width: 0;
+  height: 0;
+}
+</style>
