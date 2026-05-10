@@ -34,20 +34,22 @@ const getReadTimeLabel = (post: ContentItemData) => {
 
 <template>
   <section
-    class="rounded-[20px] border border-border-default bg-surface p-5 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-6"
+    class="rounded-lg border border-border-default bg-surface p-4 shadow-[0_18px_44px_-38px_var(--shadow-color)] md:p-5"
   >
-    <h2 class="text-xl font-extrabold text-text-primary">მსგავსი სტატიები</h2>
+    <h2 class="text-[18px] font-extrabold leading-7 text-text-primary">
+      მსგავსი სტატიები
+    </h2>
 
-    <div class="mt-5 space-y-4">
+    <div class="mt-4 space-y-3">
       <NuxtLink
         v-for="post in posts"
         :key="post.id"
         :to="getPostUrl(post)"
-        class="group flex gap-4 rounded-[16px] border border-transparent p-2 transition-colors duration-200 hover:border-border-default hover:bg-surface-2"
+        class="group flex gap-3 rounded-lg border border-transparent p-2 transition-colors duration-200 hover:border-border-default hover:bg-surface-2"
       >
-        <div class="relative h-20 w-20 shrink-0 overflow-hidden rounded-[14px]">
+        <div class="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-border-default bg-surface-2">
           <div
-            class="absolute inset-0 bg-[linear-gradient(135deg,#ff7b2c_0%,#ff9f4b_52%,#ffc968_100%)]"
+            class="absolute inset-0 bg-surface-2"
           />
 
           <BasePicture
@@ -69,7 +71,7 @@ const getReadTimeLabel = (post: ContentItemData) => {
           </p>
 
           <h3
-            class="mt-1 text-sm font-bold leading-6 text-text-primary transition-colors duration-200 group-hover:text-accent-primary"
+            class="mt-1 text-[14px] font-bold leading-[22px] text-text-primary transition-colors duration-200 group-hover:text-accent-primary"
           >
             {{ post.title }}
           </h3>

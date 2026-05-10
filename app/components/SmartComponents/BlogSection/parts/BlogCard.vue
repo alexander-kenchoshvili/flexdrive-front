@@ -47,9 +47,9 @@ const pictureData = computed(() => {
 <template>
   <NuxtLink
     :to="postUrl"
-    class="group flex h-full flex-col overflow-hidden rounded-lg border border-border-default bg-surface transition-colors duration-200 hover:border-accent-primary"
+    class="group flex h-full flex-col overflow-hidden rounded-lg border border-border-default bg-surface shadow-[0_18px_44px_-38px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200 hover:border-accent-primary/70 hover:shadow-[0_22px_54px_-36px_var(--shadow-color)]"
   >
-    <div class="relative aspect-[16/9] overflow-hidden">
+    <div class="relative aspect-[16/9] overflow-hidden border-b border-border-default">
       <div
         class="absolute inset-0 bg-surface-2"
       />
@@ -63,14 +63,14 @@ const pictureData = computed(() => {
       />
 
       <span
-        class="absolute left-3 top-3 z-[2] inline-flex min-h-7 items-center rounded-md bg-accent-primary px-2.5 py-1 text-[11px] font-bold text-text-invert"
+        class="absolute left-3 top-3 z-[2] inline-flex min-h-7 items-center rounded-md border border-accent-primary bg-accent-primary px-2.5 py-1 text-[11px] font-bold text-text-invert shadow-[0_10px_24px_-16px_var(--shadow-color)]"
       >
         {{ categoryLabel }}
       </span>
 
       <span
         v-if="readTimeLabel"
-        class="absolute bottom-3 right-3 z-[2] inline-flex min-h-8 items-center gap-1.5 rounded-md bg-black/70 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm"
+        class="absolute bottom-3 right-3 z-[2] inline-flex min-h-8 items-center gap-1.5 rounded-md border border-footer-border bg-footer-bg px-2.5 py-1.5 text-xs font-semibold text-footer-text-primary shadow-[0_10px_24px_-16px_var(--shadow-color)]"
       >
         <ClockIcon class="h-4 w-4 shrink-0" aria-hidden="true" />
         {{ readTimeLabel }}
@@ -81,14 +81,14 @@ const pictureData = computed(() => {
       <BlogCardMetaRow :published-at="post.blog_meta?.published_at" />
 
       <h3
-        class="blog-card-title upper mt-3 text-[16px] font-bold leading-[1.42] text-text-primary transition-colors duration-200 group-hover:text-accent-primary"
+        class="blog-card-title upper mt-3 text-[15px] font-bold leading-[21px] text-text-primary transition-colors duration-200 group-hover:text-accent-primary sm:text-[16px] sm:leading-[22px]"
       >
         {{ post.title }}
       </h3>
 
       <p
         v-if="excerpt"
-        class="blog-card-excerpt mt-2 pb-1 text-[13px] leading-5 text-text-secondary"
+        class="blog-card-excerpt mt-2 pb-1 text-[13px] font-medium leading-5 text-text-secondary"
       >
         {{ excerpt }}
       </p>

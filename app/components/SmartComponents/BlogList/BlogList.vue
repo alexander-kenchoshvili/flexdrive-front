@@ -283,13 +283,13 @@ useHead(() => ({
     <div class="container-fluid">
       <AppBreadcrumbs :items="breadcrumbItems" />
 
-      <header class="py-10 text-center md:py-12">
+      <header class="py-8 text-left md:py-10">
         <h1
-          class="title-under-xs upper text-[34px] font-extrabold leading-[1.1] text-text-primary md:text-[42px] lg:text-[48px]"
+          class="title-under-xs upper text-[28px] font-extrabold leading-[1.16] text-text-primary sm:text-[32px] md:text-[36px] lg:text-[40px]"
         >
           {{ title }}
         </h1>
-        <p class="subtitle-under-xs mx-auto mt-4 max-w-3xl text-base leading-7 text-text-secondary md:text-lg">
+        <p class="subtitle-under-xs mt-3 max-w-3xl text-[14px] font-medium leading-[22px] text-text-secondary md:text-[15px] md:leading-6">
           {{ subtitle }}
         </p>
       </header>
@@ -313,7 +313,7 @@ useHead(() => ({
 
         <div
           v-if="hasNonBlockingError"
-          class="rounded-[20px] border border-warning/30 bg-surface px-4 py-3 text-sm text-text-secondary"
+          class="rounded-lg border border-warning/30 bg-surface px-4 py-3 text-sm text-text-secondary"
         >
           მონაცემების განახლება ვერ მოხერხდა. ნაჩვენებია ბოლოს მიღებული შედეგები.
         </div>
@@ -326,7 +326,7 @@ useHead(() => ({
 
         <div
           v-else-if="hasBlockingError"
-          class="rounded-[20px] border border-error/25 bg-surface p-6"
+          class="rounded-lg border border-error/25 bg-surface p-6"
         >
           <p class="text-base font-semibold text-text-primary">
             ბლოგების ჩატვირთვა ვერ მოხერხდა.
@@ -347,7 +347,7 @@ useHead(() => ({
 
         <div
           v-else-if="!posts.length"
-          class="rounded-[20px] border border-dashed border-border-default bg-surface p-6 text-sm text-text-secondary"
+          class="rounded-lg border border-dashed border-border-default bg-surface p-6 text-sm text-text-secondary"
         >
           არჩეული პარამეტრებით სტატიები ვერ მოიძებნა.
         </div>

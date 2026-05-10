@@ -23,12 +23,12 @@ const isActiveCategory = (name: string | null) =>
 </script>
 
 <template>
-  <div class="blog-category-chip-strip -mx-1 flex gap-2 overflow-x-auto px-1 pt-1 pb-3">
+  <div class="blog-category-chip-strip -mx-1 flex gap-2 overflow-x-auto px-1 pb-3 pt-1">
     <button
       type="button"
       :disabled="disabled"
       :class="[
-        'shrink-0 rounded-[10px] border px-4 py-2 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60',
+        'shrink-0 rounded-md border px-3 py-2 text-[13px] font-bold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-sm',
         isActiveCategory(null)
           ? 'border-accent-primary bg-accent-primary text-text-invert'
           : 'border-border-default bg-surface text-text-secondary hover:border-accent-primary hover:text-accent-primary',
@@ -44,7 +44,7 @@ const isActiveCategory = (name: string | null) =>
       type="button"
       :disabled="disabled"
       :class="[
-        'shrink-0 rounded-[10px] border px-4 py-2 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60',
+        'shrink-0 rounded-md border px-3 py-2 text-[13px] font-bold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-sm',
         isActiveCategory(category.name)
           ? 'border-accent-primary bg-accent-primary text-text-invert'
           : 'border-border-default bg-surface text-text-secondary hover:border-accent-primary hover:text-accent-primary',

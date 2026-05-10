@@ -38,7 +38,7 @@ const sortModel = computed({
 
 <template>
   <div
-    class="flex flex-col gap-4 rounded-[20px] border border-border-default bg-surface p-4 md:flex-row md:items-center md:justify-between"
+    class="flex flex-col gap-4 rounded-lg border border-border-default bg-surface p-4 md:flex-row md:items-center md:justify-between"
   >
     <p class="text-sm leading-6 text-text-secondary">
       ნაპოვნია

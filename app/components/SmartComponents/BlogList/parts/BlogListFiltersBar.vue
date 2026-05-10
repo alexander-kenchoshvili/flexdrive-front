@@ -26,7 +26,7 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="rounded-[20px] border border-border-default bg-surface p-4 md:p-6"
+    class="rounded-lg border border-border-default bg-surface p-4 shadow-[0_18px_44px_-38px_var(--shadow-color)] md:p-5"
   >
     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
       <BlogCategoryChips

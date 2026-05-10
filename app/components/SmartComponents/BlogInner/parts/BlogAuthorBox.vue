@@ -27,11 +27,11 @@ const description = computed(
 
 <template>
   <section
-    class="rounded-[20px] border border-border-default bg-surface-2 p-5 md:p-6"
+    class="rounded-lg border border-border-default bg-surface-2 p-5 md:p-6"
   >
     <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
       <div
-        class="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#ff6b35_0%,#ff9b66_100%)] text-[28px] font-extrabold text-text-invert"
+        class="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-accent-primary/25 bg-accent-primary/10 text-[24px] font-extrabold text-accent-primary md:h-20 md:w-20 md:text-[28px]"
       >
         {{ initials }}
       </div>

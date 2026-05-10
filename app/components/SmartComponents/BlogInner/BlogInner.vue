@@ -158,7 +158,7 @@ useHead(() => ({
         "
       >
         <article
-          class="overflow-hidden rounded-[24px] border border-border-default bg-surface shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+          class="overflow-hidden rounded-lg border border-border-default bg-surface shadow-[0_18px_44px_-38px_var(--shadow-color)]"
         >
           <BlogInnerHeader
             :title="articleTitle"
@@ -171,7 +171,7 @@ useHead(() => ({
             :image="heroImage"
           />
 
-          <div class="px-5 pb-8 pt-8 md:px-8 md:pb-10 lg:px-12 lg:pb-12">
+          <div class="px-5 pb-8 pt-8 md:px-8 md:pb-10 lg:px-10 lg:pb-12">
             <BaseRichText
               :html="article.editor"
               empty-text="სტატიის ტექსტი ჯერ არ არის დამატებული."

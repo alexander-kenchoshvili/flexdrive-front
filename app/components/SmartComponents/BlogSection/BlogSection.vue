@@ -48,11 +48,11 @@ const posts = computed<BlogListItem[]>(() => {
       <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div>
           <h2
-            class="title-under-xs upper text-[26px] font-extrabold leading-[1.15] text-text-primary sm:text-[30px] md:text-[34px]"
+            class="title-under-xs upper text-[26px] font-extrabold leading-[1.16] text-text-primary sm:text-[28px] md:text-[30px] lg:text-[36px]"
           >
             {{ sectionTitle }}
           </h2>
-          <p class="subtitle-under-xs mt-3 max-w-2xl text-sm leading-6 text-text-secondary md:text-base">
+          <p class="subtitle-under-xs mt-3 max-w-2xl text-[14px] font-medium leading-[22px] text-text-secondary md:text-[15px] md:leading-6">
             {{ sectionSubtitle }}
           </p>
         </div>

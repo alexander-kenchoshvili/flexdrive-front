@@ -37,7 +37,7 @@ const hasHeroImage = computed(
   <header class="border-b border-border-default">
     <div class="relative aspect-[16/10] overflow-hidden md:aspect-[21/10]">
       <div
-        class="absolute inset-0 bg-[linear-gradient(135deg,#ff7b2c_0%,#ff9f4b_52%,#ffc968_100%)]"
+        class="absolute inset-0 border-b border-border-default bg-surface-2"
       />
 
       <BasePicture
@@ -52,13 +52,13 @@ const hasHeroImage = computed(
 
     <div class="px-5 py-8 md:px-8 md:py-10 lg:px-12">
       <span
-        class="inline-flex min-h-9 items-center rounded-md bg-accent-primary px-3.5 py-1.5 text-xs font-bold text-text-invert"
+        class="inline-flex min-h-8 items-center rounded-md border border-accent-primary/25 bg-accent-primary/10 px-3 py-1 text-xs font-bold text-accent-primary"
       >
         {{ categoryLabel }}
       </span>
 
       <h1
-        class="title-under-xs mt-5 text-[30px] font-extrabold leading-[1.18] text-text-primary md:text-[38px] lg:text-[46px]"
+        class="title-under-xs mt-5 text-[28px] font-extrabold leading-[1.18] text-text-primary md:text-[36px] lg:text-[42px]"
       >
         {{ title }}
       </h1>

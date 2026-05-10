@@ -32,7 +32,7 @@ const placeholderText = computed(() => props.emptyText?.trim() || "");
   color: var(--text-primary);
   font-weight: 800;
   line-height: 1.22;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .base-rich-text :deep(h2) {
@@ -102,9 +102,8 @@ const placeholderText = computed(() => props.emptyText?.trim() || "");
   margin: 2rem 0;
   padding: 1.35rem 1.4rem;
   border-left: 4px solid var(--accent-primary);
-  border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(255, 107, 53, 0.12), rgba(255, 107, 53, 0.04));
+  border-radius: 8px;
+  background: var(--accent-soft);
   color: var(--text-primary);
 }
 
@@ -122,7 +121,7 @@ const placeholderText = computed(() => props.emptyText?.trim() || "");
   display: block;
   width: 100%;
   margin: 2rem 0;
-  border-radius: 18px;
+  border-radius: 8px;
 }
 
 .base-rich-text :deep(figure) {
@@ -141,7 +140,7 @@ const placeholderText = computed(() => props.emptyText?.trim() || "");
   margin: 2rem 0;
   border-collapse: collapse;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 8px;
   border: 1px solid var(--border-default);
 }
 
@@ -168,7 +167,7 @@ const placeholderText = computed(() => props.emptyText?.trim() || "");
 .base-rich-text :deep(pre) {
   margin: 1.75rem 0;
   overflow-x: auto;
-  border-radius: 16px;
+  border-radius: 8px;
   background: var(--surface-2);
   padding: 1rem 1.1rem;
 }

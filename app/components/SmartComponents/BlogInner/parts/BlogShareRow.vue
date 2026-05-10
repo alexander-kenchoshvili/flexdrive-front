@@ -123,24 +123,10 @@ const handleCopyLink = async () => {
 
 @media (hover: hover) and (pointer: fine) {
   .share-action:hover {
-    transform: translateY(-1px);
-  }
-
-  .share-action--copy:hover {
     border-color: var(--accent-primary);
+    background: var(--accent-soft);
     color: var(--accent-primary);
-  }
-
-  .share-action--telegram:hover {
-    border-color: #229ed9;
-    background: rgba(34, 158, 217, 0.08);
-    color: #229ed9;
-  }
-
-  .share-action--facebook:hover {
-    border-color: #1877f2;
-    background: rgba(24, 119, 242, 0.08);
-    color: #1877f2;
+    transform: translateY(-1px);
   }
 }
 
