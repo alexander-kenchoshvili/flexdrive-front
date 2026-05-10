@@ -524,7 +524,7 @@ const handleBuyNow = async () => {
 </script>
 
 <template>
-  <section class="py-4 pb-28 md:pb-32 lg:pb-12">
+  <section class="pt-2 pb-12 sm:pt-4">
     <div class="container-fluid">
       <ProductDetailSkeleton v-if="pending" />
 
@@ -550,8 +550,7 @@ const handleBuyNow = async () => {
         <AppBreadcrumbs :items="breadcrumbItems" />
 
         <div
-          class="grid gap-8 min-[1100px]:grid-cols-2 min-[1100px]:gap-10"
-          style="margin-top: 16px"
+          class="grid !mt-2 gap-4 sm:!mt-4 sm:gap-8 min-[1100px]:grid-cols-2 min-[1100px]:gap-10"
         >
           <div
             class="min-w-0 min-[1100px]:sticky min-[1100px]:top-36 min-[1100px]:self-start"
@@ -1053,7 +1052,7 @@ const handleBuyNow = async () => {
             type="button"
             variant="primary"
             :class="[
-              'product-mobile-buy-button w-full !p-0 text-sm upper',
+              'product-mobile-buy-button w-full !p-0 text-[12px] upper sm:text-sm',
               product.in_stock ? '' : 'col-span-2',
             ]"
             :loading="buyNowPending"
@@ -1067,7 +1066,7 @@ const handleBuyNow = async () => {
             v-if="product.in_stock"
             type="button"
             variant="secondary"
-            class="product-mobile-cart-button w-full !p-0 text-sm upper"
+            class="product-mobile-cart-button w-full !p-0 text-[12px] upper sm:text-sm"
             :loading="addToCartPending"
             :disabled="!canAddSelectedQuantityToCart"
             @click="handleAddToCart"
