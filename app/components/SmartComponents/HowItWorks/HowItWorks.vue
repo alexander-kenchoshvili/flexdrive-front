@@ -177,17 +177,23 @@ const activeTabLabel = computed(
               @click="activeFlow = tab.key"
             >
               <span
-                :class="[
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-black',
-                  activeFlow === tab.key
-                    ? 'bg-transparent text-text-invert ring-1 ring-inset ring-white/25 dark:ring-black/20'
-                    : 'bg-surface-2 text-accent-primary',
-                ]"
-                aria-hidden="true"
+                class="grid w-full max-w-[190px] grid-cols-[1.75rem_minmax(0,1fr)] items-center gap-2 text-left"
               >
-                {{ tabIndex + 1 }}
+                <span
+                  :class="[
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-black',
+                    activeFlow === tab.key
+                      ? 'bg-transparent text-text-invert ring-1 ring-inset ring-white/25 dark:ring-black/20'
+                      : 'bg-surface-2 text-accent-primary',
+                  ]"
+                  aria-hidden="true"
+                >
+                  {{ tabIndex + 1 }}
+                </span>
+                <span class="min-w-0">
+                  {{ tab.label }}
+                </span>
               </span>
-              {{ tab.label }}
             </button>
           </div>
         </div>
