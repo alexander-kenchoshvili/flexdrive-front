@@ -1053,7 +1053,7 @@ const handleBuyNow = async () => {
             type="button"
             variant="primary"
             :class="[
-              'product-mobile-buy-button w-full px-4 py-3 text-sm upper',
+              'product-mobile-buy-button w-full !p-0 text-sm upper',
               product.in_stock ? '' : 'col-span-2',
             ]"
             :loading="buyNowPending"
@@ -1067,7 +1067,7 @@ const handleBuyNow = async () => {
             v-if="product.in_stock"
             type="button"
             variant="secondary"
-            class="product-mobile-cart-button w-full px-3 py-3 text-sm upper"
+            class="product-mobile-cart-button w-full !p-0 text-sm upper"
             :loading="addToCartPending"
             :disabled="!canAddSelectedQuantityToCart"
             @click="handleAddToCart"
@@ -1154,14 +1154,12 @@ const handleBuyNow = async () => {
 
   .product-mobile-buy-button {
     min-height: 44px;
-    padding-inline: 0.75rem;
   }
 
   .product-mobile-cart-button {
     min-width: 44px;
     width: 44px;
     min-height: 44px;
-    padding-inline: 0;
   }
 
   .product-mobile-cart-icon {
