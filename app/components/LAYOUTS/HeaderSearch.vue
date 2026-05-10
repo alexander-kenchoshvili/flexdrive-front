@@ -16,9 +16,11 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     hideMobileTrigger?: boolean;
+    sheetOnly?: boolean;
   }>(),
   {
     hideMobileTrigger: false,
+    sheetOnly: false,
   },
 );
 
@@ -382,7 +384,7 @@ defineExpose({
 
 <template>
   <div class="w-full" ref="rootRef">
-    <div class="hidden sm:block">
+    <div v-if="!props.sheetOnly" class="hidden sm:block">
       <div class="relative">
         <form
           class="group flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200 focus-within:border-accent-primary focus-within:bg-surface focus-within:shadow-[0_14px_34px_-22px_rgba(82,120,32,0.32)]"
@@ -746,7 +748,7 @@ defineExpose({
       </div>
     </div>
 
-    <div v-if="!props.hideMobileTrigger" class="sm:hidden">
+    <div v-if="!props.hideMobileTrigger && !props.sheetOnly" class="sm:hidden">
       <button
         type="button"
         class="flex min-h-[52px] w-full items-center gap-3 rounded-[14px] border border-header-border bg-header-surface px-3 text-left shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-colors duration-200 hover:border-accent-primary hover:bg-surface"

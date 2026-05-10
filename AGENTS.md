@@ -160,4 +160,48 @@ This file exists so the project context does not need to be re-explained in ever
   - `OrderConfidence` cards now use: `შეკვეთა მარტივად იწყება`, `რეგისტრაციის გარეშე`, `გადახდა შენზეა მორგებული`, `მიწოდება წინასწარ გასაგებია`.
   - `OrderConfidence` title is `შეკვეთა Flex[[Drive]]-ზე მარტივად და გარკვევით`.
   If staging UI still shows old content, suspect API/browser cache before changing code.
-- Likely next redesign target: continue homepage below `OrderConfidence` (`HowItWorks`, then `BlogSection`), unless the user redirects.
+- `HowItWorks` and `BlogSection` have also been redesigned into the new FlexDrive visual direction. The homepage section pass is now considered substantially complete unless a later QA/design review finds specific issues.
+- Likely next redesign target: product detail page, building from the redesigned catalog/product-card direction while preserving existing product, cart, wishlist, stock, and checkout logic.
+
+## Current Catalog Redesign State - 2026-05-08
+
+- Catalog listing/filter UI was redesigned and stabilized around the new FlexDrive auto-parts direction. Main frontend files:
+  - `app/components/SmartComponents/ProductCatalog/ProductCatalog.vue`
+  - `app/components/SmartComponents/ProductCatalog/parts/CatalogFilters.vue`
+  - `app/components/SmartComponents/ProductCatalog/parts/CatalogMobileFilterSheet.vue`
+  - `app/components/SmartComponents/ProductCatalog/parts/CatalogToolbar.vue`
+  - `app/components/SmartComponents/ProductCatalog/parts/ProductGrid.vue`
+  - `app/components/SmartComponents/ProductCatalog/parts/ProductCard.vue`
+  - `app/components/common/BaseSelect.vue`
+  - `app/pages/catalog/[slug].vue`
+- Vehicle filter behavior is intentionally changed:
+  - Make is the first required vehicle step.
+  - Year can be selected after make; model is no longer required before year.
+  - Engine stays dependent on model + year and is disabled when the backend has no engine options for that model/year.
+  - The local vehicle reset control in the sidebar is icon-only with `aria-label`; the main global clear button remains visible as text.
+- Catalog filter stability decisions:
+  - Desktop sidebar currently follows the page naturally; do not re-add a separate full-sidebar scroll panel unless explicitly requested.
+  - Category list keeps its own internal scroll area.
+  - Filtering does not rely on ad hoc scroll restoration. User-applied filters call a small smooth scroll to the product results start when the results are not already comfortably visible.
+  - `app/router.options.ts` keeps browser saved positions and prevents automatic top-scroll when moving between `/catalog` and `/catalog/category/:slug`.
+  - Product refresh uses a lightweight `ProductGrid` skeleton overlay so the right grid does not collapse during filter refresh.
+  - `CatalogToolbar` keeps a stable active-filter row height and shows the empty helper copy: `აირჩიე ფილტრები შედეგების დასაზუსტებლად`.
+- Filter logic intentionally simplified:
+  - The `ახალი` quick filter was removed from desktop/mobile filters and query construction.
+  - Product cards still show the `ახალი` product badge when `product.is_new` is true.
+  - Brand, placement, side, stock, sale, price, category, vehicle and sort filters remain.
+- Product card compatibility copy is frontend-driven from the catalog API `compatibility` payload. Current behavior should stay conservative:
+  - universal fitment shows universal compatibility copy.
+  - engine match shows engine-specific copy only when an engine is selected.
+  - otherwise the card can fall back to selected vehicle filter copy.
+  - Do not expand compatibility copy to price/stock/brand filters; those are narrowing filters, not fitment evidence.
+- Product detail out-of-stock behavior was cleaned up:
+  - if a product is out of stock, only the disabled primary `მარაგში არ არის` action remains.
+  - duplicate disabled add-to-cart buttons are hidden on desktop and mobile sticky actions.
+- `BaseSelect` dark-mode dropdown scrollbar was restyled to match the design system.
+- Backend/staging note for catalog filters:
+  - Backend repo is `C:\Users\kench\Desktop\flexdriveback`.
+  - Catalog filter schema/data exists through backend catalog vehicle/fitment models and `seed_catalog_filters`.
+  - On 2026-05-08 staging Neon/Postgres was checked: no pending migrations, then `python manage.py seed_catalog_filters --product-limit 0` was run.
+  - Staging counts after seed: 300 products, 10 brands, 8 vehicle makes, 22 vehicle models, 43 engines, 285 fitments.
+  - Do not run `seed_catalog`, `seed_staging_demo`, or `--reset-fitments` on staging unless the user explicitly asks; those touch broader demo data or can reset fitments.

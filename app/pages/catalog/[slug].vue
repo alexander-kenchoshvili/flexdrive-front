@@ -4,6 +4,8 @@ import {
   PlusIcon,
   ShoppingCartIcon,
 } from "@heroicons/vue/24/outline";
+import { Swiper, SwiperSlide } from "swiper/vue";
+import "swiper/css";
 import { storeToRefs } from "pinia";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import BaseButton from "~/components/common/BaseButton.vue";
@@ -522,7 +524,7 @@ const handleBuyNow = async () => {
 </script>
 
 <template>
-  <section class="py-8 pb-28 md:py-10 md:pb-32 lg:pb-12">
+  <section class="py-4 pb-28 md:pb-32 lg:pb-12">
     <div class="container-fluid">
       <ProductDetailSkeleton v-if="pending" />
 
@@ -547,19 +549,25 @@ const handleBuyNow = async () => {
       <div v-else class="space-y-10">
         <AppBreadcrumbs :items="breadcrumbItems" />
 
-        <div class="grid gap-8 lg:grid-cols-2 lg:gap-10">
-          <div class="min-w-0 lg:sticky lg:top-36 lg:self-start">
+        <div
+          class="grid gap-8 min-[1100px]:grid-cols-2 min-[1100px]:gap-10"
+          style="margin-top: 16px"
+        >
+          <div
+            class="min-w-0 min-[1100px]:sticky min-[1100px]:top-36 min-[1100px]:self-start"
+          >
             <div
               class="min-w-0 overflow-hidden rounded-[24px] border border-border-default bg-surface shadow-[0_24px_60px_-38px_var(--shadow-color)]"
             >
               <div
-                class="relative aspect-square overflow-hidden bg-[linear-gradient(135deg,#ff7b2c_0%,#ff9f4b_52%,#ffc968_100%)]"
+                class="relative h-[260px] w-full overflow-hidden bg-white sm:h-[300px] md:h-[340px] min-[1024px]:h-[420px] min-[1100px]:aspect-square min-[1100px]:h-auto"
               >
                 <BasePicture
                   v-if="activeImage"
                   :data="activeImage.image"
                   :alt="activeImage.alt_text || productTitle"
                   preset="detail"
+                  fit="contain"
                   class="h-full w-full"
                 />
 
@@ -596,7 +604,7 @@ const handleBuyNow = async () => {
                   type="button"
                   :ref="(element) => setThumbnailButtonRef(element, index)"
                   :class="[
-                    'w-[72px] shrink-0 snap-start overflow-hidden rounded-[16px] border bg-surface-2 transition-colors duration-200 sm:w-20',
+                    'w-[72px] shrink-0 snap-start overflow-hidden rounded-[16px] border bg-white transition-colors duration-200 sm:w-20',
                     index === selectedImageIndex
                       ? 'border-accent-primary'
                       : 'border-border-default hover:border-accent-primary/50',
@@ -620,7 +628,7 @@ const handleBuyNow = async () => {
 
           <div class="space-y-6">
             <div
-              class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+              class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
             >
               <p
                 class="text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary"
@@ -641,7 +649,7 @@ const handleBuyNow = async () => {
                 {{ productLead }}
               </p>
 
-              <div class="mt-5 flex flex-wrap items-center gap-3">
+              <div class="mt-5 flex flex-wrap items-center gap-[0.25rem]">
                 <span
                   :class="[
                     'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
@@ -667,11 +675,11 @@ const handleBuyNow = async () => {
               </div>
 
               <div
-                class="mt-6 rounded-[20px] border border-border-default bg-surface-2 p-5"
+                class="mt-6 rounded-[8px] border border-border-default bg-surface-2 p-2 md:rounded-[20px] md:p-5"
               >
-                <div class="flex flex-wrap items-end gap-3">
+                <div class="flex flex-wrap items-center gap-2 md:gap-3">
                   <span
-                    class="text-[34px] font-extrabold leading-none text-accent-primary"
+                    class="text-[24px] font-extrabold leading-none text-accent-primary md:text-[34px]"
                   >
                     {{ priceValue.toFixed(2) }} GEL
                   </span>
@@ -685,7 +693,7 @@ const handleBuyNow = async () => {
 
                   <span
                     v-if="discountPercent"
-                    class="inline-flex rounded-md bg-success/10 px-2.5 py-1 text-xs font-bold text-success"
+                    class="inline-flex rounded-md bg-success/10 text-xs font-bold text-success"
                   >
                     -{{ discountPercent }}%
                   </span>
@@ -833,7 +841,7 @@ const handleBuyNow = async () => {
               <p
                 v-if="cartFeedback"
                 :class="[
-                  'rounded-[16px] border px-4 py-3 text-sm',
+                  'mt-3 rounded-[16px] border px-4 py-3 text-sm',
                   cartFeedbackTone === 'success'
                     ? 'border-success/25 bg-success/10 text-success'
                     : 'border-error/25 bg-error/10 text-error',
@@ -990,35 +998,41 @@ const handleBuyNow = async () => {
             </p>
           </div>
 
-          <div
-            class="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 xl:grid-cols-4"
+          <Swiper
+            class="related-products-swiper"
+            :slides-per-view="1.08"
+            :space-between="12"
+            :watch-overflow="true"
+            :breakpoints="{
+              480: { slidesPerView: 1.25, spaceBetween: 12 },
+              640: { slidesPerView: 2.05, spaceBetween: 14 },
+              900: { slidesPerView: 3.05, spaceBetween: 16 },
+              1200: { slidesPerView: 4, spaceBetween: 16 },
+            }"
           >
-            <ProductCard
+            <SwiperSlide
               v-for="relatedProduct in relatedProducts"
               :key="relatedProduct.id"
-              :product="relatedProduct"
-            />
-          </div>
+              class="h-auto"
+            >
+              <ProductCard :product="relatedProduct" />
+            </SwiperSlide>
+          </Swiper>
         </section>
       </div>
     </div>
 
     <div
       v-if="product && !pending"
-      class="fixed inset-x-0 bottom-0 z-30 border-t border-[#17345f] bg-[#020c1d] px-3 py-3 shadow-[0_-10px_34px_rgba(2,6,23,0.28)] md:px-6 lg:hidden"
+      class="product-mobile-purchase-shell fixed inset-x-0 bottom-0 z-30 border-t border-[#17345f] bg-[#020c1d] px-3 py-2 shadow-[0_-10px_34px_rgba(2,6,23,0.28)] md:px-6 lg:hidden"
     >
       <div
-        class="mx-auto flex max-w-[1440px] flex-col gap-3 rounded-[20px] border border-[#17345f] bg-[#081a38] px-4 py-3"
+        class="product-mobile-purchase-dock mx-auto grid max-w-[1440px] gap-2 rounded-[18px] border border-[#17345f] bg-[#081a38] px-3 py-2"
       >
-        <div class="min-w-0">
-          <p
-            class="text-xs font-medium uppercase tracking-[0.12em] text-text-muted"
-          >
-            {{ productTitle }}
-          </p>
-          <div class="mt-1 flex items-end gap-2">
+        <div class="product-mobile-purchase-summary min-w-0">
+          <div class="product-mobile-price-row flex items-end gap-2">
             <span
-              class="text-2xl font-extrabold leading-none text-accent-primary"
+              class="product-mobile-purchase-price text-[22px] font-extrabold leading-none text-accent-primary"
             >
               {{ priceValue.toFixed(2) }} GEL
             </span>
@@ -1029,16 +1043,19 @@ const handleBuyNow = async () => {
               {{ oldPriceValue.toFixed(2) }} GEL
             </span>
           </div>
-          <p class="mt-1 text-xs font-medium text-text-secondary">
+          <p class="product-mobile-purchase-quantity mt-0.5 text-xs font-medium text-text-secondary">
             რაოდენობა: {{ selectedQuantity }} ც.
           </p>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="product-mobile-purchase-actions grid grid-cols-2 gap-2">
           <BaseButton
             type="button"
             variant="primary"
-            class="w-full px-5 py-3 text-sm upper"
+            :class="[
+              'product-mobile-buy-button w-full px-4 py-3 text-sm upper',
+              product.in_stock ? '' : 'col-span-2',
+            ]"
             :loading="buyNowPending"
             :disabled="!hasStockForBuyNow"
             @click="handleBuyNow"
@@ -1050,12 +1067,16 @@ const handleBuyNow = async () => {
             v-if="product.in_stock"
             type="button"
             variant="secondary"
-            class="w-full px-5 py-3 text-sm upper"
+            class="product-mobile-cart-button w-full px-3 py-3 text-sm upper"
             :loading="addToCartPending"
             :disabled="!canAddSelectedQuantityToCart"
             @click="handleAddToCart"
           >
-            {{ product.in_stock ? "კალათაში დამატება" : "მარაგში არ არის" }}
+            <ShoppingCartIcon
+              class="product-mobile-cart-icon hidden h-5 w-5"
+              aria-hidden="true"
+            />
+            <span class="product-mobile-cart-label">კალათაში დამატება</span>
           </BaseButton>
         </div>
 
@@ -1071,17 +1092,6 @@ const handleBuyNow = async () => {
           {{ buyNowFeedback }}
         </p>
 
-        <p
-          v-if="cartFeedback"
-          :class="[
-            'rounded-[16px] border px-4 py-3 text-sm',
-            cartFeedbackTone === 'success'
-              ? 'border-success/25 bg-success/10 text-success'
-              : 'border-error/25 bg-error/10 text-error',
-          ]"
-        >
-          {{ cartFeedback }}
-        </p>
       </div>
     </div>
   </section>
@@ -1095,6 +1105,72 @@ const handleBuyNow = async () => {
 
 .product-gallery-thumbnail-strip::-webkit-scrollbar {
   display: none;
+}
+
+.related-products-swiper :deep(.swiper-slide) {
+  height: auto;
+}
+
+.related-products-swiper :deep(.swiper-slide > *) {
+  height: 100%;
+}
+
+@media (max-width: 1023px) and (max-height: 700px) {
+  .product-mobile-purchase-shell {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .product-mobile-purchase-dock {
+    grid-template-columns: minmax(104px, auto) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 16px;
+    padding: 0.5rem;
+  }
+
+  .product-mobile-purchase-summary {
+    min-width: 0;
+  }
+
+  .product-mobile-price-row {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .product-mobile-purchase-price {
+    font-size: 18px;
+    line-height: 1.05;
+  }
+
+  .product-mobile-purchase-quantity {
+    display: none;
+  }
+
+  .product-mobile-purchase-actions {
+    display: contents;
+  }
+
+  .product-mobile-buy-button {
+    min-height: 44px;
+    padding-inline: 0.75rem;
+  }
+
+  .product-mobile-cart-button {
+    min-width: 44px;
+    width: 44px;
+    min-height: 44px;
+    padding-inline: 0;
+  }
+
+  .product-mobile-cart-icon {
+    display: block;
+  }
+
+  .product-mobile-cart-label {
+    display: none;
+  }
 }
 </style>
 

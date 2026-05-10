@@ -14,6 +14,9 @@ const isAccountDialogOpen = ref(false);
 const desktopSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
   null,
 );
+const mobileSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
+  null,
+);
 
 const menuItems = computed(() =>
   menuStore.menu.filter((item) => item.show_in_menu !== false),
@@ -89,6 +92,11 @@ const closeMobileMenu = () => {
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+const openMobileSearch = async () => {
+  closeMobileMenu();
+  await mobileSearchRef.value?.openMobileSheet();
 };
 
 const closeAccountDialog = () => {
@@ -200,6 +208,15 @@ onBeforeUnmount(() => {
         >
           <button
             type="button"
+            aria-label="ძიების გახსნა"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-header-border bg-transparent text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary max-[399px]:h-9 max-[399px]:w-9 max-[399px]:rounded-[9px] max-[359px]:h-[34px] max-[359px]:w-[34px] md:hidden"
+            @click="openMobileSearch"
+          >
+            <BaseIcon name="search" :size="20" />
+          </button>
+
+          <button
+            type="button"
             :aria-label="accountButtonLabel"
             :aria-expanded="isAccountDialogOpen"
             aria-controls="header-account-dialog"
@@ -284,9 +301,11 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div class="mt-3 md:hidden">
+      <div class="md:hidden">
         <HeaderSearch
-          :hide-mobile-trigger="false"
+          ref="mobileSearchRef"
+          :hide-mobile-trigger="true"
+          :sheet-only="true"
           @open-mobile-search="closeMobileMenu"
         />
       </div>
@@ -521,6 +540,21 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (max-width: 479px) {
+  .site-logo-link {
+    min-width: 132px;
+  }
+
+  .site-logo-horizontal {
+    height: 38px;
+    width: 132px;
+  }
+
+  .header-action-cluster {
+    gap: 0.375rem;
+  }
+}
+
 @media (max-width: 399px) {
   .site-logo-image {
     height: 52px;
@@ -528,18 +562,22 @@ onBeforeUnmount(() => {
   }
 
   .site-logo-link {
-    min-width: 130px;
+    min-width: 124px;
   }
 
   .site-logo-horizontal {
-    height: 38px;
-    width: 130px;
+    height: 36px;
+    width: 124px;
   }
 
   .header-icon-button {
     height: 36px;
     width: 36px;
     border-radius: 9px;
+  }
+
+  .header-action-cluster {
+    gap: 0.25rem;
   }
 }
 

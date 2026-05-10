@@ -1,6 +1,6 @@
 # FlexDrive Redesign Roadmap
 
-Last updated: 2026-04-30
+Last updated: 2026-05-08
 
 ## Current Phase
 
@@ -12,7 +12,7 @@ Scope მკაფიოდ არის შეზღუდული:
 - არ ვცვლით API contract-ებს.
 - არ ვცვლით auth/register/login flow-ს.
 - არ ვცვლით cart, wishlist, checkout, profile, admin ან reCAPTCHA/security ქცევას.
-- არ ვამატებთ ჯერ ახალ auto-parts ლოგიკას, მაგალითად make/model/year fitment-ს.
+- არ ვამატებთ ახალ auto-parts backend contract-ებს ან fitment ლოგიკის ახალ ფენას. უკვე დამატებული catalog vehicle/fitment selector და API data flow უნდა შენარჩუნდეს.
 - ვიზუალური კომპონენტები შეიძლება გადავაკეთოთ, ჩავანაცვლოთ ან ამოვიღოთ, მაგრამ არსებული data flow და user behavior უნდა შენარჩუნდეს.
 
 ეს roadmap არის იმისთვის, რომ redesign წავიდეს ეტაპობრივად და არა ქაოსურად.
@@ -50,6 +50,41 @@ Relevant follow-up items:
 
 - If category images still show internal white padding, the cleaner long-term fix is to change backend category image variant generation from contain-on-white-canvas to cover/crop variants. The current frontend scale-up is a visual mitigation.
 - `app/router.options.ts` was type-checked with `vue-tsc --noEmit`; full `npm run build` could not be completed in the local tool environment because Vite build hit `spawn EPERM`/timeout.
+
+### 2026-05-08 Catalog Redesign Slice
+
+Completed frontend work:
+
+- Catalog listing/filter experience was redesigned toward a dense, scannable auto-parts ecommerce surface.
+- `ProductCatalog`, `CatalogFilters`, `CatalogMobileFilterSheet`, `CatalogToolbar`, `ProductGrid`, `ProductCard`, `BaseSelect`, and product detail actions were updated.
+- Vehicle filter UX was adjusted:
+  - make is still the first required step
+  - year can be selected after make without selecting model
+  - engine remains dependent on model + year and is disabled when no backend engine options exist
+- Sidebar vehicle clear is now icon-only with accessible labeling; the global clear action remains textual.
+- Desktop sidebar full internal scroll was removed again; the sidebar follows the page naturally, while the long category list keeps an internal scroll area.
+- Category filters render as accessible `button`/`role="radio"` controls instead of hidden input patterns that caused hydration/attribute mismatch warnings.
+- Filter application no longer uses ad hoc scroll restoration. User-applied filters smoothly scroll to the product results start only when the results are not already comfortably visible.
+- `app/router.options.ts` preserves saved positions and prevents automatic top-scroll between `/catalog` and `/catalog/category/:slug`.
+- Product grid refresh uses a lightweight skeleton overlay so the right-side product area does not collapse during filtering.
+- Toolbar active-filter row keeps stable minimum height and shows the empty helper copy `აირჩიე ფილტრები შედეგების დასაზუსტებლად`.
+- The `ახალი` quick filter was removed from desktop/mobile filters and query construction; the product card `ახალი` badge remains.
+- Product card compatibility badge copy is generated from the backend `compatibility` payload and should stay focused on vehicle fitment, not price/stock/brand filters.
+- Product detail out-of-stock state now shows one disabled primary `მარაგში არ არის` action instead of duplicate disabled buttons.
+- `BaseSelect` dark-mode dropdown scrollbar was restyled to match the design system.
+
+Paired backend/staging work completed in `C:\Users\kench\Desktop\flexdriveback`:
+
+- Staging migrations were checked on 2026-05-08 and no pending migration operations were found.
+- `python manage.py seed_catalog_filters --product-limit 0` was run against staging.
+- Staging catalog filter data after seed: 300 products, 10 brands, 8 vehicle makes, 22 vehicle models, 43 engines, 285 fitments.
+- Broader demo seeds were intentionally not run: avoid `seed_catalog`, `seed_staging_demo`, and `seed_catalog_filters --reset-fitments` unless explicitly requested.
+
+Relevant follow-up items:
+
+- Do not re-add full-sidebar internal scroll or the `ახალი` filter unless the user explicitly asks.
+- Do not expand compatibility badge copy to non-fitment filters such as stock, sale, brand, price, placement, or side.
+- Browser/Playwright verification should be run only on explicit user request, per project preference.
 
 ## Product Direction
 
@@ -254,7 +289,7 @@ Tasks:
 
 Important constraint:
 
-- Current catalog logic supports search, category, min/max price, sort, pagination, stock/sale/new flags from API. Do not add make/model/year logic yet.
+- Current catalog logic supports search, category, min/max price, sort, pagination, stock/sale flags, brand/placement/side facets, and vehicle make/model/year/engine fitment through the existing catalog API. Do not add new fitment rules, API payloads, or backend contracts without checking the backend first and getting an explicit request.
 
 Success criteria:
 
@@ -370,8 +405,8 @@ This order gives visible progress fast and creates reusable patterns for the res
 These are intentionally out of scope for the current phase:
 
 - Backend schema changes.
-- New fitment logic.
-- Make/model/year selector logic.
+- New fitment logic beyond the existing catalog vehicle selector.
+- New make/model/year/engine API behavior beyond the existing catalog vehicle selector.
 - OEM/part-number search logic.
 - Admin data model changes.
 - Checkout/payment behavior changes.

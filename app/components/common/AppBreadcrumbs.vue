@@ -15,20 +15,20 @@ const props = defineProps<{
   <nav
     v-if="items.length"
     aria-label="Breadcrumb"
-    class="flex flex-wrap items-center gap-1.5 text-sm text-text-secondary"
+    class="breadcrumb-scroll flex w-full max-w-full items-center gap-1.5 overflow-x-auto overflow-y-hidden whitespace-nowrap text-sm text-text-secondary"
   >
     <template v-for="(item, index) in items" :key="`${item.label}-${index}`">
       <NuxtLink
         v-if="item.to && index < items.length - 1"
         :to="item.to"
-        class="rounded-md px-1 py-1 font-medium transition-colors duration-200 hover:bg-accent-soft hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+        class="shrink-0 rounded-md px-1 py-1 font-medium transition-colors duration-200 hover:bg-accent-soft hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
       >
         {{ item.label }}
       </NuxtLink>
 
       <span
         v-else
-        class="px-1 py-1"
+        class="shrink-0 px-1 py-1"
         :class="index === items.length - 1 ? 'font-semibold text-text-primary' : ''"
       >
         {{ item.label }}
@@ -42,3 +42,14 @@ const props = defineProps<{
     </template>
   </nav>
 </template>
+
+<style scoped>
+.breadcrumb-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.breadcrumb-scroll::-webkit-scrollbar {
+  display: none;
+}
+</style>

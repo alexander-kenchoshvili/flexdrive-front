@@ -137,24 +137,22 @@ const compatibilityBadge = computed(() => {
 
     <NuxtLink
       :to="productUrl"
-      class="relative block aspect-[16/11] overflow-hidden border-b border-border-default bg-surface-2 focus-visible:outline-none"
+      class="relative block aspect-[16/11] overflow-hidden border-b border-border-default bg-white focus-visible:outline-none"
     >
-      <div class="absolute inset-0 bg-bg-muted/35" aria-hidden="true" />
-
-      <div class="relative z-[1] h-full w-full">
+      <div class="relative h-full w-full">
         <BasePicture
           v-if="imageAsset.desktop || imageAsset.tablet || imageAsset.mobile"
           :data="imageAsset"
           :alt="product.name"
           preset="card"
-          fit="cover"
+          fit="contain"
           class="h-full w-full transition-transform duration-200 group-hover:scale-[1.025]"
           lazy
         />
 
         <div
           v-else
-          class="flex h-full w-full items-center justify-center rounded-md border border-dashed border-border-muted bg-surface px-4 text-center text-sm font-bold leading-5 text-text-secondary"
+          class="flex h-full w-full items-center justify-center rounded-md border border-dashed border-border-muted bg-white px-4 text-center text-sm font-bold leading-5 text-text-secondary"
         >
           {{ product.name }}
         </div>
