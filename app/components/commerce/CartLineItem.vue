@@ -197,44 +197,46 @@ const canDecrement = computed(
         </div>
       </NuxtLink>
 
-      <div class="min-w-0 self-start">
-        <p
-          class="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent-primary"
-        >
-          {{ categoryLabel }}
-        </p>
-
-        <NuxtLink
-          :to="`/catalog/${item.slug}`"
-          class="mt-2 block text-[20px] font-extrabold leading-tight text-text-primary transition-colors duration-200 hover:text-accent-primary md:text-[22px]"
-        >
-          {{ productTitle }}
-        </NuxtLink>
-
-        <p class="mt-2 text-sm text-text-secondary">
-          SKU: {{ item.sku || "N/A" }}
-        </p>
-
-        <div class="mt-3 flex flex-wrap items-center gap-2.5">
-          <span
-            class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold"
-            :class="
-              stockBadgeTone === 'success'
-                ? 'border-success/25 bg-success/10 text-success'
-                : 'border-warning/30 bg-warning/10 text-warning'
-            "
+      <div class="contents sm:block sm:min-w-0 sm:self-start">
+        <div class="min-w-0 self-start">
+          <p
+            class="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent-primary"
           >
-            {{ stockLabel }}
-          </span>
+            {{ categoryLabel }}
+          </p>
 
-          <span
-            class="inline-flex rounded-full border border-border-default bg-surface-2 px-2.5 py-1 text-xs font-medium text-text-secondary"
+          <NuxtLink
+            :to="`/catalog/${item.slug}`"
+            class="mt-2 block text-[20px] font-extrabold leading-tight text-text-primary transition-colors duration-200 hover:text-accent-primary md:text-[22px]"
           >
-            {{ item.quantity }} ცალი კალათაში
-          </span>
+            {{ productTitle }}
+          </NuxtLink>
+
+          <p class="mt-2 text-sm text-text-secondary">
+            SKU: {{ item.sku || "N/A" }}
+          </p>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2.5">
+            <span
+              class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold"
+              :class="
+                stockBadgeTone === 'success'
+                  ? 'border-success/25 bg-success/10 text-success'
+                  : 'border-warning/30 bg-warning/10 text-warning'
+              "
+            >
+              {{ stockLabel }}
+            </span>
+
+            <span
+              class="inline-flex rounded-full border border-border-default bg-surface-2 px-2.5 py-1 text-xs font-medium text-text-secondary"
+            >
+              {{ item.quantity }} ცალი კალათაში
+            </span>
+          </div>
         </div>
 
-        <div class="mt-4 flex flex-wrap items-center gap-3">
+        <div class="col-span-2 mt-3 flex items-center justify-between gap-3 sm:mt-4 sm:flex-wrap sm:justify-start">
           <div
             class="inline-flex items-center self-start rounded-full border border-border-default bg-surface p-1"
           >
@@ -275,7 +277,7 @@ const canDecrement = computed(
         </div>
         <div
           v-if="availabilityNoticeMessage && availabilityNoticeTitle"
-          class="mt-4 rounded-[18px] px-4 py-3"
+          class="col-span-2 mt-4 rounded-[18px] px-4 py-3"
           :class="
             availabilityNoticeTone === 'error'
               ? 'border border-error/30 bg-error/10 text-error'
@@ -291,7 +293,7 @@ const canDecrement = computed(
         </div>
         <div
           v-if="item.price_changed"
-          class="mt-4 rounded-[18px] border border-warning/30 bg-warning/10 px-4 py-3"
+          class="col-span-2 mt-4 rounded-[18px] border border-warning/30 bg-warning/10 px-4 py-3"
         >
           <p class="text-xs font-semibold uppercase tracking-[0.08em] text-warning">
             {{ priceChangeLabel }}

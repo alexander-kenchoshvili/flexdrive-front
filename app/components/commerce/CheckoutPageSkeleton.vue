@@ -4,16 +4,16 @@ import SkeletonText from "~/components/common/skeleton/SkeletonText.vue";
 </script>
 
 <template>
-  <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-    <div class="space-y-4">
+  <section class="grid gap-4 md:gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div class="space-y-3 md:space-y-4">
       <div
         v-for="index in 3"
         :key="index"
-        class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+        class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6"
       >
-        <div class="space-y-4">
+        <div class="space-y-3 sm:space-y-4">
           <SkeletonText size="sm" width="w-32" tone="muted" />
-          <div class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-3 sm:gap-4 md:grid-cols-2">
             <SkeletonBlock class="h-12" radius="xl" />
             <SkeletonBlock class="h-12" radius="xl" />
           </div>
@@ -23,9 +23,9 @@ import SkeletonText from "~/components/common/skeleton/SkeletonText.vue";
     </div>
 
     <div
-      class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+      class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6"
     >
-      <div class="space-y-4">
+      <div class="space-y-3 sm:space-y-4">
         <SkeletonText size="md" width="w-40" tone="muted" />
         <SkeletonBlock class="h-24" radius="2xl" />
         <SkeletonBlock class="h-24" radius="2xl" />

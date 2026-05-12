@@ -37,11 +37,11 @@ const emit = defineEmits<{
 
 <template>
   <section
-    class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="1" title="საკონტაქტო ინფორმაცია" />
 
-    <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
       <BaseInput
         v-model="firstName"
         v-bind="firstNameAttrs"
@@ -98,15 +98,15 @@ const emit = defineEmits<{
   </section>
 
   <section
-    class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="2" title="მიწოდების მისამართი" />
-    <p class="mt-6 text-sm leading-6 text-text-secondary">
+    <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
       მიუთითე ქალაქი და ზუსტი მისამართი, რომ ოპერატორმა მიწოდება სწორად
       დაგიზუსტოს.
     </p>
 
-    <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
       <BaseInput
         v-model="city"
         v-bind="cityAttrs"
@@ -137,15 +137,15 @@ const emit = defineEmits<{
 
   <section
     data-checkout-field="terms_accepted"
-    class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="3" title="წესები და პირობები" />
-    <p class="mt-6 text-sm leading-6 text-text-secondary">
+    <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
       შეკვეთის დადასტურებამდე აუცილებელია დაეთანხმო წესებსა და პირობებს.
     </p>
 
     <label
-      class="mt-6 flex items-start gap-3 rounded-[18px] border border-border-default/80 bg-surface-2 px-4 py-3 text-sm font-medium text-text-secondary transition-colors duration-200"
+      class="mt-4 flex items-start gap-3 rounded-[18px] border border-border-default/80 bg-surface-2 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-200 sm:mt-6 sm:px-4 sm:py-3"
       :class="errors.terms_accepted ? 'border-error/40 text-error' : ''"
     >
       <input
@@ -185,15 +185,15 @@ const emit = defineEmits<{
 
   <section
     data-checkout-field="payment_method"
-    class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="4" title="გადახდის მეთოდი" />
-    <p class="mt-6 text-sm leading-6 text-text-secondary">
+    <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
       ამ ეტაპზე სრულად ხელმისაწვდომია ნაღდი ანგარიშსწორება. ბარათით გადახდა მალე
       დაემატება.
     </p>
 
-    <div class="mt-6 grid gap-4">
+    <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
       <CheckoutPaymentMethodCard
         method="cash_on_delivery"
         title="ნაღდი ანგარიშსწორება"
@@ -219,7 +219,7 @@ const emit = defineEmits<{
   </section>
 
   <section
-    class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="5" title="დამატებითი ინფორმაცია" />
 
@@ -228,7 +228,7 @@ const emit = defineEmits<{
       v-bind="noteAttrs"
       name="note"
       data-checkout-field="note"
-      class="mt-6"
+      class="mt-4 sm:mt-6"
       label="კომენტარი შეკვეთაზე"
       placeholder="თუ გინდა, მიუთითე დამატებითი დეტალი შეკვეთასთან დაკავშირებით."
       :error="errors.note"

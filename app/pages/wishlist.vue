@@ -126,16 +126,17 @@ useNoindexPage({
     active-section="wishlist"
     title="სურვილები"
     :hide-sidebar-when-guest="!isAuthenticated"
+    compact-mobile
     eyebrow=""
     subtitle="აქ ინახება შენ მიერ მონიშნული პროდუქტები. გადაავლე თვალი, შეადარე მიმდინარე ფასებს და მზადყოფნისას პირდაპირ კალათაში დაამატე."
   >
-    <div class="space-y-8">
+    <div class="space-y-4 sm:space-y-8">
         <section
-          class="flex flex-col gap-4 rounded-[24px] border border-border-default bg-surface p-5 shadow-[0_24px_60px_-38px_var(--shadow-color)] lg:flex-row lg:items-center lg:justify-between md:p-6"
+          class="flex flex-col gap-3 rounded-[24px] border border-border-default bg-surface p-3 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:gap-4 sm:p-5 md:p-6 lg:flex-row lg:items-center lg:justify-between"
         >
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             <div
-              class="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-2 px-4 py-2 text-sm font-semibold text-text-secondary"
+              class="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-2 px-3 py-1.5 text-sm font-semibold text-text-secondary sm:px-4 sm:py-2"
             >
               <span class="h-2.5 w-2.5 rounded-full bg-accent-primary" />
               სულ შენახული:
@@ -143,7 +144,7 @@ useNoindexPage({
             </div>
 
             <div
-              class="inline-flex items-center gap-2 rounded-full border border-success/25 bg-success/10 px-4 py-2 text-sm font-semibold text-success"
+              class="inline-flex items-center gap-2 rounded-full border border-success/25 bg-success/10 px-3 py-1.5 text-sm font-semibold text-success sm:px-4 sm:py-2"
             >
               <span class="h-2.5 w-2.5 rounded-full bg-success" />
               მარაგშია:
@@ -151,7 +152,7 @@ useNoindexPage({
             </div>
 
             <div
-              class="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-2 px-4 py-2 text-sm font-semibold text-text-secondary"
+              class="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-2 px-3 py-1.5 text-sm font-semibold text-text-secondary sm:px-4 sm:py-2"
             >
               <span class="h-2.5 w-2.5 rounded-full bg-border-default" />
               მიუწვდომელია:
@@ -163,7 +164,7 @@ useNoindexPage({
             as="nuxt-link"
             to="/catalog"
             variant="secondary"
-            class="px-5 py-3 whitespace-nowrap"
+            class="whitespace-nowrap px-4 py-2.5 sm:px-5 sm:py-3"
           >
             <template #left>
               <ArrowLeftIcon class="h-4 w-4" aria-hidden="true" />
@@ -175,7 +176,7 @@ useNoindexPage({
         <section
           v-if="cartFeedback"
           :class="[
-            'rounded-[20px] border px-4 py-3 text-sm',
+            'rounded-[20px] border px-3 py-2 text-sm sm:px-4 sm:py-3',
             cartFeedbackTone === 'success'
               ? 'border-success/25 bg-success/10 text-success'
               : 'border-error/25 bg-error/10 text-error',
@@ -186,14 +187,14 @@ useNoindexPage({
 
         <section
           v-if="wishlistStore.error && wishlistStore.initialized"
-          class="rounded-[20px] border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-text-secondary"
+          class="rounded-[20px] border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3"
         >
           {{ wishlistStore.error }}
         </section>
 
         <section
           v-if="isInitialLoading"
-          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3"
         >
           <div
             v-for="index in 6"
@@ -201,7 +202,7 @@ useNoindexPage({
             class="overflow-hidden rounded-[24px] border border-border-default bg-surface shadow-[0_24px_60px_-38px_var(--shadow-color)]"
           >
             <div class="aspect-[4/3] animate-pulse bg-surface-2" />
-            <div class="space-y-4 p-5 md:p-6">
+            <div class="space-y-3 p-3 sm:space-y-4 sm:p-5 md:p-6">
               <div class="h-3 w-24 animate-pulse rounded-full bg-surface-2" />
               <div class="h-7 w-3/4 animate-pulse rounded-full bg-surface-2" />
               <div class="space-y-2">
@@ -209,7 +210,7 @@ useNoindexPage({
                 <div class="h-4 w-5/6 animate-pulse rounded-full bg-surface-2" />
               </div>
               <div class="h-10 w-40 animate-pulse rounded-full bg-surface-2" />
-              <div class="grid gap-3">
+              <div class="grid gap-2 sm:gap-3">
                 <div class="h-11 animate-pulse rounded-md bg-surface-2" />
                 <div class="h-11 animate-pulse rounded-md bg-surface-2" />
               </div>
@@ -219,7 +220,7 @@ useNoindexPage({
 
         <section
           v-else-if="hasHardLoadError"
-          class="rounded-[24px] border border-error/30 bg-surface p-6 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+          class="rounded-[24px] border border-error/30 bg-surface p-4 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6"
         >
           <p class="text-base font-semibold text-text-primary">
             სასურველების ჩატვირთვა ვერ მოხერხდა.
@@ -242,7 +243,7 @@ useNoindexPage({
 
         <section
           v-else-if="items.length"
-          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3"
         >
           <WishlistProductCard
             v-for="item in items"
@@ -257,7 +258,7 @@ useNoindexPage({
 
         <section
           v-else
-          class="rounded-[28px] border border-border-default bg-surface px-6 py-10 text-center shadow-[0_24px_60px_-38px_var(--shadow-color)] md:px-8 md:py-14"
+          class="rounded-[28px] border border-border-default bg-surface px-4 py-6 text-center shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:px-6 sm:py-10 md:px-8 md:py-14"
         >
           <div
             class="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-border-default bg-surface-2 text-accent-primary"
@@ -265,16 +266,16 @@ useNoindexPage({
             <HeartIcon class="h-11 w-11" aria-hidden="true" />
           </div>
 
-          <h2 class="title-under-xs mt-8 text-[28px] font-extrabold leading-tight text-text-primary">
+          <h2 class="title-under-xs mt-5 text-[28px] font-extrabold leading-tight text-text-primary sm:mt-8">
             სასურველები ცარიელია
           </h2>
 
-          <p class="subtitle-under-xs mx-auto mt-4 max-w-xl text-sm leading-7 text-text-secondary md:text-base">
+          <p class="subtitle-under-xs mx-auto mt-3 max-w-xl text-sm leading-7 text-text-secondary sm:mt-4 md:text-base">
             ჯერ არაფერი შეგინახავს. კატალოგში დაბრუნდი და გულის აიკონზე დაჭერით
             სასურველი პროდუქტები შეინახე, რომ შემდეგ უფრო მარტივად მიუბრუნდე.
           </p>
 
-          <div class="mt-8 flex justify-center">
+          <div class="mt-5 flex justify-center sm:mt-8">
             <BaseButton
               as="nuxt-link"
               to="/catalog"
@@ -290,7 +291,7 @@ useNoindexPage({
         </section>
 
         <section
-          class="rounded-[24px] border border-border-default bg-surface-2/80 p-6 md:p-7"
+          class="rounded-[24px] border border-border-default bg-surface-2/80 p-3 sm:p-6 md:p-7"
         >
           <div class="flex items-start gap-3">
             <span

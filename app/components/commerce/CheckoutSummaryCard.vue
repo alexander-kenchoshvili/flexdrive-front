@@ -77,14 +77,14 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
 
 <template>
   <aside
-    class="rounded-[24px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="w-full min-w-0 max-w-full overflow-hidden rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
-    <div class="flex items-start justify-between gap-3">
-      <div>
+    <div class="flex min-w-0 items-start justify-between gap-3">
+      <div class="min-w-0">
         <p class="text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary">
           შეკვეთა
         </p>
-        <h2 class="mt-2 text-[28px] font-extrabold leading-tight text-text-primary">
+        <h2 class="mt-1.5 break-words text-[22px] font-extrabold leading-tight text-text-primary sm:mt-2 sm:text-[28px]">
           შეკვეთის დეტალები
         </h2>
       </div>
@@ -96,13 +96,13 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
       </span>
     </div>
 
-    <div class="mt-6 space-y-3">
+    <div class="mt-4 space-y-2.5 sm:mt-6 sm:space-y-3">
       <article
         v-for="item in items"
         :key="item.id"
-        class="flex items-center gap-3 rounded-[18px] border border-border-default bg-surface-2 p-3"
+        class="flex w-full min-w-0 items-center gap-2.5 rounded-[18px] border border-border-default bg-surface-2 p-2.5 sm:gap-3 sm:p-3"
       >
-        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] bg-white/95">
+        <div class="h-14 w-14 shrink-0 overflow-hidden rounded-[14px] bg-white/95 sm:h-16 sm:w-16">
           <BasePicture
             :data="resolveThumbnail(item)"
             :alt="item.name"
@@ -123,50 +123,50 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
 
           <div
             v-if="item.price_changed"
-            class="mt-2 rounded-[14px] border border-warning/30 bg-warning/10 px-3 py-2"
+            class="mt-2 min-w-0 rounded-[14px] border border-warning/30 bg-warning/10 px-3 py-2"
           >
-            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
+            <p class="break-words text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
               {{ priceChangeLabel(item) }}
             </p>
-            <p class="mt-1 text-[11px] leading-5 text-text-secondary">
+            <p class="mt-1 break-words text-[11px] leading-5 text-text-secondary">
               იყო {{ formatMoney(item.price_snapshot) }}, ახლა
               {{ formatMoney(item.price) }}
             </p>
           </div>
         </div>
 
-        <div class="shrink-0 text-right">
-          <p class="text-sm font-semibold text-text-primary">
+        <div class="min-w-0 shrink-0 text-right">
+          <p class="break-words text-xs font-semibold text-text-primary sm:text-sm">
             {{ formatMoney(item.line_total) }}
           </p>
         </div>
       </article>
     </div>
 
-    <div class="mt-6 space-y-3 rounded-[20px] border border-border-default bg-surface-2 p-4">
-      <div class="flex items-center justify-between gap-3 text-sm text-text-secondary">
+    <div class="mt-4 space-y-2.5 rounded-[20px] border border-border-default bg-surface-2 p-3 sm:mt-6 sm:space-y-3 sm:p-4">
+      <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
         <span>პროდუქტები</span>
-        <span>{{ itemCount }} ცალი</span>
+        <span class="shrink-0">{{ itemCount }} ცალი</span>
       </div>
 
-      <div class="flex items-center justify-between gap-3 text-sm text-text-secondary">
+      <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
         <span>მიწოდება</span>
-        <span class="font-semibold text-success">უფასო</span>
+        <span class="shrink-0 font-semibold text-success">უფასო</span>
       </div>
 
-      <div class="flex items-center justify-between gap-3 border-t border-border-default pt-3">
-        <span class="text-base font-semibold text-text-primary">სულ</span>
-        <span class="text-[28px] font-extrabold leading-none text-accent-primary">
+      <div class="flex min-w-0 items-center justify-between gap-3 border-t border-border-default pt-3">
+        <span class="shrink-0 text-base font-semibold text-text-primary">სულ</span>
+        <span class="min-w-0 break-words text-right text-[24px] font-extrabold leading-none text-accent-primary sm:text-[28px]">
           {{ formatMoney(total) }}
         </span>
       </div>
     </div>
 
-    <div class="mt-6 space-y-3">
+    <div class="mt-4 hidden space-y-2 sm:mt-6 sm:space-y-3 lg:block">
       <div
         v-if="priceChangeMessage || errorMessage"
         data-checkout-submit-feedback="desktop"
-        class="hidden rounded-[20px] px-4 py-3 text-sm lg:block"
+        class="hidden rounded-[20px] px-4 py-3 text-sm break-words lg:block"
         :class="
           priceChangeMessage
             ? 'border border-warning/30 bg-warning/10 text-text-secondary'
@@ -182,7 +182,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
         variant="primary"
         :loading="confirming"
         :disabled="disabled"
-        class="px-6 py-3.5 text-sm upper"
+        class="min-w-0 whitespace-normal px-4 py-2.5 text-center text-[12px] leading-tight upper sm:px-6 sm:py-3.5 sm:text-sm"
         full-width
         @click="$emit('confirm')"
       >
@@ -195,7 +195,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
         variant="primary"
         :loading="submitting"
         :disabled="disabled"
-        class="px-6 py-3.5 text-sm upper"
+        class="min-w-0 whitespace-normal px-4 py-2.5 text-center text-[12px] leading-tight upper sm:px-6 sm:py-3.5 sm:text-sm"
         full-width
       >
         {{ submitLabel }}
@@ -207,7 +207,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
         :type="secondaryActionAs === 'button' ? 'button' : undefined"
         variant="secondary"
         :disabled="secondaryActionDisabled"
-        class="px-6 py-3.5 text-sm upper"
+        class="min-w-0 whitespace-normal px-4 py-2.5 text-center text-[12px] leading-tight upper sm:px-6 sm:py-3.5 sm:text-sm"
         full-width
         @click="$emit('secondaryAction')"
       >
@@ -219,7 +219,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
         as="nuxt-link"
         to="/catalog"
         variant="secondary"
-        class="px-6 py-3.5 text-sm upper"
+        class="min-w-0 whitespace-normal px-4 py-2.5 text-center text-[12px] leading-tight upper sm:px-6 sm:py-3.5 sm:text-sm"
         full-width
       >
         კატალოგში დაბრუნება

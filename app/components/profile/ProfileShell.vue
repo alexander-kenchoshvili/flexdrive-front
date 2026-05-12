@@ -16,6 +16,7 @@ const props = withDefaults(
     eyebrow?: string;
     subtitle?: string;
     hideSidebarWhenGuest?: boolean;
+    compactMobile?: boolean;
   }>(),
   {
     title: "პროფილი",
@@ -23,6 +24,7 @@ const props = withDefaults(
     subtitle:
       "აქ შეგიძლია იხილო პირადი და ძირითადი მიწოდების ინფორმაციის ისტორია.",
     hideSidebarWhenGuest: false,
+    compactMobile: false,
   },
 );
 
@@ -38,9 +40,15 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 </script>
 
 <template>
-  <main class="py-8 pb-16 md:py-10 md:pb-20">
+  <main
+    :class="
+      compactMobile
+        ? 'py-4 pb-8 sm:py-8 sm:pb-16 md:py-10 md:pb-20'
+        : 'py-8 pb-16 md:py-10 md:pb-20'
+    "
+  >
     <div class="container-fluid">
-      <div class="space-y-8">
+      <div :class="compactMobile ? 'space-y-4 sm:space-y-8' : 'space-y-8'">
         <AppBreadcrumbs :items="breadcrumbItems" />
 
         <section
@@ -72,12 +80,18 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
         <section
           :class="
             showSidebar
-              ? 'grid gap-6 xl:grid-cols-[minmax(220px,24%)_minmax(0,1fr)] xl:items-start'
+              ? [
+                  'grid xl:grid-cols-[minmax(220px,24%)_minmax(0,1fr)] xl:items-start',
+                  compactMobile ? 'gap-4 sm:gap-6' : 'gap-6',
+                ]
               : 'min-w-0'
           "
         >
           <aside v-if="showSidebar" class="min-w-0 xl:sticky xl:top-40">
-            <ProfileSidebar :active-section="activeSection" />
+            <ProfileSidebar
+              :active-section="activeSection"
+              :compact-mobile="compactMobile"
+            />
           </aside>
 
           <div class="min-w-0">

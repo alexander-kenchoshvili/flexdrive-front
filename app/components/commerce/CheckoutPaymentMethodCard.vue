@@ -28,7 +28,7 @@ const iconComponent = computed(() =>
 
 const rootClasses = computed(() => {
   const base =
-    "flex w-full items-start gap-4 rounded-[20px] border p-5 text-left transition-colors duration-200";
+    "flex w-full items-start gap-3 rounded-[18px] border p-3 text-left transition-colors duration-200 sm:gap-4 sm:rounded-[20px] sm:p-5";
 
   if (props.disabled) {
     return `${base} border-border-default bg-surface-2 opacity-70`;
@@ -66,9 +66,9 @@ const handleSelect = () => {
     @click="handleSelect"
   >
     <span
-      class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-border-default bg-surface text-text-primary"
+      class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-border-default bg-surface text-text-primary sm:h-12 sm:w-12 sm:rounded-[16px]"
     >
-      <component :is="iconComponent" class="h-6 w-6" aria-hidden="true" />
+      <component :is="iconComponent" class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
     </span>
 
     <span class="min-w-0 flex-1">
@@ -84,7 +84,7 @@ const handleSelect = () => {
         </span>
       </span>
 
-      <span class="mt-2 block text-sm leading-6 text-text-secondary">
+      <span class="mt-1.5 block text-sm leading-5 text-text-secondary sm:mt-2 sm:leading-6">
         {{ description }}
       </span>
     </span>

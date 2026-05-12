@@ -165,9 +165,9 @@ useSeoMeta({
 </script>
 
 <template>
-  <main class="py-8 pb-32 md:py-10 md:pb-36 lg:pb-12">
+  <main class="py-4 pb-16 md:py-5 md:pb-[4.5rem] lg:py-10 lg:pb-12">
     <div class="container-fluid">
-      <div class="space-y-8">
+      <div class="space-y-4 md:space-y-5 lg:space-y-8">
         <AppBreadcrumbs :items="breadcrumbItems" />
 
         <section

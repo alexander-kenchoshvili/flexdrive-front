@@ -9,9 +9,15 @@ import BaseButton from "~/components/common/BaseButton.vue";
 
 type ProfileSectionKey = "info" | "orders" | "wishlist";
 
-const props = defineProps<{
-  activeSection: ProfileSectionKey;
-}>();
+const props = withDefaults(
+  defineProps<{
+    activeSection: ProfileSectionKey;
+    compactMobile?: boolean;
+  }>(),
+  {
+    compactMobile: false,
+  },
+);
 
 const globalStore = useGlobalStore();
 const { logout } = useAuth();
@@ -59,10 +65,16 @@ const handleLogout = async () => {
 
 <template>
   <section
-    class="w-full min-w-0 rounded-[28px] border border-border-default bg-surface p-5 shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+    :class="[
+      'w-full min-w-0 rounded-[28px] border border-border-default bg-surface shadow-[0_24px_60px_-38px_var(--shadow-color)]',
+      compactMobile ? 'p-3 sm:p-5' : 'p-5',
+    ]"
   >
     <div
-      class="rounded-[22px] border border-border-default bg-surface-2 p-4 shadow-[0_20px_40px_-36px_var(--shadow-color)]"
+      :class="[
+        'rounded-[22px] border border-border-default bg-surface-2 shadow-[0_20px_40px_-36px_var(--shadow-color)]',
+        compactMobile ? 'p-3 sm:p-4' : 'p-4',
+      ]"
     >
       <div class="flex items-center gap-3">
         <span
@@ -92,13 +104,17 @@ const handleLogout = async () => {
       </div>
     </div>
 
-    <nav class="mt-4 space-y-2" aria-label="Profile navigation">
+    <nav
+      :class="compactMobile ? 'mt-3 space-y-1.5 sm:mt-4 sm:space-y-2' : 'mt-4 space-y-2'"
+      aria-label="Profile navigation"
+    >
       <NuxtLink
         v-for="item in navigationItems"
         :key="item.key"
         :to="item.to"
         :class="[
-          'flex min-w-0 items-center gap-3 rounded-[18px] border px-4 py-3 text-sm font-semibold transition-colors duration-200',
+          'flex min-w-0 items-center gap-3 rounded-[18px] border text-sm font-semibold transition-colors duration-200',
+          compactMobile ? 'px-3 py-2.5 sm:px-4 sm:py-3' : 'px-4 py-3',
           item.key === props.activeSection
             ? 'border-accent-primary/30 bg-accent-primary/10 text-accent-primary'
             : 'border-border-default bg-transparent text-text-secondary hover:border-accent-primary/30 hover:bg-surface-2 hover:text-text-primary',
@@ -109,12 +125,17 @@ const handleLogout = async () => {
       </NuxtLink>
     </nav>
 
-    <div class="mt-5 border-t border-border-default pt-4">
+    <div
+      :class="compactMobile ? 'mt-3 border-t border-border-default pt-3 sm:mt-5 sm:pt-4' : 'mt-5 border-t border-border-default pt-4'"
+    >
       <BaseButton
         type="button"
         variant="secondary"
         full-width
-        class="justify-start gap-3 rounded-[18px] px-4 py-3 text-sm font-semibold"
+        :class="[
+          'justify-start gap-3 rounded-[18px] text-sm font-semibold',
+          compactMobile ? 'px-3 py-2.5 sm:px-4 sm:py-3' : 'px-4 py-3',
+        ]"
         @click="handleLogout"
       >
         <template #left>

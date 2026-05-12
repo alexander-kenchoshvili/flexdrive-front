@@ -398,9 +398,9 @@ useNoindexPage({
 </script>
 
 <template>
-  <main class="py-8 pb-32 md:py-10 md:pb-36 lg:pb-12">
+  <main class="py-4 pb-16 md:py-10 md:pb-36 lg:pb-12">
     <div class="container-fluid">
-      <div class="space-y-8">
+      <div class="space-y-4 md:space-y-8">
         <AppBreadcrumbs
           v-if="!isInitialLoading && !hasHardLoadError && !cartStore.isEmpty"
           :items="breadcrumbItems"
@@ -417,7 +417,7 @@ useNoindexPage({
               შეკვეთის გაფორმება
             </h1>
             <p
-              class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary md:text-base"
+              class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary md:mt-3 md:text-base md:leading-7"
             >
               შეავსე საკონტაქტო და მიწოდების ინფორმაცია, შემდეგ დაადასტურე
               შეკვეთა.
@@ -425,7 +425,7 @@ useNoindexPage({
           </div>
 
           <div
-            class="inline-flex w-fit items-center gap-2 rounded-full border border-border-default bg-surface px-4 py-2 text-sm font-semibold text-text-secondary shadow-[0_16px_40px_-34px_var(--shadow-color)]"
+            class="inline-flex w-fit items-center gap-2 rounded-full border border-border-default bg-surface px-3 py-1.5 text-sm font-semibold text-text-secondary shadow-[0_16px_40px_-34px_var(--shadow-color)] md:px-4 md:py-2"
           >
             <span class="h-2.5 w-2.5 rounded-full bg-accent-primary" />
             {{ lineItemLabel }}
@@ -436,7 +436,7 @@ useNoindexPage({
 
         <section
           v-else-if="hasHardLoadError"
-          class="rounded-[24px] border border-error/30 bg-surface p-6 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+          class="rounded-[24px] border border-error/30 bg-surface p-4 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-6"
         >
           <p class="text-base font-semibold text-text-primary">
             checkout-ის ჩატვირთვა ვერ მოხერხდა.
@@ -456,17 +456,17 @@ useNoindexPage({
 
         <form
           v-else-if="!cartStore.isEmpty"
-          class="space-y-8"
+          class="space-y-4 md:space-y-8"
           novalidate
           @submit.prevent="submitForm"
         >
           <section
-            class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start"
+            class="grid min-w-0 gap-4 md:gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start"
           >
-            <div class="space-y-4">
+            <div class="min-w-0 space-y-3 md:space-y-4">
               <div
                 v-if="hasSoftError"
-                class="rounded-[20px] border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-text-secondary"
+                class="rounded-[20px] border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-text-secondary md:px-4 md:py-3"
               >
                 {{ cartStore.error }}
               </div>
@@ -494,7 +494,7 @@ useNoindexPage({
               />
             </div>
 
-            <div class="xl:sticky xl:top-40">
+            <div class="min-w-0 max-w-full xl:sticky xl:top-40">
               <CheckoutSummaryCard
                 :items="cartStore.items"
                 :item-count="cartStore.itemCount"
@@ -512,15 +512,15 @@ useNoindexPage({
           </section>
 
           <div
-            class="fixed inset-x-0 bottom-0 z-30 border-t border-[#17345f] bg-[#020c1d] px-3 py-3 shadow-[0_-10px_34px_rgba(2,6,23,0.28)] md:px-6 lg:hidden"
+            class="fixed inset-x-0 bottom-0 z-30 border-t border-[#17345f] bg-[#020c1d] px-2 py-2 shadow-[0_-10px_34px_rgba(2,6,23,0.28)] md:px-6 md:py-3 lg:hidden"
           >
             <div
-              class="mx-auto flex max-w-[1440px] flex-col gap-3 rounded-[20px] border border-[#17345f] bg-[#081a38] px-4 py-3 sm:flex-wrap sm:items-center"
+              class="mx-auto flex max-w-[1440px] flex-col gap-2 rounded-[18px] border border-[#17345f] bg-[#081a38] px-3 py-2.5 sm:flex-wrap sm:items-center md:gap-3 md:rounded-[20px] md:px-4 md:py-3"
             >
               <div
                 v-if="cartStore.priceChangeMessage || formError"
                 data-checkout-submit-feedback="mobile"
-                class="rounded-[18px] px-4 py-3 text-sm sm:basis-full"
+                class="rounded-[16px] px-3 py-2 text-sm sm:basis-full md:rounded-[18px] md:px-4 md:py-3"
                 :class="
                   cartStore.priceChangeMessage
                     ? 'border border-warning/30 bg-warning/10 text-text-secondary'
@@ -537,7 +537,7 @@ useNoindexPage({
                   სულ
                 </p>
                 <p
-                  class="mt-1 text-2xl font-extrabold leading-none text-accent-primary"
+                  class="mt-1 text-[22px] font-extrabold leading-none text-accent-primary md:text-2xl"
                 >
                   {{ Number(cartStore.total || 0).toFixed(2) }} GEL
                 </p>
@@ -548,7 +548,7 @@ useNoindexPage({
                 variant="primary"
                 :loading="cartStore.hasPriceChanges ? cartStore.mutating : submitPending"
                 :disabled="submitPending || cartStore.mutating"
-                class="w-full px-5 py-3 text-sm upper sm:w-auto sm:whitespace-nowrap"
+                class="w-full px-4 py-2.5 text-[12px] upper sm:w-auto sm:whitespace-nowrap md:px-5 md:py-3 md:text-sm"
                 @click="cartStore.hasPriceChanges ? void confirmPriceChanges() : undefined"
               >
                 {{

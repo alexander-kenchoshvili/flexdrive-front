@@ -557,48 +557,48 @@ onBeforeUnmount(() => {
 
 @media (max-width: 399px) {
   .site-logo-image {
-    height: 52px;
-    width: 92px;
-  }
-
-  .site-logo-link {
-    min-width: 124px;
-  }
-
-  .site-logo-horizontal {
-    height: 36px;
-    width: 124px;
-  }
-
-  .header-icon-button {
-    height: 36px;
-    width: 36px;
-    border-radius: 9px;
-  }
-
-  .header-action-cluster {
-    gap: 0.25rem;
-  }
-}
-
-@media (max-width: 359px) {
-  .site-logo-link {
-    min-width: 118px;
-  }
-
-  .site-logo-image {
     height: 48px;
-    width: 85px;
+    width: 86px;
+  }
+
+  .site-logo-link {
+    min-width: 116px;
   }
 
   .site-logo-horizontal {
     height: 34px;
-    width: 118px;
+    width: 116px;
   }
 
   .header-icon-button {
     height: 34px;
     width: 34px;
+    border-radius: 9px;
+  }
+
+  .header-action-cluster {
+    gap: 0.1875rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .site-logo-link {
+    min-width: 104px;
+  }
+
+  .site-logo-image {
+    height: 44px;
+    width: 78px;
+  }
+
+  .site-logo-horizontal {
+    height: 32px;
+    width: 104px;
+  }
+
+  .header-icon-button {
+    height: 32px;
+    width: 32px;
   }
 }
 

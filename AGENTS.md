@@ -161,7 +161,7 @@ This file exists so the project context does not need to be re-explained in ever
   - `OrderConfidence` title is `შეკვეთა Flex[[Drive]]-ზე მარტივად და გარკვევით`.
   If staging UI still shows old content, suspect API/browser cache before changing code.
 - `HowItWorks` and `BlogSection` have also been redesigned into the new FlexDrive visual direction. The homepage section pass is now considered substantially complete unless a later QA/design review finds specific issues.
-- Likely next redesign target: product detail page, building from the redesigned catalog/product-card direction while preserving existing product, cart, wishlist, stock, and checkout logic.
+- Product detail page redesign is no longer the next target; it was redesigned in the 2026-05-12 pass noted below.
 
 ## Current Catalog Redesign State - 2026-05-08
 
@@ -205,3 +205,53 @@ This file exists so the project context does not need to be re-explained in ever
   - On 2026-05-08 staging Neon/Postgres was checked: no pending migrations, then `python manage.py seed_catalog_filters --product-limit 0` was run.
   - Staging counts after seed: 300 products, 10 brands, 8 vehicle makes, 22 vehicle models, 43 engines, 285 fitments.
   - Do not run `seed_catalog`, `seed_staging_demo`, or `--reset-fitments` on staging unless the user explicitly asks; those touch broader demo data or can reset fitments.
+
+## Current Product Detail Redesign State - 2026-05-12
+
+- Product detail page has been redesigned in `app/pages/catalog/[slug].vue` toward the new FlexDrive auto-parts ecommerce direction while preserving product loading, cart, wishlist, buy-now, quantity, stock, related products, and existing API/data flow.
+- The page now uses the redesigned catalog/product-card visual language: practical surfaced panels, restrained borders, clear price hierarchy, product media gallery, breadcrumb row, product metadata chips, quantity controls, delivery/returns cards, description/spec tabs, related products, and a mobile sticky purchase bar.
+- Mobile product detail spacing was tuned after visual QA:
+  - main product detail section uses `pt-2 pb-12 sm:pt-4` so bottom spacing is consistent across breakpoints.
+  - media/details grid uses mobile `!mt-2 gap-4`, then `sm:!mt-4 sm:gap-8`, with `min-[1100px]:gap-10`.
+  - mobile sticky purchase action button text is `12px` below `640px`, then returns to `text-sm` at `sm` and above.
+- Avoid reintroducing inline spacing styles on the product detail page. Keep spacing in Tailwind utilities unless a dynamic runtime value is genuinely required.
+- Mobile sticky purchase bar decisions:
+  - buttons keep zero external padding via `!p-0` because inner sizing already provides enough tap area.
+  - success/add-to-cart feedback should not appear inside the fixed bar if it breaks the layout; prefer the main purchase panel or a compact non-disruptive pattern.
+  - bottom spacing is intentionally no longer oversized just to compensate for the fixed bar; verify actual overlap before increasing page padding.
+- Header/search behavior from the same product-detail mobile pass:
+  - below `768px`, use a compact search icon in the top header row.
+  - from `768px` and up, show the search input in the first header row and hide the separate search icon.
+  - do not move account or other primary actions into the hamburger just to make search fit unless explicitly requested.
+
+## Current Commerce Mobile Redesign State - 2026-05-12
+
+- Cart, wishlist, and checkout mobile spacing were tightened after product detail. Keep the direction mobile-first and compact; avoid restoring large vertical whitespace below `1024px` unless there is a specific overlap or readability reason.
+- Cart page files touched:
+  - `app/pages/cart.vue`
+  - `app/components/commerce/CartLineItem.vue`
+  Cart page spacing was reduced below `1024px`. Cart line item mobile layout was adjusted so the quantity/remove controls use the empty space under the product image more naturally. The cart footer/mobile fixed summary was intentionally kept visually unchanged where the user said it already worked.
+- Wishlist page files touched:
+  - `app/pages/wishlist.vue`
+  - `app/components/commerce/WishlistProductCard.vue`
+  - `app/components/profile/ProfileShell.vue`
+  - `app/components/profile/ProfileSidebar.vue`
+  Wishlist now uses a `compact-mobile` mode on `ProfileShell/ProfileSidebar`, so wishlist can have reduced mobile padding/gaps without affecting other profile pages. Product cards, loading skeleton, empty state, status chips, info blocks, and sidebar spacing are compact on mobile and return to previous spacing at `sm`/larger breakpoints.
+- Checkout page files touched:
+  - `app/pages/checkout/index.vue`
+  - `app/pages/buy-now/checkout.vue`
+  - `app/components/commerce/CheckoutFormSections.vue`
+  - `app/components/commerce/CheckoutSectionHeader.vue`
+  - `app/components/commerce/CheckoutPaymentMethodCard.vue`
+  - `app/components/commerce/CheckoutSummaryCard.vue`
+  - `app/components/commerce/CheckoutPageSkeleton.vue`
+  Checkout and buy-now checkout now share compact mobile spacing for page padding, section gaps, form section padding, section headers, payment method cards, summary card, loading skeleton, and bottom fixed submit bar. Business logic, validation, reCAPTCHA, cart refresh, buy-now session handling, and API payloads were not changed.
+- Checkout overflow root cause and fix:
+  - The mobile checkout breakage was caused by `CheckoutSummaryCard` and its grid wrapper, not the form fields.
+  - CSS grid children default to `min-width: auto`; the summary card's content could force the grid wider than the viewport.
+  - Keep `min-w-0`, `max-w-full`, `w-full`, `overflow-hidden`, `break-words`, and `whitespace-normal` guards on the summary wrapper/card/content. Do not remove these when editing the checkout summary.
+  - The checkout summary's action buttons are hidden below `lg` because the mobile fixed bottom bar already provides the submit/confirm action. Desktop still shows summary actions.
+- Mobile checkout bottom spacing was reduced from the large previous value to `pb-16` on checkout and buy-now checkout, while `md:pb-36` and `lg:pb-12` remain for larger breakpoints.
+- Header narrow-mobile adjustment:
+  - `app/components/LAYOUTS/Header.vue` was tuned at very narrow widths (`max-width: 399px` and `max-width: 359px`) because long checkout pages with a vertical scrollbar left less usable width and caused the fixed-size header logo/actions to crowd.
+  - Header logo/icon sizes and gaps are slightly smaller only on very narrow screens. Do not revert this unless a replacement mobile header layout is implemented.

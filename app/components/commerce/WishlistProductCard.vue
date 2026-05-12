@@ -93,7 +93,7 @@ const availability = computed(() => {
     ]"
   >
     <div class="relative overflow-hidden border-b border-border-default">
-      <div class="absolute left-4 top-4 z-[2] flex flex-wrap gap-2">
+      <div class="absolute left-3 top-3 z-[2] flex flex-wrap gap-2 sm:left-4 sm:top-4">
         <span
           v-if="item.is_new"
           class="inline-flex rounded-full bg-accent-primary px-2.5 py-1 text-[11px] font-bold text-text-invert"
@@ -109,7 +109,7 @@ const availability = computed(() => {
         </span>
       </div>
 
-      <div class="absolute right-4 top-4 z-[2]">
+      <div class="absolute right-3 top-3 z-[2] sm:right-4 sm:top-4">
         <WishlistToggleButton
           :product-id="item.product_id"
           size="sm"
@@ -142,8 +142,8 @@ const availability = computed(() => {
       </NuxtLink>
     </div>
 
-    <div class="flex flex-1 flex-col p-5 md:p-6">
-      <div class="flex items-start justify-between gap-4">
+    <div class="flex flex-1 flex-col p-3 sm:p-5 md:p-6">
+      <div class="flex items-start justify-between gap-3 sm:gap-4">
         <div class="min-w-0">
           <p
             v-if="item.category?.name"
@@ -154,7 +154,7 @@ const availability = computed(() => {
 
           <NuxtLink
             :to="productUrl"
-            class="wishlist-title mt-2 block text-[22px] font-extrabold leading-tight text-text-primary transition-colors duration-200 hover:text-accent-primary"
+            class="wishlist-title mt-1.5 block text-[20px] font-extrabold leading-tight text-text-primary transition-colors duration-200 hover:text-accent-primary sm:mt-2 sm:text-[22px]"
           >
             {{ item.name }}
           </NuxtLink>
@@ -163,14 +163,14 @@ const availability = computed(() => {
 
       <p
         v-if="item.short_description"
-        class="wishlist-description mt-3 text-sm leading-7 text-text-secondary"
+        class="wishlist-description mt-2 text-sm leading-6 text-text-secondary sm:mt-3 sm:leading-7"
       >
         {{ item.short_description }}
       </p>
 
-      <div class="mt-4 flex flex-wrap items-center gap-3">
+      <div class="mt-3 flex flex-wrap items-center gap-2.5 sm:mt-4 sm:gap-3">
         <span
-          class="text-[28px] font-extrabold leading-none text-accent-primary"
+          class="text-[24px] font-extrabold leading-none text-accent-primary sm:text-[28px]"
         >
           {{ formatMoney(item.price) }}
         </span>
@@ -183,7 +183,7 @@ const availability = computed(() => {
         </span>
       </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-2.5">
+      <div class="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-2.5">
         <span
           :class="[
             'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
@@ -210,7 +210,7 @@ const availability = computed(() => {
         </span>
       </div>
 
-      <div class="mt-auto flex flex-col gap-3 pt-6">
+      <div class="mt-auto flex flex-col gap-2 pt-4 sm:gap-3 sm:pt-6">
         <BaseButton
           type="button"
           variant="primary"
