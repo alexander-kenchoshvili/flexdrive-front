@@ -63,13 +63,16 @@ const resendActivation = handleSubmit(async (values) => {
 
   try {
     const recaptchaToken = await executeRecaptcha("resend_activation");
-    const response = await secureFetchRaw<{ message?: string }>("/accounts/activate/resend/", {
-      method: "POST",
-      body: {
-        email: values.email,
-        recaptcha_token: recaptchaToken,
+    const response = await secureFetchRaw<{ message?: string }>(
+      "/accounts/activate/resend/",
+      {
+        method: "POST",
+        body: {
+          email: values.email,
+          recaptcha_token: recaptchaToken,
+        },
       },
-    });
+    );
 
     message.value =
       response?.message ||
@@ -90,55 +93,80 @@ const resendActivation = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <form
-    class="mx-auto mt-12 w-full max-w-md rounded-xl border border-border-default bg-surface p-8 shadow-[0_8px_24px_var(--shadow-color)]"
-    novalidate
-    @submit.prevent="resendActivation"
+  <section
+    class="bg-[linear-gradient(135deg,var(--bg-primary)_0%,var(--surface)_46%,var(--section-soft)_100%)] text-text-primary"
   >
-    <h2 class="title-under-xs mb-6 text-center text-2xl font-bold text-text-primary upper">
-      აქტივაციის ბმულის თავიდან გაგზავნა
-    </h2>
-
-    <BaseInput
-      v-model="email"
-      class="mb-4"
-      v-bind="emailAttrs"
-      label="ელფოსტა"
-      type="email"
-      autocomplete="email"
-      placeholder="you@example.com"
-      :error="errors.email"
-      :disabled="loading"
-    />
-
-    <button
-      type="submit"
-      class="btn-min-h-44 mt-2 w-full rounded-md bg-accent-primary px-4 py-3 font-semibold text-text-invert transition-colors hover:bg-accent-hover active:bg-accent-pressed disabled:cursor-not-allowed disabled:opacity-60"
-      :disabled="loading"
+    <div
+      class="container-fluid flex min-h-[420px] items-start justify-center py-6 sm:py-10 lg:min-h-[560px] lg:py-14 xl:py-16"
     >
-      {{ loading ? "იგზავნება..." : "ახალი აქტივაციის ბმულის გაგზავნა" }}
-    </button>
-
-    <p
-      v-if="message"
-      class="mt-4 rounded-md border border-border-default bg-surface-2 px-3 py-2 text-sm text-success"
-    >
-      {{ message }}
-    </p>
-    <p
-      v-if="errorMessage"
-      class="mt-4 rounded-md border border-border-default bg-surface-2 px-3 py-2 text-sm text-error"
-    >
-      {{ errorMessage }}
-    </p>
-
-    <div class="mt-4 text-center">
-      <NuxtLink
-        to="/login"
-        class="text-sm font-medium text-link underline underline-offset-2 hover:text-link-hover"
+      <form
+        class="w-full max-w-[460px] rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_26px_70px_-44px_var(--shadow-color)] sm:p-6 lg:p-7"
+        novalidate
+        @submit.prevent="resendActivation"
       >
-        დაბრუნება ავტორიზაციაზე
-      </NuxtLink>
+        <div class="mb-5 text-center sm:mb-6">
+          <p
+            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary"
+          >
+            აქტივაციის ბმული
+          </p>
+          <h1
+            class="title-under-xs upper mt-2 text-[26px] font-extrabold leading-tight text-text-primary sm:text-[30px]"
+          >
+            ბმულის თავიდან გაგზავნა
+          </h1>
+          <p
+            class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary"
+          >
+            მიუთითე ელ.ფოსტა და ახალ აქტივაციის ბმულს გამოგიგზავნით.
+          </p>
+        </div>
+
+        <BaseInput
+          v-model="email"
+          class="mb-3 sm:mb-4"
+          v-bind="emailAttrs"
+          label="ელ.ფოსტა"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          :error="errors.email"
+          :disabled="loading"
+        />
+
+        <BaseButton
+          type="submit"
+          :full-width="true"
+          class="mt-2 rounded-[16px]"
+          :disabled="loading"
+        >
+          {{ loading ? "იგზავნება..." : "ბმულის გაგზავნა" }}
+        </BaseButton>
+
+        <p
+          v-if="message"
+          class="mt-4 rounded-[16px] border border-success/20 bg-success/5 px-4 py-3 text-sm font-medium text-success"
+        >
+          {{ message }}
+        </p>
+        <p
+          v-if="errorMessage"
+          class="mt-4 rounded-[16px] border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error"
+        >
+          {{ errorMessage }}
+        </p>
+
+        <div
+          class="mt-5 flex items-center justify-center border-t border-border-default pt-4 text-sm"
+        >
+          <NuxtLink
+            to="/login"
+            class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
+          >
+            დაბრუნება ავტორიზაციაზე
+          </NuxtLink>
+        </div>
+      </form>
     </div>
-  </form>
+  </section>
 </template>

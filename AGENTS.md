@@ -286,3 +286,44 @@ This file exists so the project context does not need to be re-explained in ever
 - Verification:
   - `npm run build` completed successfully after the profile mobile pass. In sandbox it hit a Windows `readlink C:\Users\kench` permission error during Nitro packaging, then succeeded when rerun with approved escalation. The only remaining message was the existing Vue package trailing-slash export deprecation warning.
 - Likely next redesign target: authentication and registration pages/forms, keeping auth logic, reCAPTCHA, validation, redirects, and API contracts unchanged while updating mobile spacing, visual hierarchy, and new FlexDrive design-system consistency.
+
+## Current Auth Redesign State - 2026-05-13
+
+- Authentication flow redesign is now substantially complete in the new FlexDrive design direction. Preserve auth behavior, API contracts, reCAPTCHA actions, validation schemas, redirects, activation tokens, and password reset token handling unless explicitly requested.
+- Main frontend files touched:
+  - `app/components/SmartComponents/Login/Login.vue`
+  - `app/components/SmartComponents/RegisterForm/RegisterForm.vue`
+  - `app/components/SmartComponents/ForgotPassword/ForgotPassword.vue`
+  - `app/pages/reset-password/[token].vue`
+  - `app/pages/activate/[token].vue`
+  - `app/pages/resend-activation.vue`
+  - `app/components/common/BaseButton.vue`
+- Login/register/forgot/reset pages now share the same practical auth layout language:
+  - `container-fluid` based layout.
+  - token-driven background gradient using design-system CSS variables.
+  - surfaced form cards with restrained borders/shadows.
+  - compact mobile spacing and wider desktop two-column compositions where useful.
+  - no decorative blobs/orbs or old AutoMate visual treatment.
+- Login and register still use CMS/backend content for their hero copy where applicable. Backend CMS content migrations were created/run during this pass for the refreshed login/register content locally and on staging.
+- `RegisterForm` benefit cards were tuned after visual review:
+  - cards are single-column below `1240px` and become three columns at `1240px+`.
+  - number and title are vertically centered together.
+  - description text is a separate row starting from the card's left edge, not indented under the number.
+- The same info-card alignment pattern was applied to login, forgot-password, and reset-password cards: number/title centered together, body copy below from the card edge.
+- Auth headings now use the existing `upper` class on the redesigned auth pages and modal/form headings where relevant.
+- `BaseButton` now includes `upper` in its base classes so all `BaseButton` text uses the project uppercase/case font treatment by default.
+- Auth submit buttons that were raw `<button>` elements were converted to `BaseButton` on login, register, forgot-password, reset-password, and resend-activation. Loading text behavior was intentionally preserved by using `:disabled="loading"` and keeping the existing conditional slot text instead of `BaseButton`'s `loading` prop, which would hide the label and show only the spinner.
+- Auth state decisions:
+  - Login shows inline errors only; success redirects immediately, so no success state/modal is needed.
+  - Register shows a success modal and inline error.
+  - Forgot password shows a success modal and inline error.
+  - Reset password shows a success modal and inline error, then returns to login on modal close.
+  - Activate page shows loading, success, and error states inline; error state links to resend activation.
+  - Resend activation shows success/error inline; modal is intentionally not used there.
+- Known current behavior to preserve unless requested:
+  - Register backend field-error mapping was not expanded during this pass; broad registration errors still use the current generic/detail handling.
+  - Empty states are not needed for these auth forms; missing optional CMS info cards simply render nothing.
+- Verification:
+  - `npm run build` was run successfully during the main auth-page pass after forgot/reset/activate/resend changes.
+  - Later typography/button-only tweaks were checked with `git diff --check`; no full build was run for those small class/component swaps.
+- Likely next redesign target after auth: static/legal/support pages or any remaining account-adjacent utility pages, while preserving existing business logic and API contracts.

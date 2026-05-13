@@ -139,7 +139,7 @@ const loginUser = handleSubmit(async (values) => {
 
         <div>
           <h1
-            class="title-under-xs max-w-xl text-[28px] font-extrabold leading-[1.15] text-text-primary sm:text-[36px] lg:text-[44px]"
+            class="title-under-xs upper max-w-xl text-[28px] font-extrabold leading-[1.15] text-text-primary sm:text-[36px] lg:text-[44px]"
           >
             <span v-if="titleParts.upperLeadingPart" class="upper">
               {{ titleParts.upperLeadingPart }}
@@ -174,24 +174,24 @@ const loginUser = handleSubmit(async (values) => {
             :key="item.id"
             class="rounded-[18px] border border-border-default bg-surface p-3 shadow-[0_16px_38px_-34px_var(--shadow-color)] sm:p-4"
           >
-            <div class="flex items-start gap-3">
+            <div class="flex items-center gap-3">
               <span
-                class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-xs font-extrabold text-accent-primary"
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-xs font-extrabold text-accent-primary"
               >
                 {{ index + 1 }}
               </span>
               <div class="min-w-0">
-                <p class="text-sm font-bold text-text-primary">
+                <p class="text-sm font-bold leading-5 text-text-primary">
                   {{ sanitizeText(item.title) }}
-                </p>
-                <p
-                  v-if="sanitizeText(item.description)"
-                  class="mt-1 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6"
-                >
-                  {{ sanitizeText(item.description) }}
                 </p>
               </div>
             </div>
+            <p
+              v-if="sanitizeText(item.description)"
+              class="mt-3 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6"
+            >
+              {{ sanitizeText(item.description) }}
+            </p>
           </article>
         </div>
       </div>
@@ -209,7 +209,7 @@ const loginUser = handleSubmit(async (values) => {
               შესვლა
             </p>
             <h2
-              class="title-under-xs mt-2 text-[26px] font-extrabold leading-tight text-text-primary sm:text-[30px]"
+              class="title-under-xs upper mt-2 text-[26px] font-extrabold leading-tight text-text-primary sm:text-[30px]"
             >
               ანგარიშში შესვლა
             </h2>
@@ -257,13 +257,14 @@ const loginUser = handleSubmit(async (values) => {
             {{ errorMessage }}
           </div>
 
-          <button
+          <BaseButton
             type="submit"
-            class="btn-min-h-44 mt-2 w-full rounded-[16px] bg-accent-primary px-4 py-3 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover active:bg-accent-pressed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+            :full-width="true"
+            class="mt-2 rounded-[16px]"
             :disabled="loading"
           >
             {{ loading ? "მიმდინარეობს შესვლა..." : "შესვლა" }}
-          </button>
+          </BaseButton>
 
           <div
             class="mt-5 border-t border-border-default pt-4 text-center text-sm"

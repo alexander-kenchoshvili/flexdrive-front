@@ -39,7 +39,7 @@ const attrs = useAttrs();
 const isDisabled = computed(() => props.disabled || props.loading);
 
 const baseClasses =
-  "btn-min-h-44 inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition-[border-color,background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:cursor-not-allowed disabled:opacity-60";
+  "btn-min-h-44 upper inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition-[border-color,background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:cursor-not-allowed disabled:opacity-60";
 
 const widthClasses = computed(() => (props.fullWidth ? "w-full" : ""));
 

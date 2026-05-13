@@ -2,9 +2,10 @@
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import { CheckCircleIcon } from "@heroicons/vue/24/solid";
+import type { SmartComponentData } from "~/types/page";
 
 defineProps<{
-  data: any;
+  data?: SmartComponentData;
 }>();
 
 const { executeRecaptcha } = useRecaptcha();
@@ -70,42 +71,101 @@ const sendRequest = handleSubmit(async (values) => {
 
 <template>
   <section
-    class="relative isolate overflow-hidden bg-[linear-gradient(180deg,#fffaf6_0%,#ffffff_42%,#fff8f4_100%)] dark:bg-[linear-gradient(180deg,#08111f_0%,#0a1628_44%,#0d1b31_100%)]"
+    class="bg-[linear-gradient(135deg,var(--bg-primary)_0%,var(--surface)_46%,var(--section-soft)_100%)] text-text-primary"
   >
     <div
-      class="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(circle_at_top_left,rgba(255,107,53,0.12),transparent_42%),radial-gradient(circle_at_top_right,rgba(15,23,42,0.07),transparent_34%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(255,107,53,0.18),transparent_38%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.12),transparent_32%)]"
-      aria-hidden="true"
-    />
-    <div
-      class="pointer-events-none absolute left-1/2 top-16 h-40 w-40 -translate-x-1/2 rounded-full bg-accent-primary/10 blur-3xl dark:bg-accent-primary/14"
-      aria-hidden="true"
-    />
-
-    <div
-      class="mx-auto flex w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 sm:py-14 lg:min-h-[640px] lg:px-8 lg:py-20"
+      class="container-fluid grid gap-5 py-6 sm:py-10 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] lg:items-start lg:gap-12 lg:py-14 xl:py-16"
     >
-      <div class="relative w-full max-w-[540px]">
-        <div
-          class="pointer-events-none absolute inset-x-10 -top-8 h-24 rounded-full bg-accent-primary/15 blur-3xl dark:bg-accent-primary/18"
-          aria-hidden="true"
-        />
+      <div class="order-2 space-y-4 lg:order-1 lg:max-w-xl lg:pr-6">
+        <span
+          class="inline-flex items-center rounded-full border border-border-default bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary shadow-[0_14px_34px_-30px_var(--shadow-color)] sm:px-4 sm:py-2"
+        >
+          ანგარიშის დაცვა
+        </span>
 
+        <div>
+          <h1
+            class="title-under-xs upper max-w-xl text-[28px] font-extrabold leading-[1.15] text-text-primary sm:text-[36px] lg:text-[44px]"
+          >
+            პაროლის აღდგენა
+          </h1>
+          <p
+            class="subtitle-under-xs mt-3 max-w-xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7"
+          >
+            შეიყვანე ანგარიშის ელ.ფოსტა და აღდგენის ბმულს გამოგიგზავნით.
+          </p>
+        </div>
+
+        <div class="grid gap-2 sm:grid-cols-2 lg:max-w-lg">
+          <article
+            class="rounded-[18px] border border-border-default bg-surface p-3 shadow-[0_16px_38px_-34px_var(--shadow-color)] sm:p-4"
+          >
+            <div class="flex items-center gap-3">
+              <span
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-xs font-extrabold text-accent-primary"
+              >
+                1
+              </span>
+              <div class="min-w-0">
+                <p class="text-sm font-bold leading-5 text-text-primary">
+                  შეამოწმე ელ.ფოსტა
+                </p>
+              </div>
+            </div>
+            <p class="mt-3 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">
+              ბმული გაიგზავნება მხოლოდ იმ მისამართზე, რომელიც ანგარიშზეა მიბმული.
+            </p>
+          </article>
+
+          <article
+            class="rounded-[18px] border border-border-default bg-surface p-3 shadow-[0_16px_38px_-34px_var(--shadow-color)] sm:p-4"
+          >
+            <div class="flex items-center gap-3">
+              <span
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-xs font-extrabold text-accent-primary"
+              >
+                2
+              </span>
+              <div class="min-w-0">
+                <p class="text-sm font-bold leading-5 text-text-primary">
+                  დააყენე ახალი პაროლი
+                </p>
+              </div>
+            </div>
+            <p class="mt-3 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">
+              ბმულის გახსნის შემდეგ შექმნი ახალ პაროლს და ჩვეულებრივ შეხვალ.
+            </p>
+          </article>
+        </div>
+      </div>
+
+      <div class="order-1 lg:order-2 lg:justify-self-end">
         <form
-          class="relative rounded-[30px] border border-border-default/90 bg-surface/95 p-5 shadow-[0_32px_80px_-42px_rgba(15,23,42,0.28)] backdrop-blur sm:p-8 dark:border-[#2b3d5d] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.94)_0%,rgba(17,28,51,0.98)_100%)] dark:shadow-[0_38px_92px_-50px_rgba(0,0,0,0.82)]"
+          class="mx-auto w-full max-w-[420px] rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_26px_70px_-44px_var(--shadow-color)] sm:p-6 lg:p-7"
           novalidate
           @submit.prevent="sendRequest"
         >
-          <div class="mb-6 text-center">
-            <h1 class="title-under-xs text-[30px] font-extrabold text-text-primary sm:text-[34px]">
-              დაგავიწყდა პაროლი?
-            </h1>
+          <div class="mb-5 sm:mb-6">
+            <p
+              class="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary"
+            >
+              პაროლის აღდგენა
+            </p>
+            <h2
+              class="title-under-xs upper mt-2 text-[26px] font-extrabold leading-tight text-text-primary sm:text-[30px]"
+            >
+              აღდგენის ბმული
+            </h2>
+            <p class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary">
+              მიუთითე ელ.ფოსტა და შემდეგი ნაბიჯი inbox-ში დაგხვდება.
+            </p>
           </div>
 
           <BaseInput
             v-model="email"
-            class="mb-4"
+            class="mb-3 sm:mb-4"
             v-bind="emailAttrs"
-            label="ელფოსტა"
+            label="ელ.ფოსტა"
             type="email"
             autocomplete="email"
             placeholder="you@example.com"
@@ -113,23 +173,24 @@ const sendRequest = handleSubmit(async (values) => {
             :disabled="loading"
           />
 
-          <button
+          <BaseButton
             type="submit"
-            class="btn-min-h-44 mt-2 w-full rounded-[16px] bg-accent-primary px-4 py-3 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover active:bg-accent-pressed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+            :full-width="true"
+            class="mt-2 rounded-[16px]"
             :disabled="loading"
           >
-            {{ loading ? "იგზავნება..." : "პაროლის აღდგენის ბმულის გაგზავნა" }}
-          </button>
+            {{ loading ? "იგზავნება..." : "ბმულის გაგზავნა" }}
+          </BaseButton>
 
           <p
             v-if="errorMessage"
-            class="mt-4 rounded-[18px] border border-error/20 bg-error/5 px-4 py-3 text-sm text-error"
+            class="mt-4 rounded-[16px] border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error"
           >
             {{ errorMessage }}
           </p>
 
           <div
-            class="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 border-t border-border-default/80 pt-5 text-sm text-text-secondary"
+            class="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 border-t border-border-default pt-4 text-sm text-text-secondary"
           >
             <NuxtLink
               to="/login"
@@ -161,11 +222,11 @@ const sendRequest = handleSubmit(async (values) => {
         <CheckCircleIcon class="h-8 w-8" aria-hidden="true" />
       </div>
 
-      <p class="mt-5 max-w-md text-sm leading-7 text-text-secondary md:text-base">
-        {{
-          message ||
-          "თუ ეს ელფოსტა სისტემაში არსებობს, პაროლის აღდგენის ბმული გამოგიგზავნეთ. შეამოწმეთ შემოსულები."
-        }}
+      <p
+        v-if="message"
+        class="mt-5 max-w-md text-sm leading-7 text-text-secondary md:text-base"
+      >
+        {{ message }}
       </p>
     </div>
 
