@@ -106,14 +106,16 @@ useNoindexPage({
 <template>
   <ProfileShell
     active-section="orders"
+    title="ჩემი შეკვეთები"
     eyebrow="შეკვეთები"
+    compact-mobile
     subtitle="აქ ნახავ შეკვეთების ისტორიას და თითოეულის მიმდინარე სტატუსს."
   >
     <ProfileOrdersSkeleton v-if="isInitialLoading" />
 
     <section
       v-else-if="hasHardLoadError"
-      class="rounded-[28px] border border-error/30 bg-surface p-6 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+      class="rounded-[24px] border border-error/30 bg-surface p-4 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6"
     >
       <p class="text-base font-semibold text-text-primary">
         შეკვეთების ისტორიის ჩატვირთვა ვერ მოხერხდა.

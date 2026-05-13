@@ -52,25 +52,32 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
         <AppBreadcrumbs :items="breadcrumbItems" />
 
         <section
-          class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
+          :class="[
+            'flex flex-col lg:flex-row lg:items-end lg:justify-between',
+            compactMobile ? 'gap-2 sm:gap-3' : 'gap-3',
+          ]"
         >
           <div class="max-w-3xl">
             <p
               v-if="eyebrow"
-              class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
+              class="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-primary sm:text-xs"
             >
               {{ eyebrow }}
             </p>
             <h1
               :class="[
-                'title-under-xs text-[34px] upper font-extrabold leading-tight text-text-primary md:text-[44px]',
-                eyebrow ? 'mt-3' : '',
+                'title-under-xs upper font-extrabold leading-tight text-text-primary',
+                compactMobile ? 'text-[30px] sm:text-[34px] md:text-[44px]' : 'text-[34px] md:text-[44px]',
+                eyebrow ? (compactMobile ? 'mt-2 sm:mt-3' : 'mt-3') : '',
               ]"
             >
               {{ title }}
             </h1>
             <p
-              class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary md:text-base"
+              :class="[
+                'subtitle-under-xs text-sm text-text-secondary md:text-base',
+                compactMobile ? 'mt-2 leading-6 sm:mt-3 sm:leading-7' : 'mt-3 leading-7',
+              ]"
             >
               {{ subtitle }}
             </p>

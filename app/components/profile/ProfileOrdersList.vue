@@ -101,10 +101,10 @@ const goToPage = (page: number | null) => {
 
 <template>
   <section
-    class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
   >
     <div
-      class="flex flex-col gap-4 border-b border-border-default pb-6 sm:flex-row sm:items-end sm:justify-between"
+      class="flex flex-col gap-3 border-b border-border-default pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:pb-6"
     >
       <div>
         <p
@@ -112,32 +112,32 @@ const goToPage = (page: number | null) => {
         >
           შეკვეთების ისტორია
         </p>
-        <h2 class="mt-2 text-[28px] font-extrabold leading-tight text-text-primary">
+        <h2 class="mt-2 text-[24px] font-extrabold leading-tight text-text-primary sm:text-[28px]">
           ჩემი შეკვეთები
         </h2>
-        <p class="mt-3 text-sm leading-7 text-text-secondary">
+        <p class="mt-2 text-sm leading-6 text-text-secondary sm:mt-3 sm:leading-7">
           გადახედე უკვე შექმნილ შეკვეთებს, მიმდინარე სტატუსებს და შენს
           აქტივობას ერთ სივრცეში.
         </p>
       </div>
 
       <div
-        class="inline-flex w-fit items-center gap-2 rounded-full border border-border-default bg-surface-2 px-4 py-2 text-sm font-semibold text-text-secondary"
+        class="inline-flex w-fit items-center gap-2 rounded-full border border-border-default bg-surface-2 px-3 py-1.5 text-sm font-semibold text-text-secondary sm:px-4 sm:py-2"
       >
         <CubeIcon class="h-4 w-4 shrink-0 text-accent-primary" aria-hidden="true" />
         {{ totalCount }} შეკვეთა
       </div>
     </div>
 
-    <div class="mt-6 grid gap-3 md:grid-cols-3">
+    <div class="mt-4 grid gap-3 sm:mt-6 md:grid-cols-3">
       <article
         v-for="card in summaryCards"
         :key="card.key"
-        class="rounded-[22px] border border-border-default bg-surface-2 px-4 py-4 shadow-[0_18px_44px_-38px_var(--shadow-color)]"
+        class="rounded-[18px] border border-border-default bg-surface-2 px-3 py-3 shadow-[0_18px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:px-4 sm:py-4"
       >
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-2.5 sm:gap-3">
           <span
-            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-accent-primary/20 bg-accent-primary/10 text-accent-primary"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-accent-primary/20 bg-accent-primary/10 text-accent-primary sm:h-11 sm:w-11 sm:rounded-2xl"
           >
             <component :is="card.icon" class="h-5 w-5" aria-hidden="true" />
           </span>
@@ -148,10 +148,10 @@ const goToPage = (page: number | null) => {
             >
               {{ card.label }}
             </p>
-            <p class="mt-2 text-lg font-extrabold leading-tight text-text-primary">
+            <p class="mt-1.5 text-base font-extrabold leading-tight text-text-primary sm:mt-2 sm:text-lg">
               {{ card.value }}
             </p>
-            <p class="mt-2 text-xs leading-6 text-text-secondary">
+            <p class="mt-1.5 text-xs leading-5 text-text-secondary sm:mt-2 sm:leading-6">
               {{ card.helper }}
             </p>
           </div>
@@ -159,23 +159,23 @@ const goToPage = (page: number | null) => {
       </article>
     </div>
 
-    <div v-if="orders.length" class="mt-6 space-y-4">
+    <div v-if="orders.length" class="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
       <article
         v-for="order in orders"
         :key="order.public_token"
-        class="rounded-[22px] border border-border-default bg-surface-2 px-5 py-5 shadow-[0_20px_44px_-38px_var(--shadow-color)]"
+        class="rounded-[20px] border border-border-default bg-surface-2 px-3.5 py-4 shadow-[0_20px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:px-5 sm:py-5"
       >
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-3">
-              <p class="text-lg font-extrabold text-text-primary">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+              <p class="text-base font-extrabold text-text-primary sm:text-lg">
                 {{ order.order_number }}
               </p>
               <ProfileStatusBadge :status="order.status" />
             </div>
 
             <div
-              class="mt-3 flex flex-col gap-2 text-sm text-text-secondary sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
+              class="mt-2 flex flex-col gap-1.5 text-sm text-text-secondary sm:mt-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
             >
               <span class="inline-flex items-center gap-2">
                 <CalendarDaysIcon
@@ -190,7 +190,7 @@ const goToPage = (page: number | null) => {
           </div>
 
           <div
-            class="flex flex-col gap-3 sm:flex-row sm:items-center lg:shrink-0"
+            class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3 lg:shrink-0"
           >
             <div class="text-left sm:text-right">
               <p
@@ -198,7 +198,7 @@ const goToPage = (page: number | null) => {
               >
                 ჯამი
               </p>
-              <p class="mt-1 text-2xl font-extrabold leading-none text-accent-primary">
+              <p class="mt-1 text-xl font-extrabold leading-none text-accent-primary sm:text-2xl">
                 {{ formatMoney(order.total) }} GEL
               </p>
             </div>
@@ -207,7 +207,7 @@ const goToPage = (page: number | null) => {
               as="nuxt-link"
               :to="`/profile/orders/${order.public_token}`"
               variant="accent-outline"
-              class="px-5 py-3 whitespace-nowrap"
+              class="whitespace-nowrap px-4 py-2.5 sm:px-5 sm:py-3"
             >
               დეტალების ნახვა
             </BaseButton>
@@ -218,7 +218,7 @@ const goToPage = (page: number | null) => {
 
     <div
       v-else
-      class="mt-6 rounded-[22px] border border-border-default bg-surface-2 px-6 py-8 text-center"
+      class="mt-4 rounded-[20px] border border-border-default bg-surface-2 px-4 py-6 text-center sm:mt-6 sm:rounded-[22px] sm:px-6 sm:py-8"
     >
       <p class="text-lg font-bold text-text-primary">შეკვეთები ჯერ არ არის</p>
       <p class="mt-3 text-sm leading-7 text-text-secondary">
@@ -236,7 +236,7 @@ const goToPage = (page: number | null) => {
 
     <div
       v-if="orders.length && totalPages > 1"
-      class="mt-6 flex flex-col gap-3 border-t border-border-default pt-5 sm:flex-row sm:items-center sm:justify-between"
+      class="mt-4 flex flex-col gap-3 border-t border-border-default pt-4 sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:pt-5"
     >
       <p class="text-sm text-text-secondary">
         გვერდი {{ currentPage }} / {{ totalPages }}

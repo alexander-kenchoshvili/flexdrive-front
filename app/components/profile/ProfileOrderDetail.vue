@@ -191,12 +191,12 @@ const getTrackingStateLabel = (state: string) => {
 </script>
 
 <template>
-  <section class="space-y-4">
+  <section class="space-y-3 sm:space-y-4">
     <section
-      class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+      class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
     >
       <div
-        class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+        class="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between"
       >
         <div class="max-w-3xl">
           <p
@@ -210,7 +210,7 @@ const getTrackingStateLabel = (state: string) => {
             {{ order.order_number }}
           </h2>
           <div
-            class="mt-4 flex flex-col gap-2 text-sm text-text-secondary sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
+            class="mt-3 flex flex-col gap-2 text-sm text-text-secondary sm:mt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
           >
             <span class="inline-flex items-center gap-2">
               <CalendarDaysIcon
@@ -231,7 +231,7 @@ const getTrackingStateLabel = (state: string) => {
             as="nuxt-link"
             to="/profile/orders"
             variant="secondary"
-            class="px-5 py-3"
+            class="px-4 py-2.5 sm:px-5 sm:py-3"
           >
             შეკვეთების სიაში დაბრუნება
           </BaseButton>
@@ -239,9 +239,9 @@ const getTrackingStateLabel = (state: string) => {
       </div>
     </section>
 
-    <section class="grid gap-4 lg:grid-cols-3">
+    <section class="grid gap-3 sm:gap-4 lg:grid-cols-3">
       <article
-        class="rounded-[22px] border border-border-default bg-surface p-5 shadow-[0_20px_44px_-38px_var(--shadow-color)]"
+        class="rounded-[20px] border border-border-default bg-surface p-4 shadow-[0_20px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:p-5"
       >
         <p
           class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
@@ -254,7 +254,7 @@ const getTrackingStateLabel = (state: string) => {
       </article>
 
       <article
-        class="rounded-[22px] border border-border-default bg-surface p-5 shadow-[0_20px_44px_-38px_var(--shadow-color)]"
+        class="rounded-[20px] border border-border-default bg-surface p-4 shadow-[0_20px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:p-5"
       >
         <p
           class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
@@ -267,7 +267,7 @@ const getTrackingStateLabel = (state: string) => {
       </article>
 
       <article
-        class="rounded-[22px] border border-border-default bg-surface p-5 shadow-[0_20px_44px_-38px_var(--shadow-color)]"
+        class="rounded-[20px] border border-border-default bg-surface p-4 shadow-[0_20px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:p-5"
       >
         <p
           class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
@@ -284,7 +284,7 @@ const getTrackingStateLabel = (state: string) => {
 
     <section
       v-if="cancelled"
-      class="rounded-[24px] border border-error/30 bg-error/10 p-5 text-sm leading-7 text-text-secondary"
+      class="rounded-[22px] border border-error/30 bg-error/10 p-4 text-sm leading-6 text-text-secondary sm:rounded-[24px] sm:p-5 sm:leading-7"
     >
       <p class="text-base font-semibold text-text-primary">
         შეკვეთა გაუქმებულია
@@ -297,7 +297,7 @@ const getTrackingStateLabel = (state: string) => {
 
     <section
       v-else
-      class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+      class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
     >
       <div class="flex items-center gap-3">
         <span
@@ -321,9 +321,9 @@ const getTrackingStateLabel = (state: string) => {
       </p>
 
       <div
-        class="mt-6 rounded-[24px] border border-border-default bg-surface-2 px-4 py-5 md:px-5"
+        class="mt-4 rounded-[22px] border border-border-default bg-surface-2 px-3 py-4 sm:mt-6 sm:rounded-[24px] sm:px-4 sm:py-5 md:px-5"
       >
-        <div class="space-y-4">
+        <div class="space-y-3 sm:space-y-4">
           <article
             v-for="step in trackingSteps"
             :key="`stack-${step.key}`"
@@ -346,7 +346,7 @@ const getTrackingStateLabel = (state: string) => {
               <div class="flex items-center justify-between gap-3">
                 <p
                   :class="[
-                    'text-sm font-semibold',
+                    'text-xs font-semibold sm:text-sm',
                     getTrackingLabelClasses(step.state),
                   ]"
                 >
@@ -371,40 +371,43 @@ const getTrackingStateLabel = (state: string) => {
 
       <article
         :class="[
-          'mt-5 rounded-[22px] border px-5 py-5 shadow-[0_18px_44px_-36px_var(--shadow-color)]',
+          'mt-4 rounded-[20px] border px-4 py-4 shadow-[0_18px_44px_-36px_var(--shadow-color)] sm:mt-5 sm:rounded-[22px] sm:px-5 sm:py-5',
           getTrackingPanelClasses(currentTrackingStep.state),
         ]"
       >
         <div
-          class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+          class="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between"
         >
-          <div class="flex items-start gap-3">
-            <span
-              :class="[
-                'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border',
-                getTrackingPanelIconClasses(currentTrackingStep.state),
-              ]"
-            >
-              <component
-                :is="getTrackingMeta(currentTrackingStep.key).icon"
-                class="h-5 w-5"
-                aria-hidden="true"
-              />
-            </span>
-
-            <div class="min-w-0">
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
+          <div class="min-w-0 flex-1">
+            <div class="flex items-start gap-3">
+              <span
+                :class="[
+                  'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border',
+                  getTrackingPanelIconClasses(currentTrackingStep.state),
+                ]"
               >
-                აქტიური ეტაპი
-              </p>
-              <h4 class="mt-2 text-lg font-bold text-text-primary">
-                {{ currentTrackingStep.label }}
-              </h4>
-              <p class="mt-2 max-w-2xl text-sm leading-7 text-text-secondary">
-                {{ getTrackingMeta(currentTrackingStep.key).description }}
-              </p>
+                <component
+                  :is="getTrackingMeta(currentTrackingStep.key).icon"
+                  class="h-5 w-5"
+                  aria-hidden="true"
+                />
+              </span>
+
+              <div class="min-w-0">
+                <p
+                  class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
+                >
+                  აქტიური ეტაპი
+                </p>
+                <h4 class="mt-2 text-lg font-bold text-text-primary">
+                  {{ currentTrackingStep.label }}
+                </h4>
+              </div>
             </div>
+
+            <p class="mt-3 max-w-2xl text-sm leading-7 text-text-secondary">
+              {{ getTrackingMeta(currentTrackingStep.key).description }}
+            </p>
           </div>
 
           <div class="flex flex-col gap-2 lg:items-end">
@@ -430,9 +433,11 @@ const getTrackingStateLabel = (state: string) => {
       </article>
     </section>
 
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+    <div
+      class="grid min-w-0 max-w-full gap-3 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)] xl:items-start"
+    >
       <section
-        class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+        class="min-w-0 max-w-full rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
       >
         <div class="flex items-center gap-3">
           <span
@@ -440,104 +445,104 @@ const getTrackingStateLabel = (state: string) => {
           >
             <MapPinIcon class="h-5 w-5" aria-hidden="true" />
           </span>
-          <div>
+          <div class="min-w-0">
             <p
               class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
             >
               მიწოდება
             </p>
-            <h3 class="mt-1 text-xl font-bold text-text-primary">
+            <h3 class="mt-1 break-words text-xl font-bold text-text-primary">
               საკონტაქტო და მისამართის დეტალები
             </h3>
           </div>
         </div>
 
-        <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div class="mt-4 grid min-w-0 gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
           <article
-            class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
           >
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
               მყიდველი
             </p>
-            <p class="mt-2 text-base font-semibold text-text-primary">
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
               {{ order.first_name }} {{ order.last_name }}
             </p>
           </article>
 
           <article
-            class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
           >
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
               ტელეფონი
             </p>
-            <p class="mt-2 text-base font-semibold text-text-primary">
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
               {{ order.phone }}
             </p>
           </article>
 
           <article
             v-if="order.email"
-            class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
           >
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
               ელფოსტა
             </p>
-            <p class="mt-2 text-base font-semibold text-text-primary">
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
               {{ order.email }}
             </p>
           </article>
 
           <article
-            class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
           >
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
               ქალაქი
             </p>
-            <p class="mt-2 text-base font-semibold text-text-primary">
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
               {{ order.city }}
             </p>
           </article>
 
           <article
-            class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
           >
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
               მისამართი
             </p>
-            <p class="mt-2 text-base font-semibold leading-7 text-text-primary">
+            <p class="mt-2 break-words text-base font-semibold leading-7 text-text-primary">
               {{ order.address_line }}
             </p>
           </article>
 
           <article
             v-if="order.note"
-            class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
           >
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
               კომენტარი
             </p>
-            <p class="mt-2 text-sm leading-7 text-text-secondary">
+            <p class="mt-2 break-words text-sm leading-7 text-text-secondary">
               {{ order.note }}
             </p>
           </article>
         </div>
       </section>
 
-      <aside class="space-y-4 xl:sticky xl:top-40">
+      <aside class="min-w-0 max-w-full space-y-3 sm:space-y-4 xl:sticky xl:top-40">
         <section
-          class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+          class="min-w-0 rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
         >
           <div class="flex items-center gap-3">
             <span
@@ -545,25 +550,25 @@ const getTrackingStateLabel = (state: string) => {
             >
               <CubeIcon class="h-5 w-5" aria-hidden="true" />
             </span>
-            <div>
+            <div class="min-w-0">
               <p
                 class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
               >
                 პროდუქტები
               </p>
-              <h3 class="mt-1 text-xl font-bold text-text-primary">
+              <h3 class="mt-1 break-words text-xl font-bold text-text-primary">
                 შეკვეთილი ნივთები
               </h3>
             </div>
           </div>
 
-          <div class="mt-6 space-y-3">
+          <div class="mt-4 space-y-2.5 sm:mt-6 sm:space-y-3">
             <article
               v-for="item in order.items"
               :key="item.id"
-              class="rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+              class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
             >
-              <div class="flex items-start gap-3">
+              <div class="flex min-w-0 items-start gap-3">
                 <div
                   class="h-11 w-11 shrink-0 overflow-hidden rounded-[14px] border border-border-default bg-white/95"
                 >
@@ -578,15 +583,15 @@ const getTrackingStateLabel = (state: string) => {
                 </div>
 
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-semibold text-text-primary">
+                  <p class="break-words text-sm font-semibold text-text-primary">
                     {{ item.product_name }}
                   </p>
-                  <p class="mt-1 text-xs text-text-muted">
+                  <p class="mt-1 break-words text-xs text-text-muted">
                     {{ item.quantity }} ც. · SKU: {{ item.sku || "—" }}
                   </p>
                 </div>
 
-                <p class="shrink-0 text-sm font-semibold text-text-primary">
+                <p class="shrink-0 whitespace-nowrap text-sm font-semibold text-text-primary">
                   {{ formatMoney(item.line_total) }}
                 </p>
               </div>
@@ -595,7 +600,7 @@ const getTrackingStateLabel = (state: string) => {
         </section>
 
         <section
-          class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+          class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
         >
           <div class="space-y-3">
             <div

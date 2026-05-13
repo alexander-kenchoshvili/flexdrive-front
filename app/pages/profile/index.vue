@@ -368,14 +368,16 @@ useNoindexPage({
 <template>
   <ProfileShell
     active-section="info"
+    title="ანგარიშის ინფორმაცია"
     eyebrow="ანგარიში"
+    compact-mobile
     subtitle="აქ შეგიძლია შეცვალო პირადი და ძირითადი მიწოდების ინფორმაცია."
   >
     <ProfileInfoSkeleton v-if="isInitialLoading" />
 
     <section
       v-else-if="hasHardLoadError"
-      class="rounded-[28px] border border-error/30 bg-surface p-6 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)]"
+      class="rounded-[24px] border border-error/30 bg-surface p-4 text-sm text-text-secondary shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6"
     >
       <p class="text-base font-semibold text-text-primary">
         პროფილის მონაცემების ჩატვირთვა ვერ მოხერხდა.
@@ -399,7 +401,7 @@ useNoindexPage({
           <BaseButton
             type="button"
             variant="accent-outline"
-            class="px-5 py-3"
+            class="px-4 py-2.5 sm:px-5 sm:py-3"
             @click="openEditMode"
           >
             რედაქტირება
@@ -409,10 +411,10 @@ useNoindexPage({
 
       <section
         v-else
-        class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+        class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
       >
         <div
-          class="flex flex-col gap-4 border-b border-border-default pb-6 sm:flex-row sm:items-start sm:justify-between"
+          class="flex flex-col gap-3 border-b border-border-default pb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:pb-6"
         >
           <div class="max-w-2xl">
             <p
@@ -421,12 +423,12 @@ useNoindexPage({
               ანგარიშის ინფორმაცია
             </p>
             <h2
-              class="title-under-xs mt-2 text-[28px] font-extrabold leading-tight text-text-primary"
+              class="title-under-xs mt-2 text-[24px] font-extrabold leading-tight text-text-primary sm:text-[28px]"
             >
               მონაცემების რედაქტირება
             </h2>
             <p
-              class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary"
+              class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary sm:mt-3 sm:leading-7"
             >
               შეცვალე ის მონაცემები, რომლებიც პროფილში და მიწოდების დეტალებში
               უნდა გამოჩნდეს.
@@ -436,7 +438,7 @@ useNoindexPage({
           <BaseButton
             type="button"
             variant="secondary"
-            class="px-5 py-3"
+            class="px-4 py-2.5 sm:px-5 sm:py-3"
             @click="closeEditMode"
           >
             გაუქმება
@@ -445,17 +447,17 @@ useNoindexPage({
 
         <div
           v-if="formError"
-          class="mt-6 rounded-[20px] border border-error/30 bg-error/10 px-4 py-3 text-sm text-error"
+          class="mt-4 rounded-[18px] border border-error/30 bg-error/10 px-3 py-2.5 text-sm text-error sm:mt-6 sm:rounded-[20px] sm:px-4 sm:py-3"
         >
           {{ formError }}
         </div>
 
         <form
-          class="mt-6 space-y-6"
+          class="mt-4 space-y-4 sm:mt-6 sm:space-y-6"
           novalidate
           @submit.prevent="submitProfileForm"
         >
-          <div class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-3 sm:gap-4 md:grid-cols-2">
             <BaseInput
               v-model="firstName"
               v-bind="firstNameAttrs"
@@ -524,7 +526,7 @@ useNoindexPage({
             <BaseButton
               type="button"
               variant="secondary"
-              class="px-6 py-3"
+              class="px-4 py-2.5 sm:px-6 sm:py-3"
               :disabled="savePending"
               @click="closeEditMode"
             >
@@ -533,7 +535,7 @@ useNoindexPage({
             <BaseButton
               type="submit"
               variant="primary"
-              class="px-6 py-3"
+              class="px-4 py-2.5 sm:px-6 sm:py-3"
               :loading="savePending"
               :disabled="savePending"
             >
@@ -544,10 +546,10 @@ useNoindexPage({
       </section>
 
       <section
-        class="mt-6 rounded-[28px] border border-error/25 bg-[linear-gradient(180deg,rgba(239,68,68,0.06)_0%,rgba(239,68,68,0.02)_100%)] p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+        class="mt-4 rounded-[24px] border border-error/25 bg-[linear-gradient(180deg,rgba(239,68,68,0.06)_0%,rgba(239,68,68,0.02)_100%)] p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:mt-6 sm:rounded-[28px] sm:p-6 md:p-7"
       >
         <div
-          class="flex flex-col gap-5 border-b border-border-default pb-6 sm:flex-row sm:items-start sm:justify-between"
+          class="flex flex-col gap-3 border-b border-border-default pb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 sm:pb-6"
         >
           <div class="max-w-2xl">
             <p
@@ -556,12 +558,12 @@ useNoindexPage({
               საფრთხის ზონა
             </p>
             <h2
-              class="title-under-xs mt-2 text-[28px] font-extrabold leading-tight text-text-primary"
+              class="title-under-xs mt-2 text-[24px] font-extrabold leading-tight text-text-primary sm:text-[28px]"
             >
               ანგარიშის გაუქმება
             </h2>
             <p
-              class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary"
+              class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary sm:mt-3 sm:leading-7"
             >
               თუ პროფილი აღარ გჭირდება, შეგიძლია სრულად გააუქმო ანგარიში. ეს
               მოქმედება შეუქცევადია.
@@ -571,7 +573,7 @@ useNoindexPage({
           <BaseButton
             type="button"
             variant="danger"
-            class="px-5 py-3"
+            class="px-4 py-2.5 sm:px-5 sm:py-3"
             @click="openDeleteModal"
           >
             ანგარიშის გაუქმება
@@ -579,10 +581,10 @@ useNoindexPage({
         </div>
 
         <div
-          class="mt-5 flex items-center gap-3 text-sm leading-7 text-text-secondary"
+          class="mt-4 flex items-center gap-3 text-sm leading-6 text-text-secondary sm:mt-5 sm:leading-7"
         >
           <span
-            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-error/20 bg-error/10 text-error"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-error/20 bg-error/10 text-error sm:h-11 sm:w-11"
           >
             <ExclamationTriangleIcon class="h-5 w-5" aria-hidden="true" />
           </span>

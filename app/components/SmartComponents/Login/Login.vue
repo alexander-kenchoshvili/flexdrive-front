@@ -9,13 +9,6 @@ import {
   splitAutoMateTitleParts,
 } from "~/composables/helpers";
 
-type AccountHighlight = {
-  id: number;
-  title: string;
-  copy: string;
-  position: number;
-};
-
 const props = defineProps<{
   data?: SmartComponentData;
 }>();
@@ -30,11 +23,6 @@ const { loginSchema } = useAuthValidationSchemas();
 const errorMessage = ref("");
 const loading = ref(false);
 
-const toNumber = (value: unknown, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
 const sectionEyebrow = computed(() => sanitizeText(props.data?.buttonText));
 
 const sectionTitle = computed(() => sanitizeText(props.data?.title));
@@ -42,24 +30,16 @@ const titleParts = computed(() => splitAutoMateTitleParts(sectionTitle.value));
 
 const sectionSubtitle = computed(() => sanitizeText(props.data?.subtitle));
 
-const accountHighlights = computed<AccountHighlight[]>(() => {
+const accountHighlights = computed<ContentItemData[]>(() => {
   const list = props.data?.contentData?.list;
 
   if (!Array.isArray(list) || list.length === 0) {
     return [];
   }
 
-  return list
-    .map((item: ContentItemData, index) => ({
-      id: toNumber(item.id, index + 1),
-      position: toNumber(item.position, index + 1),
-      title: sanitizeText(item.title),
-      copy: sanitizeText(item.description),
-    }))
-    .filter((item) => item.title || item.copy)
-    .sort((a, b) =>
-      a.position === b.position ? a.id - b.id : a.position - b.position,
-    );
+  return list.filter(
+    (item) => sanitizeText(item.title) || sanitizeText(item.description),
+  );
 });
 
 const redirectTarget = computed(() =>
@@ -145,129 +125,102 @@ const loginUser = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <section
-    class="relative isolate overflow-hidden bg-[linear-gradient(180deg,#fffaf6_0%,#ffffff_42%,#fff8f4_100%)] dark:bg-[linear-gradient(180deg,#08111f_0%,#0a1628_44%,#0d1b31_100%)]"
-  >
+  <section class="bg-[linear-gradient(135deg,var(--bg-primary)_0%,var(--surface)_46%,var(--section-soft)_100%)] text-text-primary">
     <div
-      class="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(circle_at_top_left,rgba(255,107,53,0.12),transparent_42%),radial-gradient(circle_at_top_right,rgba(15,23,42,0.07),transparent_34%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(255,107,53,0.18),transparent_38%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.12),transparent_32%)]"
-      aria-hidden="true"
-    />
-    <div
-      class="pointer-events-none absolute left-1/2 top-16 h-40 w-40 -translate-x-1/2 rounded-full bg-accent-primary/10 blur-3xl dark:bg-accent-primary/14"
-      aria-hidden="true"
-    />
-    <div
-      class="pointer-events-none absolute right-[14%] top-28 hidden h-48 w-48 rounded-full bg-[#7dd3fc]/10 blur-3xl dark:block"
-      aria-hidden="true"
-    />
-
-    <div
-      class="mx-auto grid w-full max-w-6xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:min-h-[680px] lg:grid-cols-[minmax(0,1fr)_minmax(400px,460px)] lg:items-center lg:gap-14 lg:px-8 lg:py-20"
+      class="container-fluid grid gap-5 py-6 sm:py-10 lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(380px,430px)] lg:items-center lg:gap-12 lg:py-14 xl:py-16"
     >
-      <div class="relative lg:pr-6">
+      <div class="order-2 space-y-4 lg:order-1 lg:max-w-xl lg:pr-6">
         <span
           v-if="sectionEyebrow"
-          class="inline-flex items-center rounded-full border border-accent-primary/15 bg-surface/80 px-5 py-2.5 text-[16px] font-semibold uppercase tracking-[0.12em] text-accent-primary shadow-[0_18px_42px_-28px_rgba(255,107,53,0.45)] backdrop-blur dark:border-accent-primary/25 dark:bg-surface/55 dark:shadow-[0_24px_46px_-28px_rgba(255,107,53,0.28)]"
+          class="inline-flex items-center rounded-full border border-border-default bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary shadow-[0_14px_34px_-30px_var(--shadow-color)] sm:px-4 sm:py-2"
         >
           {{ sectionEyebrow }}
         </span>
 
-        <h1
-          class="title-under-xs mt-6 max-w-xl text-[34px] font-extrabold leading-tight text-text-primary sm:text-[42px] lg:text-[52px]"
-        >
-          <span v-if="titleParts.upperLeadingPart" class="upper">
-            {{ titleParts.upperLeadingPart }}
-          </span>
-          <template
-            v-for="(segment, index) in titleParts.brandSegments"
-            :key="`${segment.text}-${index}`"
+        <div>
+          <h1
+            class="title-under-xs max-w-xl text-[28px] font-extrabold leading-[1.15] text-text-primary sm:text-[36px] lg:text-[44px]"
           >
-            <span :class="segment.accent ? 'text-accent-primary' : ''">
-              {{ segment.text }}
+            <span v-if="titleParts.upperLeadingPart" class="upper">
+              {{ titleParts.upperLeadingPart }}
             </span>
-          </template>
-          <span v-if="titleParts.upperTrailingPart" class="upper">
-            {{ titleParts.upperTrailingPart }}
-          </span>
-        </h1>
+            <template
+              v-for="(segment, index) in titleParts.brandSegments"
+              :key="`${segment.text}-${index}`"
+            >
+              <span :class="segment.accent ? 'text-accent-primary' : ''">
+                {{ segment.text }}
+              </span>
+            </template>
+            <span v-if="titleParts.upperTrailingPart" class="upper">
+              {{ titleParts.upperTrailingPart }}
+            </span>
+          </h1>
 
-        <p
-          class="subtitle-under-xs mt-4 max-w-xl text-base leading-7 text-text-secondary sm:text-[17px]"
-        >
-          {{ sectionSubtitle }}
-        </p>
+          <p
+            v-if="sectionSubtitle"
+            class="subtitle-under-xs mt-3 max-w-xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7"
+          >
+            {{ sectionSubtitle }}
+          </p>
+        </div>
 
         <div
           v-if="accountHighlights.length"
-          class="mt-8 rounded-[28px] border border-border-default bg-surface/82 p-4 shadow-[0_24px_70px_-46px_var(--shadow-color)] backdrop-blur sm:p-5 dark:border-[#263651] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.78)_0%,rgba(17,28,51,0.88)_100%)] dark:shadow-[0_34px_84px_-46px_rgba(0,0,0,0.72)]"
+          class="grid gap-2 sm:grid-cols-2 lg:max-w-lg"
         >
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div
-              v-for="(item, index) in accountHighlights"
-              :key="item.id"
-              class="rounded-[22px] border border-border-default bg-surface px-4 py-4 dark:border-[#263651] dark:bg-[linear-gradient(180deg,rgba(11,22,40,0.96)_0%,rgba(15,23,42,0.98)_100%)]"
-            >
+          <article
+            v-for="(item, index) in accountHighlights"
+            :key="item.id"
+            class="rounded-[18px] border border-border-default bg-surface p-3 shadow-[0_16px_38px_-34px_var(--shadow-color)] sm:p-4"
+          >
+            <div class="flex items-start gap-3">
               <span
-                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-primary/10 text-xs font-bold text-accent-primary"
+                class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-xs font-extrabold text-accent-primary"
               >
                 {{ index + 1 }}
               </span>
-              <p class="mt-3 text-sm font-semibold text-text-primary">
-                {{ item.title }}
-              </p>
-              <p class="mt-2 text-sm leading-6 text-text-secondary">
-                {{ item.copy }}
-              </p>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-text-primary">
+                  {{ sanitizeText(item.title) }}
+                </p>
+                <p
+                  v-if="sanitizeText(item.description)"
+                  class="mt-1 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6"
+                >
+                  {{ sanitizeText(item.description) }}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div
-          class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-text-secondary"
-        >
-          <NuxtLink
-            to="/register"
-            class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
-          >
-            ანგარიშის შექმნა
-          </NuxtLink>
-          <NuxtLink
-            to="/"
-            class="font-medium transition-colors duration-200 hover:text-accent-primary"
-          >
-            მთავარ გვერდზე დაბრუნება
-          </NuxtLink>
+          </article>
         </div>
       </div>
 
-      <div class="relative lg:justify-self-end">
-        <div
-          class="pointer-events-none absolute inset-x-10 -top-8 h-24 rounded-full bg-accent-primary/15 blur-3xl dark:bg-accent-primary/18"
-          aria-hidden="true"
-        />
-
+      <div class="order-1 lg:order-2 lg:justify-self-end">
         <form
-          class="relative mx-auto w-full max-w-[440px] rounded-[28px] border border-border-default/90 bg-surface/95 p-5 shadow-[0_32px_80px_-42px_rgba(15,23,42,0.28)] backdrop-blur sm:p-8 dark:border-[#2b3d5d] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.94)_0%,rgba(17,28,51,0.98)_100%)] dark:shadow-[0_38px_92px_-50px_rgba(0,0,0,0.82)]"
+          class="mx-auto w-full max-w-[420px] rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_26px_70px_-44px_var(--shadow-color)] sm:p-6 lg:p-7"
           novalidate
           @submit.prevent="loginUser"
         >
-          <div class="mb-6">
+          <div class="mb-5 sm:mb-6">
             <p
-              class="text-xs font-semibold uppercase tracking-[0.16em] text-accent-primary"
+              class="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary"
             >
               შესვლა
             </p>
-            <h2 class="title-under-xs mt-3 text-[30px] font-extrabold text-text-primary">
-              კეთილი დაბრუნება
+            <h2
+              class="title-under-xs mt-2 text-[26px] font-extrabold leading-tight text-text-primary sm:text-[30px]"
+            >
+              ანგარიშში შესვლა
             </h2>
             <p class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary">
-              შეიყვანე ელ.ფოსტა და პაროლი, რომ შეხვიდე შენს პროფილში.
+              შეიყვანე ელ.ფოსტა და პაროლი, რომ გააგრძელო პროფილში.
             </p>
           </div>
 
           <BaseInput
             v-model="email"
-            class="mb-4"
+            class="mb-3 sm:mb-4"
             v-bind="emailAttrs"
             label="ელ.ფოსტა"
             type="email"
@@ -279,7 +232,7 @@ const loginUser = handleSubmit(async (values) => {
 
           <BaseInput
             v-model="password"
-            class="mb-4"
+            class="mb-2"
             v-bind="passwordAttrs"
             label="პაროლი"
             type="password"
@@ -288,9 +241,18 @@ const loginUser = handleSubmit(async (values) => {
             :disabled="loading"
           />
 
+          <div class="mb-4 flex justify-end">
+            <NuxtLink
+              to="/forgot-password"
+              class="text-sm font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
+            >
+              პაროლი დაგავიწყდათ?
+            </NuxtLink>
+          </div>
+
           <div
             v-if="errorMessage"
-            class="mb-4 rounded-[18px] border border-error/20 bg-error/5 px-4 py-3 text-sm text-error"
+            class="mb-4 rounded-[16px] border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error"
           >
             {{ errorMessage }}
           </div>
@@ -304,16 +266,9 @@ const loginUser = handleSubmit(async (values) => {
           </button>
 
           <div
-            class="mt-6 border-t border-border-default/80 pt-5 text-center text-sm"
+            class="mt-5 border-t border-border-default pt-4 text-center text-sm"
           >
-            <NuxtLink
-              to="/forgot-password"
-              class="relative inline-block pb-[2px] font-medium text-accent-primary no-underline after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-current after:opacity-60 after:content-[''] transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
-            >
-              პაროლი დაგავიწყდათ?
-            </NuxtLink>
-
-            <p class="mt-3 text-text-secondary">
+            <p class="text-text-secondary">
               ჯერ არ გაქვს ანგარიში?
               <NuxtLink
                 to="/register"

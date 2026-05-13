@@ -255,3 +255,34 @@ This file exists so the project context does not need to be re-explained in ever
 - Header narrow-mobile adjustment:
   - `app/components/LAYOUTS/Header.vue` was tuned at very narrow widths (`max-width: 399px` and `max-width: 359px`) because long checkout pages with a vertical scrollbar left less usable width and caused the fixed-size header logo/actions to crowd.
   - Header logo/icon sizes and gaps are slightly smaller only on very narrow screens. Do not revert this unless a replacement mobile header layout is implemented.
+
+## Current Profile Mobile Redesign State - 2026-05-13
+
+- Profile mobile UX was tightened after cart/wishlist/checkout. Main files touched:
+  - `app/components/profile/ProfileShell.vue`
+  - `app/components/profile/ProfileSidebar.vue`
+  - `app/components/profile/ProfileInfoSection.vue`
+  - `app/components/profile/ProfileInfoSkeleton.vue`
+  - `app/components/profile/ProfileOrdersList.vue`
+  - `app/components/profile/ProfileOrdersSkeleton.vue`
+  - `app/components/profile/ProfileOrderDetail.vue`
+  - `app/components/profile/ProfileOrderDetailSkeleton.vue`
+  - `app/pages/profile/index.vue`
+  - `app/pages/profile/orders/index.vue`
+  - `app/pages/profile/orders/[token].vue`
+- Profile navigation behavior:
+  - On mobile, `ProfileSidebar` uses a compact account row plus three tab-like buttons: account, orders, wishlist.
+  - Desktop/tablet behavior remains the existing sidebar style via `sm:` and larger Tailwind utilities.
+  - Profile subpages now pass page-specific titles (`ანგარიშის ინფორმაცია`, `ჩემი შეკვეთები`, `შეკვეთის დეტალი`) so route changes are visually obvious on mobile.
+  - Navigation links set `aria-current="page"` when active.
+- Mobile spacing:
+  - Profile shell, profile info, edit/delete account sections, orders list, order detail, and related skeleton states use tighter mobile padding/gaps and return to larger spacing at `sm` and above.
+  - Keep this work Tailwind-only; no custom CSS was added for these profile fixes.
+- Fixed profile/order detail mobile defects:
+  - Georgian tab labels were clipping vertically because `leading-none` plus `truncate` was too tight. Mobile tab labels now use `leading-4`.
+  - Order tracking status names are `12px` on mobile (`text-xs`) and return to `14px` at `sm`.
+  - The active tracking-step description now spans the available card width instead of being constrained beside the icon column.
+  - Order detail contact/products sections received `min-w-0`, `max-w-full`, `break-words`, and `minmax(0,360px)` grid guards so long emails, names, product titles, prices, or address text do not force horizontal overflow on narrow screens.
+- Verification:
+  - `npm run build` completed successfully after the profile mobile pass. In sandbox it hit a Windows `readlink C:\Users\kench` permission error during Nitro packaging, then succeeded when rerun with approved escalation. The only remaining message was the existing Vue package trailing-slash export deprecation warning.
+- Likely next redesign target: authentication and registration pages/forms, keeping auth logic, reCAPTCHA, validation, redirects, and API contracts unchanged while updating mobile spacing, visual hierarchy, and new FlexDrive design-system consistency.

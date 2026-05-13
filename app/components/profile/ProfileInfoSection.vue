@@ -54,10 +54,10 @@ const fields = computed(() => [
 
 <template>
   <section
-    class="rounded-[28px] border border-border-default bg-surface p-6 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+    class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
   >
     <div
-      class="flex flex-col gap-4 border-b border-border-default pb-6 sm:flex-row sm:items-start sm:justify-between"
+      class="flex flex-col gap-3 border-b border-border-default pb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:pb-6"
     >
       <div class="max-w-2xl">
         <p
@@ -65,10 +65,10 @@ const fields = computed(() => [
         >
           ანგარიშის ინფორმაცია
         </p>
-        <h2 class="mt-2 text-[28px] font-extrabold leading-tight text-text-primary">
+        <h2 class="mt-2 text-[24px] font-extrabold leading-tight text-text-primary sm:text-[28px]">
           პირადი მონაცემები
         </h2>
-        <p class="mt-3 text-sm leading-7 text-text-secondary">
+        <p class="mt-2 text-sm leading-6 text-text-secondary sm:mt-3 sm:leading-7">
           აქ ჩანს ძირითადი საკონტაქტო და მიწოდების ინფორმაცია, რომელიც პროფილში
           გაქვს შენახული.
         </p>
@@ -79,18 +79,18 @@ const fields = computed(() => [
       </div>
     </div>
 
-    <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
       <article
         v-for="field in fields"
         :key="field.key"
         :class="[
-          'min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 shadow-[0_18px_44px_-38px_var(--shadow-color)]',
+          'min-w-0 rounded-[18px] border border-border-default bg-surface-2 px-3 py-3 shadow-[0_18px_44px_-38px_var(--shadow-color)] sm:rounded-[20px] sm:px-4 sm:py-4',
           field.fullWidth ? 'md:col-span-2' : '',
         ]"
       >
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5 sm:gap-3">
           <span
-            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-border-default bg-surface text-text-muted dark:border-accent-primary/20 dark:bg-accent-primary/10 dark:text-accent-primary"
+            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[13px] border border-border-default bg-surface text-text-muted dark:border-accent-primary/20 dark:bg-accent-primary/10 dark:text-accent-primary sm:h-10 sm:w-10 sm:rounded-[14px]"
           >
             <component :is="field.icon" class="h-5 w-5" aria-hidden="true" />
           </span>
@@ -102,7 +102,7 @@ const fields = computed(() => [
               {{ field.label }}
             </p>
             <p
-              class="mt-2 break-words text-sm font-semibold leading-6 text-text-primary md:text-base"
+              class="mt-1.5 break-words text-sm font-semibold leading-6 text-text-primary sm:mt-2 md:text-base"
             >
               {{ field.value || "არ არის შევსებული" }}
             </p>
