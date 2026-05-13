@@ -6,13 +6,6 @@ import { normalizeAuthRedirect } from "~/utils/authRouting";
 import type { ContentItemData, SmartComponentData } from "~/types/page";
 import { sanitizeText, splitAutoMateTitleParts } from "~/composables/helpers";
 
-type RegisterBenefit = {
-  id: number;
-  title: string;
-  copy: string;
-  position: number;
-};
-
 const props = defineProps<{
   data?: SmartComponentData;
 }>();
@@ -28,11 +21,6 @@ const errorMessage = ref("");
 const loading = ref(false);
 const isSuccessModalOpen = ref(false);
 
-const toNumber = (value: unknown, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
 const sectionEyebrow = computed(() => sanitizeText(props.data?.buttonText));
 
 const sectionTitle = computed(() => sanitizeText(props.data?.title));
@@ -40,24 +28,16 @@ const titleParts = computed(() => splitAutoMateTitleParts(sectionTitle.value));
 
 const sectionSubtitle = computed(() => sanitizeText(props.data?.subtitle));
 
-const registerBenefits = computed<RegisterBenefit[]>(() => {
+const registerBenefits = computed<ContentItemData[]>(() => {
   const list = props.data?.contentData?.list;
 
   if (!Array.isArray(list) || list.length === 0) {
     return [];
   }
 
-  return list
-    .map((item: ContentItemData, index) => ({
-      id: toNumber(item.id, index + 1),
-      position: toNumber(item.position, index + 1),
-      title: sanitizeText(item.title),
-      copy: sanitizeText(item.description),
-    }))
-    .filter((item) => item.title || item.copy)
-    .sort((a, b) =>
-      a.position === b.position ? a.id - b.id : a.position - b.position,
-    );
+  return list.filter(
+    (item) => sanitizeText(item.title) || sanitizeText(item.description),
+  );
 });
 
 const redirectTarget = computed(() =>
@@ -74,17 +54,15 @@ const redirectIfAuthenticated = async () => {
   }
 };
 
-const { defineField, errors, handleSubmit, setFieldError, resetForm } = useForm(
-  {
-    validationSchema: toTypedSchema(registerSchema),
-    initialValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-      termsAccepted: false,
-    },
+const { defineField, errors, handleSubmit, resetForm } = useForm({
+  validationSchema: toTypedSchema(registerSchema),
+  initialValues: {
+    email: "",
+    password: "",
+    confirmPassword: "",
+    termsAccepted: false,
   },
-);
+});
 
 const [email, emailAttrs] = defineField("email");
 const [password, passwordAttrs] = defineField("password");
@@ -98,60 +76,6 @@ watch(
   },
   { immediate: true },
 );
-
-const extractFirstErrorMessage = (payload: any): string | null => {
-  if (!payload) return null;
-  if (typeof payload === "string") return payload;
-
-  if (Array.isArray(payload)) {
-    for (const item of payload) {
-      const nested = extractFirstErrorMessage(item);
-      if (nested) return nested;
-    }
-    return null;
-  }
-
-  if (typeof payload === "object") {
-    const priorityKeys = [
-      "password",
-      "confirm_password",
-      "terms_accepted",
-      "email",
-      "non_field_errors",
-      "detail",
-      "message",
-    ];
-    const keys = [...priorityKeys, ...Object.keys(payload)];
-    const seen = new Set<string>();
-
-    for (const key of keys) {
-      if (seen.has(key) || !(key in payload)) continue;
-      seen.add(key);
-      const nested = extractFirstErrorMessage(payload[key]);
-      if (nested) return nested;
-    }
-  }
-
-  return null;
-};
-
-const applyBackendFieldErrors = (payload: any) => {
-  if (!payload || typeof payload !== "object") return;
-
-  const fieldMap = [
-    { apiKey: "email", formKey: "email" },
-    { apiKey: "password", formKey: "password" },
-    { apiKey: "confirm_password", formKey: "confirmPassword" },
-    { apiKey: "terms_accepted", formKey: "termsAccepted" },
-  ] as const;
-
-  for (const { apiKey, formKey } of fieldMap) {
-    const message = extractFirstErrorMessage(payload[apiKey]);
-    if (message) {
-      setFieldError(formKey, message);
-    }
-  }
-};
 
 const closeSuccessModal = () => {
   isSuccessModalOpen.value = false;
@@ -177,16 +101,6 @@ const submitForm = handleSubmit(async (values) => {
       },
     });
 
-    const submitErrorPayload = null;
-    if (submitErrorPayload) {
-      const payload = submitErrorPayload;
-      applyBackendFieldErrors(payload);
-
-      errorMessage.value =
-        extractFirstErrorMessage(payload) || "რეგისტრაცია ვერ შესრულდა.";
-      return;
-    }
-
     successMessage.value =
       "რეგისტრაცია წარმატებით დასრულდა. შეამოწმეთ ელფოსტა.";
     resetForm({
@@ -199,7 +113,8 @@ const submitForm = handleSubmit(async (values) => {
     });
     isSuccessModalOpen.value = true;
   } catch (error: any) {
-    errorMessage.value = "დაფიქსირდა შეცდომა.";
+    errorMessage.value =
+      error?.data?.detail || "რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.";
   } finally {
     loading.value = false;
   }
@@ -208,126 +123,105 @@ const submitForm = handleSubmit(async (values) => {
 
 <template>
   <section
-    class="relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff7f0_0%,#fffdfa_24%,#fff8f1_58%,#fffaf6_100%)] dark:bg-[linear-gradient(180deg,#060f1d_0%,#0b1730_34%,#0e1c38_70%,#122246_100%)]"
+    class="bg-[linear-gradient(135deg,var(--bg-primary)_0%,var(--surface)_46%,var(--section-soft)_100%)] text-text-primary"
   >
     <div
-      class="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top_left,rgba(255,107,53,0.16),transparent_34%),radial-gradient(circle_at_top_center,rgba(255,214,153,0.24),transparent_28%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_30%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(255,107,53,0.24),transparent_32%),radial-gradient(circle_at_top_center,rgba(251,191,36,0.16),transparent_26%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_30%)]"
-      aria-hidden="true"
-    />
-    <div
-      class="pointer-events-none absolute -left-16 top-28 h-56 w-56 rounded-full bg-accent-primary/10 blur-3xl dark:bg-accent-primary/18"
-      aria-hidden="true"
-    />
-    <div
-      class="pointer-events-none absolute right-[8%] top-40 h-48 w-48 rounded-full bg-[#fde68a]/20 blur-3xl dark:bg-[#38bdf8]/12"
-      aria-hidden="true"
-    />
-    <div
-      class="pointer-events-none absolute bottom-10 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-[#fb7185]/10 blur-3xl dark:bg-[#f97316]/10"
-      aria-hidden="true"
-    />
-
-    <div
-      class="mx-auto grid w-full max-w-6xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:min-h-[720px] lg:grid-cols-[minmax(0,1fr)_minmax(430px,500px)] lg:items-start lg:gap-16 lg:px-8 lg:py-20"
+      class="container-fluid grid gap-5 py-6 sm:py-10 lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(380px,460px)] lg:items-start lg:gap-12 lg:py-14 xl:py-16"
     >
-      <div class="relative lg:pr-4">
+      <div class="order-2 space-y-4 lg:order-1 lg:min-w-0 lg:pr-8">
         <span
           v-if="sectionEyebrow"
-          class="inline-flex items-center rounded-full border border-accent-primary/15 bg-surface/80 px-5 py-2.5 text-[16px] font-semibold uppercase tracking-[0.12em] text-accent-primary shadow-[0_18px_42px_-28px_rgba(255,107,53,0.45)] backdrop-blur dark:border-accent-primary/25 dark:bg-surface/55 dark:shadow-[0_24px_46px_-28px_rgba(255,107,53,0.28)]"
+          class="inline-flex items-center rounded-full border border-border-default bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary shadow-[0_14px_34px_-30px_var(--shadow-color)] sm:px-4 sm:py-2"
         >
           {{ sectionEyebrow }}
         </span>
 
-        <h1
-          v-if="sectionTitle"
-          class="title-under-xs mt-5 max-w-xl text-[34px] font-extrabold leading-[1.04] text-text-primary sm:text-[42px] lg:text-[54px]"
-        >
-          <span v-if="titleParts.upperLeadingPart" class="upper">
-            {{ titleParts.upperLeadingPart }}
-          </span>
-          <template
-            v-for="(segment, index) in titleParts.brandSegments"
-            :key="`${segment.text}-${index}`"
+        <div>
+          <h1
+            v-if="sectionTitle"
+            class="title-under-xs max-w-2xl text-[28px] font-extrabold leading-[1.15] text-text-primary sm:text-[36px] lg:text-[44px]"
           >
-            <span :class="segment.accent ? 'text-accent-primary' : ''">
-              {{ segment.text }}
+            <span v-if="titleParts.upperLeadingPart" class="upper">
+              {{ titleParts.upperLeadingPart }}
             </span>
-          </template>
-          <span v-if="titleParts.upperTrailingPart" class="upper">
-            {{ titleParts.upperTrailingPart }}
-          </span>
-        </h1>
+            <template
+              v-for="(segment, index) in titleParts.brandSegments"
+              :key="`${segment.text}-${index}`"
+            >
+              <span :class="segment.accent ? 'text-accent-primary' : ''">
+                {{ segment.text }}
+              </span>
+            </template>
+            <span v-if="titleParts.upperTrailingPart" class="upper">
+              {{ titleParts.upperTrailingPart }}
+            </span>
+          </h1>
 
-        <p
-          v-if="sectionSubtitle"
-          class="subtitle-under-xs mt-5 max-w-xl text-base leading-7 text-text-secondary sm:text-[17px]"
-        >
-          {{ sectionSubtitle }}
-        </p>
+          <p
+            v-if="sectionSubtitle"
+            class="subtitle-under-xs mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7"
+          >
+            {{ sectionSubtitle }}
+          </p>
+        </div>
 
         <div
           v-if="registerBenefits.length"
-          class="mt-9 rounded-[30px] border border-border-default/80 bg-surface/72 p-4 shadow-[0_28px_80px_-48px_var(--shadow-color)] backdrop-blur sm:p-5 dark:border-[#294066] dark:bg-[linear-gradient(180deg,rgba(10,19,37,0.82)_0%,rgba(14,27,50,0.9)_100%)] dark:shadow-[0_34px_86px_-48px_rgba(0,0,0,0.82)]"
+          class="grid gap-2 max-[1239px]:grid-cols-1 min-[1240px]:grid-cols-3 lg:gap-3 xl:gap-4"
         >
-          <ol class="space-y-3">
-            <li
-              v-for="(item, index) in registerBenefits"
-              :key="item.id"
-              class="grid grid-cols-[auto_1fr] gap-4 rounded-[22px] border border-border-default/70 bg-surface/80 px-4 py-4 dark:border-[#243755] dark:bg-[linear-gradient(180deg,rgba(10,19,37,0.92)_0%,rgba(14,24,44,0.98)_100%)]"
-            >
+          <article
+            v-for="(item, index) in registerBenefits"
+            :key="item.id"
+            class="rounded-[18px] border border-border-default bg-surface p-3 shadow-[0_16px_38px_-34px_var(--shadow-color)] sm:p-4 lg:p-5"
+          >
+            <div class="flex items-start gap-3">
               <span
-                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-accent-primary/20 bg-accent-primary/10 text-sm font-bold text-accent-primary"
+                class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-xs font-extrabold text-accent-primary"
               >
                 {{ index + 1 }}
               </span>
-              <div>
-                <p
-                  class="text-sm font-semibold text-text-primary sm:text-[15px]"
-                >
-                  {{ item.title }}
-                </p>
-                <p class="mt-1.5 text-sm leading-6 text-text-secondary">
-                  {{ item.copy }}
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-text-primary">
+                  {{ sanitizeText(item.title) }}
                 </p>
               </div>
-            </li>
-          </ol>
+            </div>
+            <p
+              v-if="sanitizeText(item.description)"
+              class="mt-3 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6"
+            >
+              {{ sanitizeText(item.description) }}
+            </p>
+          </article>
         </div>
       </div>
 
-      <div class="relative lg:justify-self-end">
-        <div
-          class="pointer-events-none absolute inset-x-10 -top-10 h-28 rounded-full bg-accent-primary/16 blur-3xl dark:bg-accent-primary/22"
-          aria-hidden="true"
-        />
-
+      <div class="order-1 lg:order-2 lg:justify-self-end">
         <form
-          class="relative mx-auto w-full max-w-[500px] rounded-[32px] border border-border-default/90 bg-surface/95 p-5 shadow-[0_36px_92px_-48px_rgba(15,23,42,0.34)] backdrop-blur sm:p-8 dark:border-[#2b436b] dark:bg-[linear-gradient(180deg,rgba(10,19,37,0.95)_0%,rgba(14,27,50,0.98)_100%)] dark:shadow-[0_42px_100px_-54px_rgba(0,0,0,0.86)]"
+          class="mx-auto w-full max-w-[460px] rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_26px_70px_-44px_var(--shadow-color)] sm:p-6 lg:p-7"
           novalidate
           @submit.prevent="submitForm"
         >
-          <div class="mb-6">
+          <div class="mb-5 sm:mb-6">
             <p
-              class="text-xs font-semibold uppercase tracking-[0.16em] text-accent-primary"
+              class="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary"
             >
               რეგისტრაცია
             </p>
             <h2
-              class="title-under-xs mt-3 text-[30px] font-extrabold text-text-primary"
+              class="title-under-xs mt-2 text-[26px] font-extrabold leading-tight text-text-primary sm:text-[30px]"
             >
-              შექმენი ანგარიში
+              ანგარიშის შექმნა
             </h2>
-            <p
-              class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary"
-            >
-              ელ.ფოსტა და პაროლი საკმარისია, რომ პერსონალური სივრცე სწრაფად
-              გაააქტიურო.
+            <p class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary">
+              შექმენი პროფილი შეკვეთების, სურვილების სიის და მიწოდების
+              მონაცემებისთვის.
             </p>
           </div>
 
           <BaseInput
             v-model="email"
-            class="mb-4"
+            class="mb-3 sm:mb-4"
             v-bind="emailAttrs"
             label="ელ.ფოსტა"
             type="email"
@@ -349,17 +243,17 @@ const submitForm = handleSubmit(async (values) => {
           />
 
           <div
-            class="mb-4 rounded-[18px] border border-border-default/80 bg-surface/70 px-4 py-3 text-sm leading-6 text-text-secondary dark:border-[#263c5f] dark:bg-[rgba(12,22,40,0.82)]"
+            class="mb-3 rounded-[16px] border border-border-default bg-surface-2 px-3 py-2.5 text-xs leading-5 text-text-secondary sm:mb-4 sm:px-4 sm:py-3 sm:text-sm sm:leading-6"
           >
-            <span class="font-semibold text-text-primary"
-              >პაროლის მოთხოვნა:</span
-            >
+            <span class="font-semibold text-text-primary">
+              პაროლის მოთხოვნა:
+            </span>
             {{ passwordHint }}
           </div>
 
           <BaseInput
             v-model="confirmPassword"
-            class="mb-4"
+            class="mb-3 sm:mb-4"
             v-bind="confirmPasswordAttrs"
             label="გაიმეორე პაროლი"
             type="password"
@@ -369,13 +263,13 @@ const submitForm = handleSubmit(async (values) => {
           />
 
           <label
-            class="mb-2 flex items-start gap-3 rounded-[18px] border border-border-default/80 bg-surface/72 px-4 py-3 text-sm font-medium text-text-secondary transition-colors duration-200 dark:border-[#263c5f] dark:bg-[rgba(12,22,40,0.82)]"
+            class="mb-2 flex items-start gap-3 rounded-[16px] border border-border-default bg-surface-2 px-3 py-2.5 text-xs font-medium leading-5 text-text-secondary transition-colors duration-200 sm:px-4 sm:py-3 sm:text-sm sm:leading-6"
             :class="errors.termsAccepted ? 'border-error/40 text-error' : ''"
           >
             <input
               v-model="termsAccepted"
               type="checkbox"
-              class="mt-0.5 h-4 w-4 rounded border border-border-default bg-surface-2 accent-accent-primary"
+              class="mt-0.5 h-4 w-4 rounded border border-border-default bg-surface accent-accent-primary"
               :disabled="loading"
             />
             <span>
@@ -384,7 +278,7 @@ const submitForm = handleSubmit(async (values) => {
                 to="/terms"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="relative inline-block pb-[2px] font-semibold text-accent-primary no-underline after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-current after:opacity-60 after:content-[''] transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
+                class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
                 @click.stop
               >
                 წესებსა და პირობებს
@@ -394,7 +288,7 @@ const submitForm = handleSubmit(async (values) => {
                 to="/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="relative inline-block pb-[2px] font-semibold text-accent-primary no-underline after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-current after:opacity-60 after:content-[''] transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
+                class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
                 @click.stop
               >
                 კონფიდენციალურობის პოლიტიკას
@@ -407,7 +301,7 @@ const submitForm = handleSubmit(async (values) => {
 
           <button
             type="submit"
-            class="btn-min-h-44 mt-4 w-full rounded-[16px] bg-accent-primary px-4 py-3 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover active:bg-accent-pressed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+            class="btn-min-h-44 mt-3 w-full rounded-[16px] bg-accent-primary px-4 py-3 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover active:bg-accent-pressed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="loading"
           >
             {{ loading ? "მიმდინარეობს რეგისტრაცია..." : "რეგისტრაცია" }}
@@ -415,22 +309,20 @@ const submitForm = handleSubmit(async (values) => {
 
           <div
             v-if="successMessage && !isSuccessModalOpen"
-            class="mt-4 rounded-[18px] border border-success/20 bg-success/5 px-4 py-3 text-sm text-success"
+            class="mt-4 rounded-[16px] border border-success/20 bg-success/5 px-4 py-3 text-sm font-medium text-success"
           >
             {{ successMessage }}
           </div>
 
           <div
             v-if="errorMessage"
-            class="mt-4 rounded-[18px] border border-error/20 bg-error/5 px-4 py-3 text-sm text-error"
+            class="mt-4 rounded-[16px] border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error"
           >
             {{ errorMessage }}
           </div>
 
-          <div
-            class="mt-6 border-t border-border-default/80 pt-5 text-center text-sm text-text-secondary"
-          >
-            <p>
+          <div class="mt-5 border-t border-border-default pt-4 text-center text-sm">
+            <p class="text-text-secondary">
               უკვე გაქვს ანგარიში?
               <NuxtLink
                 to="/login"
@@ -458,12 +350,10 @@ const submitForm = handleSubmit(async (values) => {
       </div>
 
       <p
+        v-if="successMessage"
         class="mt-5 max-w-md text-sm leading-7 text-text-secondary md:text-base"
       >
-        {{
-          successMessage ||
-          "რეგისტრაცია წარმატებით დასრულდა. შეამოწმეთ ელფოსტა."
-        }}
+        {{ successMessage }}
       </p>
     </div>
 
