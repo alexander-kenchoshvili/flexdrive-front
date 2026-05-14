@@ -339,3 +339,20 @@ This file exists so the project context does not need to be re-explained in ever
   - `npm run build` was run successfully during the main auth-page pass after forgot/reset/activate/resend changes.
   - Later typography/button-only tweaks were checked with `git diff --check`; no full build was run for those small class/component swaps.
 - Likely next redesign target after auth: static/legal/support pages, especially `/delivery`, `/returns`, `/payment-methods`, `/terms`, `/privacy-policy`, `/contact`, plus footer support/social content QA. Preserve existing business logic and API contracts.
+
+## Upcoming Payment Safety Work - 2026-05-15
+
+- Before real card, installment, or part-payment integrations go live, FlexDrive needs a carefully designed payment safety flow. This is high-priority work and must be implemented deliberately, with every step checked end to end.
+- The goal is to avoid situations where a customer pays online or receives installment approval for a part that cannot be fulfilled because stock, compatibility, or order validation failed after payment.
+- Required planning/implementation areas:
+  - stock reservation during checkout, with expiry and release on failed/abandoned payment;
+  - separate order status and payment status models/state handling;
+  - payment transaction records with provider, provider transaction id, amount, currency, status, timestamps, and raw provider references where appropriate;
+  - admin actions for cancelling orders, marking/refunding payments, and clearly tracking refund/cancel state;
+  - provider abstraction so a manual/mock provider can exist before TBC/BOG/other real providers are connected;
+  - success, failure, cancellation, callback/webhook, refund, and out-of-stock edge cases;
+  - customer-facing copy for successful payment, pending confirmation, failed payment, cancelled order, refund initiated, and refund completed states.
+- Prefer building the internal safety architecture before bank/provider integration. Bank APIs should plug into an already clear order/payment/refund model rather than defining the whole checkout logic.
+- For card payments, prefer authorization/capture if the chosen provider supports it: reserve stock first, authorize payment, then capture only after the order is fulfilment-ready. If immediate capture is required, implement reliable full refund/cancel flows.
+- For installments and part-payment providers, cancellation/refund must go through the same provider channel, not manual cash/bank transfer, unless a documented provider exception requires otherwise.
+- Do not start this work casually while finishing legal/static pages. Treat it as a separate checkout/payment architecture phase after Terms/Returns/Delivery/Payment/Privacy content is stable and before production payment integrations.
