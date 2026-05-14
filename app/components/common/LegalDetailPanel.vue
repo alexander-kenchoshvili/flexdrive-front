@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import BaseRichText from "~/components/common/BaseRichText.vue";
+import LegalSectionIcon from "~/components/common/LegalSectionIcon.vue";
+import type { LegalSectionIconName } from "~/composables/useLegalPageSections";
 
 const props = withDefaults(
   defineProps<{
@@ -7,63 +9,61 @@ const props = withDefaults(
     index: number;
     title: string;
     summary?: string;
-    iconSvg?: string;
+    iconName: LegalSectionIconName;
     html?: string;
     variant?: "base" | "subtle";
   }>(),
   {
     summary: "",
-    iconSvg: "",
     html: "",
     variant: "base",
   },
 );
 
 const surfaceClass = computed(() =>
-  props.variant === "subtle" ? "bg-surface-2" : "bg-surface",
+  props.variant === "subtle" ? "bg-surface-2/70" : "bg-surface",
 );
 </script>
 
 <template>
   <article
     :id="sectionId"
-    class="scroll-mt-40 rounded-[28px] border border-border-default px-5 py-6 shadow-[0_20px_50px_-40px_var(--shadow-color)] md:px-8 md:py-8 lg:px-10 lg:py-10"
+    class="scroll-mt-28 rounded-xl border border-border-default p-4 shadow-[0_18px_48px_-42px_var(--shadow-color)] sm:p-5 lg:p-6"
     :class="surfaceClass"
   >
-    <div class="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
-      <div class="lg:sticky lg:top-36 lg:self-start">
-        <div class="flex items-center gap-3">
+    <div
+      class="grid gap-4 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,1fr)] lg:gap-8 xl:grid-cols-[320px_minmax(0,1fr)]"
+    >
+      <div class="min-w-0 lg:sticky lg:top-28 lg:self-start">
+        <div class="flex items-center gap-2">
           <span
-            class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full bg-accent-primary text-sm font-bold text-text-invert"
+            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-primary text-xs font-extrabold text-text-invert"
           >
             {{ String(index).padStart(2, "0") }}
           </span>
 
           <span
-            v-if="iconSvg"
-            class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border-default bg-surface text-accent-primary"
+            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-default bg-surface text-accent-primary"
           >
-            <span
-              class="block [&>svg]:block [&>svg]:h-5 [&>svg]:w-5"
-              v-html="iconSvg"
-            />
+            <LegalSectionIcon :name="iconName" class="h-4 w-4" />
           </span>
         </div>
 
         <h2
-          class="mt-5 text-[24px] font-extrabold leading-[1.2] text-text-primary"
+          class="upper mt-3 break-words text-lg font-extrabold leading-6 text-text-primary sm:text-xl sm:leading-7"
         >
           {{ title }}
         </h2>
 
-        <p v-if="summary" class="mt-3 text-sm leading-6 text-text-secondary">
+        <p
+          v-if="summary"
+          class="mt-2 break-words text-sm leading-6 text-text-secondary"
+        >
           {{ summary }}
         </p>
       </div>
 
-      <div
-        class="rounded-[24px] border border-border-default bg-surface px-5 py-5 md:px-7 md:py-7"
-      >
+      <div class="min-w-0 border-t border-border-default pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
         <BaseRichText :html="html" />
       </div>
     </div>
