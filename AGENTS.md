@@ -305,6 +305,18 @@ This file exists so the project context does not need to be re-explained in ever
   - compact mobile spacing and wider desktop two-column compositions where useful.
   - no decorative blobs/orbs or old AutoMate visual treatment.
 - Login and register still use CMS/backend content for their hero copy where applicable. Backend CMS content migrations were created/run during this pass for the refreshed login/register content locally and on staging.
+- Follow-up auth content polish on 2026-05-14:
+  - `app/components/LAYOUTS/HeaderAccountDialog.vue` guest account prompt copy was tightened to: `შედი ანგარიშში` / `მართე შეკვეთები, სურვილების სია და კალათა ერთი პროფილიდან.`
+  - `app/components/SmartComponents/Login/Login.vue` form helper copy was tightened to: `შეიყვანე ელ.ფოსტა და პაროლი ანგარიშში შესასვლელად.`
+  - Backend migration `pages/migrations/0049_update_auth_card_copy.py` was added in the paired backend repo and run on both development and staging DBs.
+  - Login CMS cards now use:
+    - `შეკვეთების კონტროლი` - `ნახე მიმდინარე სტატუსები და წინა შეკვეთები ერთ ადგილას.`
+    - `რჩეულები და კალათა` - `ნახე შენახული ნაწილები და გააგრძელე შეკვეთა იქიდან, სადაც გაჩერდი.`
+  - Register CMS cards now use:
+    - `შენახული მონაცემები` - `შეკვეთის გაფორმებისას საკონტაქტო და მიწოდების ინფორმაცია ავტომატურად შეივსება.`
+    - `შეკვეთების ისტორია` - `ყველა შეკვეთა და მიმდინარე სტატუსი შენს პროფილში დაგხვდება.`
+    - `სურვილების სია` - `შეინახე საჭირო ნაწილები და ყიდვამდე მარტივად დაუბრუნდი.`
+  - Local and staging DB content was verified after the migration. If staging UI still shows old copy, suspect API/browser cache before changing code.
 - `RegisterForm` benefit cards were tuned after visual review:
   - cards are single-column below `1240px` and become three columns at `1240px+`.
   - number and title are vertically centered together.
@@ -326,4 +338,4 @@ This file exists so the project context does not need to be re-explained in ever
 - Verification:
   - `npm run build` was run successfully during the main auth-page pass after forgot/reset/activate/resend changes.
   - Later typography/button-only tweaks were checked with `git diff --check`; no full build was run for those small class/component swaps.
-- Likely next redesign target after auth: static/legal/support pages or any remaining account-adjacent utility pages, while preserving existing business logic and API contracts.
+- Likely next redesign target after auth: static/legal/support pages, especially `/delivery`, `/returns`, `/payment-methods`, `/terms`, `/privacy-policy`, `/contact`, plus footer support/social content QA. Preserve existing business logic and API contracts.

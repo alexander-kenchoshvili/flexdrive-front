@@ -130,10 +130,10 @@ onBeforeUnmount(() => {
                 </span>
                 <div class="min-w-0">
                   <p class="text-base font-bold text-text-primary">
-                    შედი ანგარიშზე
+                    შედი ანგარიშში
                   </p>
                   <p class="mt-1 text-sm leading-6 text-text-secondary">
-                    შეკვეთები, სურვილების სია და კალათა ერთ სივრცეში იქნება.
+                    მართე შეკვეთები, სურვილების სია და კალათა ერთი პროფილიდან.
                   </p>
                 </div>
               </div>

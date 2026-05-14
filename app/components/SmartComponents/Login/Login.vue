@@ -214,7 +214,7 @@ const loginUser = handleSubmit(async (values) => {
               ანგარიშში შესვლა
             </h2>
             <p class="subtitle-under-xs mt-2 text-sm leading-6 text-text-secondary">
-              შეიყვანე ელ.ფოსტა და პაროლი, რომ გააგრძელო პროფილში.
+              შეიყვანე ელ.ფოსტა და პაროლი ანგარიშში შესასვლელად.
             </p>
           </div>
 
