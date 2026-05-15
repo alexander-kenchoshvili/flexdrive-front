@@ -18,7 +18,7 @@ const props = defineProps<{
 }>();
 
 
-const categoryLabel = computed(() => sanitizeText(props.category) || "ბლოგი");
+const categoryLabel = computed(() => sanitizeText(props.category));
 const excerptText = computed(() => sanitizeText(props.excerpt));
 const formattedDate = computed(() => formatGeorgianDate(props.publishedAt));
 const readTimeLabel = computed(() => {
@@ -35,7 +35,7 @@ const hasHeroImage = computed(
 
 <template>
   <header class="border-b border-border-default">
-    <div class="relative aspect-[16/10] overflow-hidden md:aspect-[21/10]">
+    <div class="relative aspect-[16/9] overflow-hidden md:aspect-[21/10]">
       <div
         class="absolute inset-0 border-b border-border-default bg-surface-2"
       />
@@ -50,21 +50,22 @@ const hasHeroImage = computed(
       />
     </div>
 
-    <div class="px-5 py-8 md:px-8 md:py-10 lg:px-12">
+    <div class="px-4 py-5 sm:px-5 sm:py-6 md:px-7 lg:px-9">
       <span
+        v-if="categoryLabel"
         class="inline-flex min-h-8 items-center rounded-md border border-accent-primary/25 bg-accent-primary/10 px-3 py-1 text-xs font-bold text-accent-primary"
       >
         {{ categoryLabel }}
       </span>
 
       <h1
-        class="title-under-xs mt-5 text-[28px] font-extrabold leading-[1.18] text-text-primary md:text-[36px] lg:text-[42px]"
+        class="title-under-xs mt-3 text-[25px] font-extrabold leading-[1.18] text-text-primary sm:text-[30px] md:text-[36px] lg:text-[40px]"
       >
         {{ title }}
       </h1>
 
       <div
-        class="mt-6 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"
+        class="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
       >
         <BlogAuthorInfo
           :name="authorName"
@@ -86,7 +87,7 @@ const hasHeroImage = computed(
 
       <p
         v-if="excerptText"
-        class="subtitle-under-xs mt-6 max-w-3xl text-base leading-7 text-text-secondary lg:text-[17px]"
+        class="subtitle-under-xs mt-4 max-w-3xl text-[14px] leading-6 text-text-secondary sm:text-base sm:leading-7"
       >
         {{ excerptText }}
       </p>

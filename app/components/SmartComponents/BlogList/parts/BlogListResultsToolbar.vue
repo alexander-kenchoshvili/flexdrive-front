@@ -38,7 +38,7 @@ const sortModel = computed({
 
 <template>
   <div
-    class="flex flex-col gap-4 rounded-lg border border-border-default bg-surface p-4 md:flex-row md:items-center md:justify-between"
+    class="flex flex-col gap-3 rounded-lg border border-border-default bg-surface p-3 sm:p-4 md:flex-row md:items-center md:justify-between"
   >
     <p class="text-sm leading-6 text-text-secondary">
       ნაპოვნია
@@ -53,7 +53,7 @@ const sortModel = computed({
         :options="sortOptions"
         placeholder="დალაგება"
         :disabled="disabled"
-        class="w-full sm:w-[260px]"
+        class="w-full sm:w-[250px]"
       />
     </div>
   </div>

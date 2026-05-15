@@ -26,9 +26,9 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="rounded-lg border border-border-default bg-surface p-4 shadow-[0_18px_44px_-38px_var(--shadow-color)] md:p-5"
+    class="rounded-lg border border-border-default bg-surface p-3 shadow-[0_16px_36px_-34px_var(--shadow-color)] sm:p-4"
   >
-    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+    <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
       <BlogCategoryChips
         :categories="categories"
         :selected-category="selectedCategory"
@@ -42,7 +42,7 @@ const emit = defineEmits<{
         placeholder="ძებნა ბლოგში..."
         autocomplete="off"
         :disabled="disabled"
-        class="w-full xl:max-w-[320px]"
+        class="w-full xl:max-w-[300px]"
         @update:model-value="emit('update:search', $event)"
       />
     </div>

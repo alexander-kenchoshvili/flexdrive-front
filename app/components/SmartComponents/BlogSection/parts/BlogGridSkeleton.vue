@@ -25,7 +25,7 @@ const sectionItems = computed(() => [1, 2, 3, 4]);
 <template>
   <div
     v-if="variant === 'section'"
-    class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+    class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
   >
     <div
       v-for="index in sectionItems"
@@ -44,7 +44,7 @@ const sectionItems = computed(() => [1, 2, 3, 4]);
 
   <div
     v-else
-    class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+    class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3"
   >
     <div
       v-for="index in listItems"

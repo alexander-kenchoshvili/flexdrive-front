@@ -27,11 +27,11 @@ const description = computed(
 
 <template>
   <section
-    class="rounded-lg border border-border-default bg-surface-2 p-5 md:p-6"
+    class="rounded-lg border border-border-default bg-surface-2 p-4 sm:p-5"
   >
-    <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
       <div
-        class="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-accent-primary/25 bg-accent-primary/10 text-[24px] font-extrabold text-accent-primary md:h-20 md:w-20 md:text-[28px]"
+        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-accent-primary/25 bg-accent-primary/10 text-[22px] font-extrabold text-accent-primary md:h-16 md:w-16 md:text-[26px]"
       >
         {{ initials }}
       </div>
@@ -43,7 +43,7 @@ const description = computed(
         <p class="mt-1 text-sm font-medium text-accent-primary">
           {{ authorRole }}
         </p>
-        <p class="mt-4 max-w-3xl text-sm leading-7 text-text-secondary md:text-[15px]">
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-text-secondary md:text-[15px] md:leading-7">
           {{ description }}
         </p>
       </div>

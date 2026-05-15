@@ -71,6 +71,7 @@ Avoid keeping old styling just because it is already present. If a component is 
 - Do not start temporary frontend/backend dev servers unless the user explicitly asks for a server/browser check.
 - Do not run Playwright or other browser automation unless the user explicitly asks for it. For routine visual/UI edits, rely on code inspection and normal build/type/test checks unless requested otherwise.
 - When running `npm run build`, use a long timeout from the first attempt, preferably at least 600000ms, because Nuxt production builds in this project often exceed two minutes on Windows. Do not report a short timeout as an intermediate user-facing issue; report only the final build result or a real actionable failure.
+- The paired backend at `C:\Users\kench\Desktop\flexdriveback` uses its local virtual environment. Run Django/backend commands with `C:\Users\kench\Desktop\flexdriveback\venv\Scripts\python.exe` from the backend repository instead of system `python`.
 
 ## Context7 Usage Rules
 
@@ -361,19 +362,21 @@ This file exists so the project context does not need to be re-explained in ever
   - `0059` and `0060` refresh and trim `/payment-methods`.
   - `0061` and `0062` refresh and refine `/privacy-policy`.
   - `0063` refreshes `/delivery`.
+  - `0064` removes the redundant `/contact` support intro description that referenced footer settings.
 - Current legal/support content direction:
   - `/terms`: practical FlexDrive terms for account/guest checkout, product info, compatibility responsibility, pricing/stock/technical errors, order confirmation, payment, delivery, returns, B2B, privacy/security. Warranty references were removed because FlexDrive does not offer a warranty in the first phase.
   - `/returns`: 6 sections, company-protective but legally conscious wording. Uses `პროდუქტისა და თანხის დაბრუნება`; ordinary return timing uses `ჩაბარებიდან 14` rather than purchase date; installed/used parts are assessed individually.
   - `/payment-methods`: 4 concise sections. Current live method is cash on delivery; online card/installment/part-payment text is written for future integrations without pretending those methods are currently active. Refund/cancel copy says online refunds are processed through the original payment channel.
   - `/privacy-policy`: 5 concise sections covering auth/profile, cart/wishlist/buy-now, checkout/order, contact form, reCAPTCHA, cookies, analytics/GTM/Google Ads/Meta Pixel, payment providers, delivery partners, retention/security, and user rights.
   - `/delivery`: 4 concise sections. Delivery timing starts after order confirmation; standard timing is Tbilisi `1-2 სამუშაო დღე`, regions `4-5 სამუშაო დღე`. Old same-day/13:00 copy was removed.
+- `/contact` has been visually redesigned mobile-first. Contact form/API logic is preserved; the support intro description now renders only when CMS provides non-empty text. The footer redesign attempt was reverted at the user's request, so `app/components/LAYOUTS/Footer.vue` is back to the previous visual implementation.
 - Placeholder contact/company data remains in legal content until company registration and real support details are available. Current placeholder addresses include `support@flexdrive.ge`, `returns@flexdrive.ge`, and `privacy@flexdrive.ge`.
 - Content migrations were applied to the staging Neon/Postgres database and verified after each pass. If staging UI still shows old content, suspect API/browser cache before changing code.
 - Tests updated/run for touched legal content:
   - `pages.test_payment_methods_page`
   - `pages.tests.GetCurrentContentAPITests.test_privacy_policy_page_includes_seeded_component`
   - `pages.tests.GetCurrentContentAPITests.test_delivery_page_includes_seeded_component`
-- Next likely static/support step: redesign/refine `/contact`, then do footer legal/support/social/contact QA before starting the payment safety architecture work.
+- Next likely static/support step: footer/contact browser QA if explicitly requested, then payment safety architecture work.
 
 ## Upcoming Payment Safety Work - 2026-05-15
 

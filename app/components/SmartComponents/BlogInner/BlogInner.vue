@@ -12,10 +12,10 @@ import {
   buildArticleStructuredData,
   buildBreadcrumbStructuredData,
 } from "~/utils/structuredData";
-import BaseRichText from "~/components/common/BaseRichText.vue";
 import BlogAuthorBox from "./parts/BlogAuthorBox.vue";
 import BlogInnerHeader from "./parts/BlogInnerHeader.vue";
 import BlogRelatedPosts from "./parts/BlogRelatedPosts.vue";
+import BlogRichText from "./parts/BlogRichText.vue";
 import BlogShareRow from "./parts/BlogShareRow.vue";
 
 type BlogInnerData = SmartComponentRenderData & Partial<ContentItemData>;
@@ -145,12 +145,12 @@ useHead(() => ({
 </script>
 
 <template>
-  <section class="py-8 md:py-10">
+  <section class="py-4 sm:py-6 lg:py-8">
     <div class="container-fluid">
       <AppBreadcrumbs :items="breadcrumbItems" />
 
       <div
-        class="mt-6 grid gap-8 lg:items-start"
+        class="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:gap-6 lg:items-start"
         :class="
           hasRelatedPosts
             ? 'lg:grid-cols-[minmax(0,1fr)_320px]'
@@ -171,16 +171,13 @@ useHead(() => ({
             :image="heroImage"
           />
 
-          <div class="px-5 pb-8 pt-8 md:px-8 md:pb-10 lg:px-10 lg:pb-12">
-            <BaseRichText
-              :html="article.editor"
-              empty-text="სტატიის ტექსტი ჯერ არ არის დამატებული."
-            />
+          <div class="px-4 py-5 sm:px-5 sm:py-6 md:px-7 lg:px-8">
+            <BlogRichText :html="article.editor" />
 
-            <BlogShareRow class="mt-10" :title="articleTitle" :url="shareUrl" />
+            <BlogShareRow class="mt-6 sm:mt-7" :title="articleTitle" :url="shareUrl" />
 
             <BlogAuthorBox
-              class="mt-10"
+              class="mt-6 sm:mt-7"
               :name="authorName"
               :role="authorRole"
             />

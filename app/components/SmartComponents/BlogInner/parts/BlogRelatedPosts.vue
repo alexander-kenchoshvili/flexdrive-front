@@ -34,20 +34,20 @@ const getReadTimeLabel = (post: ContentItemData) => {
 
 <template>
   <section
-    class="rounded-lg border border-border-default bg-surface p-4 shadow-[0_18px_44px_-38px_var(--shadow-color)] md:p-5"
+    class="rounded-lg border border-border-default bg-surface p-3 shadow-[0_16px_36px_-34px_var(--shadow-color)] sm:p-4"
   >
     <h2 class="text-[18px] font-extrabold leading-7 text-text-primary">
       მსგავსი სტატიები
     </h2>
 
-    <div class="mt-4 space-y-3">
+    <div class="mt-3 space-y-2.5">
       <NuxtLink
         v-for="post in posts"
         :key="post.id"
         :to="getPostUrl(post)"
         class="group flex gap-3 rounded-lg border border-transparent p-2 transition-colors duration-200 hover:border-border-default hover:bg-surface-2"
       >
-        <div class="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-border-default bg-surface-2">
+        <div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border-default bg-surface-2 sm:h-20 sm:w-20">
           <div
             class="absolute inset-0 bg-surface-2"
           />
@@ -55,7 +55,7 @@ const getReadTimeLabel = (post: ContentItemData) => {
           <BasePicture
             v-if="getPostImage(post)"
             :data="getPostImage(post)"
-            :alt="sanitizeText(post.title) || 'Blog post'"
+            :alt="sanitizeText(post.title)"
             class="relative z-[1] h-full w-full"
             preset="thumb"
             lazy

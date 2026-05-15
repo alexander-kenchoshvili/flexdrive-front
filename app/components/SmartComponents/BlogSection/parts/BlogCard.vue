@@ -13,9 +13,7 @@ const props = defineProps<{
 
 const postUrl = computed(() => getSingleViewUrl(props.post));
 
-const categoryLabel = computed(
-  () => sanitizeText(props.post.blog_meta?.category) || "ბლოგი",
-);
+const categoryLabel = computed(() => sanitizeText(props.post.blog_meta?.category));
 
 const excerpt = computed(
   () =>
@@ -63,6 +61,7 @@ const pictureData = computed(() => {
       />
 
       <span
+        v-if="categoryLabel"
         class="absolute left-3 top-3 z-[2] inline-flex min-h-7 items-center rounded-md border border-accent-primary bg-accent-primary px-2.5 py-1 text-[11px] font-bold text-text-invert shadow-[0_10px_24px_-16px_var(--shadow-color)]"
       >
         {{ categoryLabel }}
@@ -77,18 +76,18 @@ const pictureData = computed(() => {
       </span>
     </div>
 
-    <div class="flex flex-1 flex-col p-4">
+    <div class="flex flex-1 flex-col p-3 sm:p-4">
       <BlogCardMetaRow :published-at="post.blog_meta?.published_at" />
 
       <h3
-        class="blog-card-title upper mt-3 text-[15px] font-bold leading-[21px] text-text-primary transition-colors duration-200 group-hover:text-accent-primary sm:text-[16px] sm:leading-[22px]"
+        class="blog-card-title upper mt-2 text-[15px] font-bold leading-[21px] text-text-primary transition-colors duration-200 group-hover:text-accent-primary sm:text-[16px] sm:leading-[22px]"
       >
         {{ post.title }}
       </h3>
 
       <p
         v-if="excerpt"
-        class="blog-card-excerpt mt-2 pb-1 text-[13px] font-medium leading-5 text-text-secondary"
+        class="blog-card-excerpt mt-1.5 text-[13px] font-medium leading-5 text-text-secondary"
       >
         {{ excerpt }}
       </p>

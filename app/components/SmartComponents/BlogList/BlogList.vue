@@ -47,14 +47,8 @@ const currentPage = ref(1);
 
 const isMobilePagination = useMediaQuery("(max-width: 640px)");
 
-const title = computed(
-  () => (props.data?.title as string) || "ბლოგი",
-);
-const subtitle = computed(
-  () =>
-    (props.data?.subtitle as string) ||
-    "იხილეთ ექსპერტული რჩევები, გზამკვლევები და სიახლეები ავტონაწილებზე, ავტომობილის მოვლასა და სწორ არჩევანზე.",
-);
+const title = computed(() => (props.data?.title as string) || "ბლოგი");
+const subtitle = computed(() => (props.data?.subtitle as string) || "");
 
 const breadcrumbItems = computed(() => [
   { label: "მთავარი", to: "/" },
@@ -279,17 +273,20 @@ useHead(() => ({
 </script>
 
 <template>
-  <section class="py-8 md:py-10">
+  <section class="py-4 sm:py-6 lg:py-8">
     <div class="container-fluid">
       <AppBreadcrumbs :items="breadcrumbItems" />
 
-      <header class="py-8 text-left md:py-10">
+      <header class="py-5 text-left sm:py-6 lg:py-7">
         <h1
-          class="title-under-xs upper text-[28px] font-extrabold leading-[1.16] text-text-primary sm:text-[32px] md:text-[36px] lg:text-[40px]"
+          class="title-under-xs upper text-[26px] font-extrabold leading-[1.15] text-text-primary sm:text-[32px] lg:text-[38px]"
         >
           {{ title }}
         </h1>
-        <p class="subtitle-under-xs mt-3 max-w-3xl text-[14px] font-medium leading-[22px] text-text-secondary md:text-[15px] md:leading-6">
+        <p
+          v-if="subtitle"
+          class="subtitle-under-xs mt-2 max-w-3xl text-[14px] font-medium leading-[22px] text-text-secondary md:text-[15px] md:leading-6"
+        >
           {{ subtitle }}
         </p>
       </header>
@@ -303,7 +300,7 @@ useHead(() => ({
         @update:search="searchTerm = $event"
       />
 
-      <div class="mt-6 space-y-4">
+      <div class="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
         <BlogListResultsToolbar
           :result-count="resultCount"
           :sort="selectedSort"
@@ -326,7 +323,7 @@ useHead(() => ({
 
         <div
           v-else-if="hasBlockingError"
-          class="rounded-lg border border-error/25 bg-surface p-6"
+          class="rounded-lg border border-error/25 bg-surface p-4 sm:p-5"
         >
           <p class="text-base font-semibold text-text-primary">
             ბლოგების ჩატვირთვა ვერ მოხერხდა.
@@ -347,14 +344,14 @@ useHead(() => ({
 
         <div
           v-else-if="!posts.length"
-          class="rounded-lg border border-dashed border-border-default bg-surface p-6 text-sm text-text-secondary"
+          class="rounded-lg border border-dashed border-border-default bg-surface p-4 text-sm text-text-secondary sm:p-5"
         >
           არჩეული პარამეტრებით სტატიები ვერ მოიძებნა.
         </div>
 
         <div
           v-else
-          class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+          class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3"
         >
           <BlogCard
             v-for="post in posts"
@@ -364,7 +361,7 @@ useHead(() => ({
         </div>
 
         <ClientOnly>
-          <div v-if="totalPages > 1" class="flex justify-center py-4">
+          <div v-if="totalPages > 1" class="flex justify-center py-3 sm:py-4">
             <vue-awesome-paginate
               v-model="currentPage"
               :total-items="resultCount"

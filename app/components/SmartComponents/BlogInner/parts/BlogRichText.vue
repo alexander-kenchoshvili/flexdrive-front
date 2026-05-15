@@ -8,20 +8,13 @@ const content = computed(() => props.html?.trim() || "");
 
 <template>
   <div v-if="content" class="blog-richtext" v-html="content" />
-
-  <div
-    v-else
-    class="rounded-[18px] border border-dashed border-border-default bg-surface-2 px-5 py-4 text-sm text-text-secondary"
-  >
-    სტატიის ტექსტი ჯერ არ არის დამატებული.
-  </div>
 </template>
 
 <style scoped>
 .blog-richtext {
   color: var(--text-primary);
-  font-size: 1.05rem;
-  line-height: 1.85;
+  font-size: 1rem;
+  line-height: 1.78;
 }
 
 .blog-richtext :deep(h2),
@@ -34,22 +27,22 @@ const content = computed(() => props.html?.trim() || "");
 }
 
 .blog-richtext :deep(h2) {
-  margin: 3rem 0 1.25rem;
-  font-size: clamp(1.8rem, 2vw, 2.35rem);
+  margin: 2rem 0 0.9rem;
+  font-size: clamp(1.45rem, 2vw, 2.15rem);
 }
 
 .blog-richtext :deep(h3) {
-  margin: 2.4rem 0 1rem;
-  font-size: clamp(1.35rem, 1.5vw, 1.7rem);
+  margin: 1.7rem 0 0.75rem;
+  font-size: clamp(1.2rem, 1.5vw, 1.55rem);
 }
 
 .blog-richtext :deep(h4) {
-  margin: 2rem 0 0.9rem;
+  margin: 1.4rem 0 0.65rem;
   font-size: 1.15rem;
 }
 
 .blog-richtext :deep(p) {
-  margin: 0 0 1.35rem;
+  margin: 0 0 1rem;
   color: var(--text-secondary);
 }
 
@@ -73,7 +66,7 @@ const content = computed(() => props.html?.trim() || "");
 
 .blog-richtext :deep(ul),
 .blog-richtext :deep(ol) {
-  margin: 1.5rem 0;
+  margin: 1.15rem 0;
   padding-left: 1.45rem;
   color: var(--text-secondary);
   list-style-position: outside;
@@ -88,7 +81,7 @@ const content = computed(() => props.html?.trim() || "");
 }
 
 .blog-richtext :deep(li) {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.45rem;
   padding-left: 0.25rem;
 }
 
@@ -97,8 +90,8 @@ const content = computed(() => props.html?.trim() || "");
 }
 
 .blog-richtext :deep(blockquote) {
-  margin: 2rem 0;
-  padding: 1.35rem 1.4rem;
+  margin: 1.5rem 0;
+  padding: 1rem 1.1rem;
   border-left: 4px solid var(--accent-primary);
   border-radius: 8px;
   background: var(--accent-soft);
@@ -110,7 +103,7 @@ const content = computed(() => props.html?.trim() || "");
 }
 
 .blog-richtext :deep(hr) {
-  margin: 2.5rem 0;
+  margin: 1.75rem 0;
   border: 0;
   border-top: 1px solid var(--border-default);
 }
@@ -118,12 +111,12 @@ const content = computed(() => props.html?.trim() || "");
 .blog-richtext :deep(img) {
   display: block;
   width: 100%;
-  margin: 2rem 0;
+  margin: 1.5rem 0;
   border-radius: 8px;
 }
 
 .blog-richtext :deep(figure) {
-  margin: 2rem 0;
+  margin: 1.5rem 0;
 }
 
 .blog-richtext :deep(figcaption) {
@@ -135,7 +128,7 @@ const content = computed(() => props.html?.trim() || "");
 
 .blog-richtext :deep(table) {
   width: 100%;
-  margin: 2rem 0;
+  margin: 1.5rem 0;
   border-collapse: collapse;
   overflow: hidden;
   border-radius: 8px;
@@ -163,7 +156,7 @@ const content = computed(() => props.html?.trim() || "");
 }
 
 .blog-richtext :deep(pre) {
-  margin: 1.75rem 0;
+  margin: 1.35rem 0;
   overflow-x: auto;
   border-radius: 8px;
   background: var(--surface-2);
@@ -177,16 +170,18 @@ const content = computed(() => props.html?.trim() || "");
 
 @media (max-width: 767px) {
   .blog-richtext {
-    font-size: 1rem;
-    line-height: 1.78;
+    font-size: 0.96rem;
+    line-height: 1.72;
   }
 
   .blog-richtext :deep(h2) {
-    margin-top: 2.3rem;
+    margin-top: 1.65rem;
+    font-size: 1.35rem;
   }
 
   .blog-richtext :deep(h3) {
-    margin-top: 2rem;
+    margin-top: 1.45rem;
+    font-size: 1.18rem;
   }
 }
 </style>

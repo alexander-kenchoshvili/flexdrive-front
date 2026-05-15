@@ -33,12 +33,12 @@ const handleCopyLink = async () => {
 </script>
 
 <template>
-  <section class="border-t border-border-default pt-8">
+  <section class="border-t border-border-default pt-5 sm:pt-6">
     <div class="flex justify-end">
       <div class="space-y-3 lg:text-right">
         <p class="text-sm font-semibold text-text-primary">გააზიარე</p>
 
-        <div class="mt-3 flex flex-wrap gap-3 lg:justify-end">
+        <div class="mt-2 flex flex-wrap gap-2.5 lg:justify-end">
           <button
             type="button"
             class="share-action share-action--copy"
@@ -87,11 +87,11 @@ const handleCopyLink = async () => {
 <style scoped>
 .share-action {
   display: inline-flex;
-  height: 3rem;
-  width: 3rem;
+  height: 2.75rem;
+  width: 2.75rem;
   align-items: center;
   justify-content: center;
-  padding: 0.8rem;
+  padding: 0.7rem;
   border-radius: 9999px;
   border: 1px solid var(--border-default);
   background: var(--surface);

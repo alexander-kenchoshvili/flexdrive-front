@@ -489,11 +489,11 @@ const submitContactForm = handleSubmit(
             <h2 class="text-lg font-extrabold text-text-primary">
               {{ supportIntroNotice?.title || "სწრაფი კონტაქტი" }}
             </h2>
-            <p class="mt-2 text-sm leading-7 text-text-secondary">
-              {{
-                supportIntroNotice?.description ||
-                "თუ მოკლე შეკითხვის სწრაფად გარკვევა გჭირდებათ, გამოიყენეთ პირდაპირი არხები."
-              }}
+            <p
+              v-if="supportIntroNotice?.description"
+              class="mt-2 text-sm leading-7 text-text-secondary"
+            >
+              {{ supportIntroNotice.description }}
             </p>
 
             <div class="mt-4 divide-y divide-border-default">
