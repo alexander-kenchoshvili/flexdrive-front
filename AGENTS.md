@@ -385,24 +385,83 @@ This file exists so the project context does not need to be re-explained in ever
   - cash-on-delivery checkout and buy-now flows still create orders, reduce stock, clear cart/session, and show success exactly through the existing flow;
   - public order summary and authenticated order list/detail responses include `payment_status`;
   - frontend order success, profile order detail, and profile order list display payment status using `გადახდა ჩაბარებისას` for `cash_on_delivery + pending`;
-  - guest users still only get the existing per-order success/status page by `public_token`; no guest cabinet was added.
-- Local backend migration `commerce.0010_order_payment_status` was applied during this stage. Staging/prod still need this migration applied during deployment.
+  - guest users have order visibility without a cabinet: the existing success page by `public_token` remains, and `/order-status` can look up a safe short summary by order number + phone.
+- Local and staging backend migration `commerce.0010_order_payment_status` was applied during this stage. Production still needs normal deploy-time migrations when applicable.
 - The agreed generic availability copy is: `პროდუქტის ხელმისაწვდომობა შეიცვალა. გთხოვთ გადაამოწმოთ მარაგი და სცადოთ ხელახლა.`
-- Payment safety work still not implemented: payment transaction records, reservation expiry, provider abstraction, online card/installment/part-payment callbacks, and refund/cancel provider flows.
+- Stage 2, guest order lookup/status, is implemented:
+  - backend endpoint: `POST /api/commerce/orders/lookup/`;
+  - lookup uses `order_number + phone` with light Georgian phone normalization, including `+995`/`995` and local number matching;
+  - response is intentionally limited to safe summary fields: order number, order/payment status, payment method, checkout source, total, created date, item count, total quantity, and short item list;
+  - response must not expose `public_token`, email, phone, city, address line, or note;
+  - wrong order number and wrong phone return the same generic `404` text;
+  - endpoint uses `order_lookup` throttle scope with `10/min`;
+  - endpoint requires reCAPTCHA with frontend action/backend expected action `order_lookup`;
+  - authenticated users can also use this endpoint, but it is not an ownership-based cabinet feature.
+- Frontend `/order-status` is implemented through the CMS/SmartComponent flow:
+  - SmartComponent file: `app/components/SmartComponents/OrderStatus/OrderStatus.vue`;
+  - backend CMS data migration: `pages/migrations/0065_seed_order_status_page.py`;
+  - route slug is `order-status`, component name is `OrderStatus`, footer group is `help`, footer label is `შეკვეთის სტატუსი`, SEO is `noindex`;
+  - local and staging `pages.0065_seed_order_status_page` migration was applied; production needs normal deploy-time migrations when applicable;
+  - success page includes a secondary link to `/order-status`;
+  - the form uses required field validation and does not submit empty values;
+  - frontend sends `recaptcha_token` with lookup requests, and backend verifies it before searching orders;
+  - successful lookup stores the last lookup inputs and safe summary in `sessionStorage` for the current tab, so refresh keeps the last visible result without automatically calling the protected backend endpoint again;
+  - clicking `შემოწმება` manually performs a fresh reCAPTCHA + backend lookup.
+- Stage 3, internal payment safety foundation, is implemented in the backend without changing live cash-on-delivery checkout behavior:
+  - backend migration: `commerce/migrations/0011_stockreservation_paymenttransaction_and_more.py`;
+  - local development DB and staging Neon/Postgres DB have both applied `commerce.0011`;
+  - new `StockReservation` model stores temporary stock holds by `user` or `guest_token`, source (`cart` / `buy_now`), status (`active`, `completed`, `expired`, `released`), expiry time, completion order, and release/completion timestamps;
+  - new `StockReservationItem` model stores reserved product, quantity, and price snapshot;
+  - new `PaymentTransaction` model stores payment attempts independently from orders: order/reservation link, provider, method, action, status, amount, currency, provider transaction id/reference, errors, and authorized/captured/cancelled/refunded timestamps;
+  - payment provider choices currently include `mock` and `manual`; this is intentional foundation only, not a real bank integration;
+  - payment transaction actions are `authorize`, `capture`, `sale`, `cancel`, and `refund`;
+  - transaction statuses mirror the internal payment lifecycle: `pending`, `authorized`, `paid`, `failed`, `cancelled`, `refund_pending`, `refunded`;
+  - `config/settings.py` now has `STOCK_RESERVATION_TTL_SECONDS`, defaulting to 15 minutes;
+  - `commerce/payment_providers.py` contains the mock/manual provider abstraction, so future BOG/TBC/etc. adapters can plug into the same method names instead of changing checkout logic;
+  - `commerce/services.py` now includes reservation service functions for cart and buy-now sources, reserved-stock calculation, release, expiry, completion, and mock/manual authorize/capture/sale/cancel/refund transaction processing;
+  - the reservation service accounts for active non-expired reservations when calculating available stock, but it does not reduce real `Product.stock_qty`; real stock is still reduced only when an order is created by the existing checkout flow;
+  - replacing a reservation for the same owner/source releases the previous active reservation after the new reservation validates, so repeated starts do not hold duplicate stock;
+  - existing cash-on-delivery checkout, buy-now checkout, stock validation, price validation, order creation, cart/session cleanup, admin cancel/restore, and profile orders were intentionally not rewired to use reservation yet.
+- Admin visibility for the foundation is implemented:
+  - `PaymentTransaction` is visible as a read-only inline on order admin pages;
+  - `StockReservation` has its own admin with items inline;
+  - `PaymentTransaction` has its own admin list/detail view with provider, action, status, amount, order/reservation links, timestamps, and provider reference fields.
+- Backend tests were updated for the foundation:
+  - cart reservation creates active reservation items without reducing stock;
+  - active reservations reduce available stock for other owners;
+  - same owner/source replacement releases the previous active reservation;
+  - expired reservations stop counting against available stock;
+  - released reservations free available stock;
+  - completed reservations link to an order;
+  - buy-now reservation uses the buy-now session snapshot;
+  - mock authorize/capture/refund transactions create transaction records and update order `payment_status`;
+  - admin registration for `StockReservation` and `PaymentTransaction` is covered;
+  - full backend command `C:\Users\kench\Desktop\flexdriveback\venv\Scripts\python.exe manage.py test commerce` passed with 96 tests OK.
+- Payment safety work still not fully implemented: the new reservation and transaction foundation is not yet connected to real online checkout, real bank redirect/callback/webhook, real authorization/capture, real installment/part-payment flows, or provider-driven refund/cancel flows.
 
 ## Upcoming Payment Safety Work - 2026-05-15
 
 - Before real card, installment, or part-payment integrations go live, FlexDrive needs a carefully designed payment safety flow. This is high-priority work and must be implemented deliberately, with every step checked end to end.
 - The goal is to avoid situations where a customer pays online or receives installment approval for a part that cannot be fulfilled because stock, compatibility, or order validation failed after payment.
 - Required planning/implementation areas:
-  - stock reservation during checkout, with expiry and release on failed/abandoned payment;
-  - separate order status and payment status models/state handling;
-  - payment transaction records with provider, provider transaction id, amount, currency, status, timestamps, and raw provider references where appropriate;
+  - wire the existing stock reservation foundation into the future online payment start flow, with expiry and release on failed/abandoned payment;
+  - continue using separate order status and payment status handling; the base `payment_status` field already exists;
+  - continue using the new payment transaction records with provider, provider transaction id, amount, currency, status, timestamps, and raw provider references where appropriate;
   - admin actions for cancelling orders, marking/refunding payments, and clearly tracking refund/cancel state;
-  - provider abstraction so a manual/mock provider can exist before TBC/BOG/other real providers are connected;
+  - replace/extend the current mock/manual provider abstraction with real TBC/BOG/other provider adapters once provider API details are available;
   - success, failure, cancellation, callback/webhook, refund, and out-of-stock edge cases;
   - customer-facing copy for successful payment, pending confirmation, failed payment, cancelled order, refund initiated, and refund completed states.
 - Prefer building the internal safety architecture before bank/provider integration. Bank APIs should plug into an already clear order/payment/refund model rather than defining the whole checkout logic.
 - For card payments, prefer authorization/capture if the chosen provider supports it: reserve stock first, authorize payment, then capture only after the order is fulfilment-ready. If immediate capture is required, implement reliable full refund/cancel flows.
 - For installments and part-payment providers, cancellation/refund must go through the same provider channel, not manual cash/bank transfer, unless a documented provider exception requires otherwise.
-- Do not start this work casually while finishing legal/static pages. Treat it as a separate checkout/payment architecture phase after Terms/Returns/Delivery/Payment/Privacy content is stable and before production payment integrations.
+- Still needed from banks/providers before final integration:
+  - whether card payments support authorization/capture or only direct capture;
+  - redirect/session creation API details;
+  - callback/webhook payloads, signatures, retry rules, and idempotency requirements;
+  - cancellation/void rules for authorized but uncaptured payments;
+  - refund API rules and expected refund timing;
+  - installment approval/cancel/refund flow;
+  - part-payment status lifecycle and failure states;
+  - provider transaction id/reference fields that must be stored;
+  - test credentials and sandbox URLs.
+- Do not connect the foundation to live checkout casually. The next payment phase should be a deliberate provider-integration phase: choose provider, map its statuses to the internal statuses, add provider adapter, add webhook/callback endpoints, then connect reservation + transaction + order creation end to end with tests.
