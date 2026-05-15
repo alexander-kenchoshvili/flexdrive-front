@@ -73,7 +73,7 @@ const miniItemMeta = (item: CommerceOrderItem) =>
           </p>
 
           <h1
-            class="title-under-xs mt-3 text-[32px] font-extrabold leading-tight text-text-primary md:text-[42px]"
+            class="title-under-xs upper mt-3 text-[32px] font-extrabold leading-tight text-text-primary md:text-[42px]"
           >
             შეკვეთა მიღებულია
           </h1>
@@ -484,6 +484,16 @@ const miniItemMeta = (item: CommerceOrderItem) =>
               full-width
             >
               მთავარზე დაბრუნება
+            </BaseButton>
+
+            <BaseButton
+              as="nuxt-link"
+              to="/order-status"
+              variant="ghost"
+              class="px-6 py-3.5 text-sm upper"
+              full-width
+            >
+              შეკვეთის სტატუსის შემოწმება
             </BaseButton>
           </div>
         </div>

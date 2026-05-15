@@ -3,6 +3,8 @@ import type {
   CheckoutPayload,
   CommerceBuyNowSession,
   CommerceCart,
+  CommerceOrderLookupPayload,
+  CommerceOrderLookupSummary,
   OwnedOrderDetail,
   OwnedOrdersResponse,
   CommerceOrderSummary,
@@ -128,6 +130,13 @@ export const useCommerceApi = () => {
     return apiFetchRaw<CommerceOrderSummary>(`/commerce/orders/${token}/`);
   };
 
+  const lookupOrder = async (payload: CommerceOrderLookupPayload) => {
+    return apiFetchRaw<CommerceOrderLookupSummary>("/commerce/orders/lookup/", {
+      method: "POST",
+      body: payload,
+    });
+  };
+
   const getOwnedOrders = async (
     page = 1,
     options?: CommerceRequestOptions,
@@ -164,6 +173,7 @@ export const useCommerceApi = () => {
     checkoutOrder,
     checkoutBuyNow,
     getOrderSummary,
+    lookupOrder,
     getOwnedOrders,
     getOwnedOrderDetail,
   };

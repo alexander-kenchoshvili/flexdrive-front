@@ -174,8 +174,23 @@ export interface CheckoutPayload {
   recaptcha_token?: string;
 }
 
+export interface CommerceOrderLookupPayload {
+  order_number: string;
+  phone: string;
+  recaptcha_token: string;
+}
+
 export interface CommerceOrderItem {
   id: number;
+  product_name: string;
+  sku: string;
+  unit_price: string;
+  quantity: number;
+  line_total: string;
+  primary_image: CatalogImageAsset;
+}
+
+export interface CommerceOrderLookupItem {
   product_name: string;
   sku: string;
   unit_price: string;
@@ -202,6 +217,19 @@ export interface CommerceOrderSummary {
   note: string;
   items: CommerceOrderItem[];
   created_at: string;
+}
+
+export interface CommerceOrderLookupSummary {
+  order_number: string;
+  status: CommerceOrderStatus;
+  payment_status: CommercePaymentStatus;
+  payment_method: CheckoutPaymentMethod;
+  checkout_source: "cart" | "buy_now";
+  total: string;
+  created_at: string;
+  item_count: number;
+  total_quantity: number;
+  items: CommerceOrderLookupItem[];
 }
 
 export interface OwnedOrderListItem {
