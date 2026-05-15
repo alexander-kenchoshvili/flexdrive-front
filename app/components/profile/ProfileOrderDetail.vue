@@ -27,6 +27,7 @@ type TrackableStatus = Exclude<CommerceOrderStatus, "cancelled">;
 const {
   getOrderStatusLabel,
   getPaymentMethodLabel,
+  getPaymentStatusLabel,
   getTrackingSteps,
   isOrderCancelled,
 } = useCommercePresentation();
@@ -220,6 +221,7 @@ const getTrackingStateLabel = (state: string) => {
               {{ formattedCreatedAt }}
             </span>
             <span>{{ getPaymentMethodLabel(order.payment_method) }}</span>
+            <span>{{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}</span>
           </div>
         </div>
 
@@ -239,7 +241,7 @@ const getTrackingStateLabel = (state: string) => {
       </div>
     </section>
 
-    <section class="grid gap-3 sm:gap-4 lg:grid-cols-3">
+    <section class="grid gap-3 sm:gap-4 lg:grid-cols-4">
       <article
         class="rounded-[20px] border border-border-default bg-surface p-4 shadow-[0_20px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:p-5"
       >
@@ -250,6 +252,19 @@ const getTrackingStateLabel = (state: string) => {
         </p>
         <p class="mt-2 text-base font-semibold text-text-primary">
           {{ getPaymentMethodLabel(order.payment_method) }}
+        </p>
+      </article>
+
+      <article
+        class="rounded-[20px] border border-border-default bg-surface p-4 shadow-[0_20px_44px_-38px_var(--shadow-color)] sm:rounded-[22px] sm:p-5"
+      >
+        <p
+          class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+        >
+          გადახდის სტატუსი
+        </p>
+        <p class="mt-2 text-base font-semibold text-text-primary">
+          {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
         </p>
       </article>
 

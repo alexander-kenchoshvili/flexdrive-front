@@ -1,5 +1,6 @@
 import type {
   CheckoutPaymentMethod,
+  CommercePaymentStatus,
   CommerceOrderStatus,
 } from "~/types/commerce";
 
@@ -14,6 +15,26 @@ type TrackingStep = {
 const paymentLabels: Record<CheckoutPaymentMethod, string> = {
   cash_on_delivery: "ნაღდი ანგარიშსწორება",
   card: "ბარათით გადახდა",
+};
+
+const paymentStatusLabels: Record<CommercePaymentStatus, string> = {
+  pending: "გადახდა მოლოდინშია",
+  authorized: "თანხა ავტორიზებულია",
+  paid: "გადახდილია",
+  failed: "გადახდა ვერ შესრულდა",
+  cancelled: "გადახდა გაუქმებულია",
+  refund_pending: "თანხის დაბრუნება მუშავდება",
+  refunded: "თანხა დაბრუნებულია",
+};
+
+const paymentStatusBadgeClasses: Record<CommercePaymentStatus, string> = {
+  pending: "border-border-default bg-surface-2 text-text-secondary",
+  authorized: "border-accent-primary/30 bg-accent-primary/10 text-accent-primary",
+  paid: "border-success/30 bg-success/10 text-success",
+  failed: "border-error/30 bg-error/10 text-error",
+  cancelled: "border-error/30 bg-error/10 text-error",
+  refund_pending: "border-warning/30 bg-warning/10 text-warning",
+  refunded: "border-success/30 bg-success/10 text-success",
 };
 
 const statusLabels: Record<CommerceOrderStatus, string> = {
@@ -82,6 +103,21 @@ export const useCommercePresentation = () => {
   const getPaymentMethodLabel = (method: CheckoutPaymentMethod) =>
     paymentLabels[method] ?? method;
 
+  const getPaymentStatusLabel = (
+    status: CommercePaymentStatus,
+    method?: CheckoutPaymentMethod,
+  ) => {
+    if (method === "cash_on_delivery" && status === "pending") {
+      return "გადახდა ჩაბარებისას";
+    }
+
+    return paymentStatusLabels[status] ?? status;
+  };
+
+  const getPaymentStatusBadgeClasses = (status: CommercePaymentStatus) =>
+    paymentStatusBadgeClasses[status] ??
+    "border-border-default bg-surface-2 text-text-secondary";
+
   const isOrderCancelled = (status: CommerceOrderStatus) =>
     status === "cancelled";
 
@@ -125,6 +161,8 @@ export const useCommercePresentation = () => {
     getOrderStatusLabel,
     getOrderStatusBadgeClasses,
     getPaymentMethodLabel,
+    getPaymentStatusLabel,
+    getPaymentStatusBadgeClasses,
     isOrderCancelled,
     getTrackingSteps,
     getTrackingStepClasses,

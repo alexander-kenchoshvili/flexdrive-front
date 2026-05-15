@@ -378,6 +378,18 @@ This file exists so the project context does not need to be re-explained in ever
   - `pages.tests.GetCurrentContentAPITests.test_delivery_page_includes_seeded_component`
 - Next likely static/support step: footer/contact browser QA if explicitly requested, then payment safety architecture work.
 
+## Current Payment Safety State - 2026-05-15
+
+- Stage 1 of payment safety is implemented as a low-risk foundation:
+  - backend `Order` now has a separate `payment_status` field with values `pending`, `authorized`, `paid`, `failed`, `cancelled`, `refund_pending`, and `refunded`;
+  - cash-on-delivery checkout and buy-now flows still create orders, reduce stock, clear cart/session, and show success exactly through the existing flow;
+  - public order summary and authenticated order list/detail responses include `payment_status`;
+  - frontend order success, profile order detail, and profile order list display payment status using `გადახდა ჩაბარებისას` for `cash_on_delivery + pending`;
+  - guest users still only get the existing per-order success/status page by `public_token`; no guest cabinet was added.
+- Local backend migration `commerce.0010_order_payment_status` was applied during this stage. Staging/prod still need this migration applied during deployment.
+- The agreed generic availability copy is: `პროდუქტის ხელმისაწვდომობა შეიცვალა. გთხოვთ გადაამოწმოთ მარაგი და სცადოთ ხელახლა.`
+- Payment safety work still not implemented: payment transaction records, reservation expiry, provider abstraction, online card/installment/part-payment callbacks, and refund/cancel provider flows.
+
 ## Upcoming Payment Safety Work - 2026-05-15
 
 - Before real card, installment, or part-payment integrations go live, FlexDrive needs a carefully designed payment safety flow. This is high-priority work and must be implemented deliberately, with every step checked end to end.

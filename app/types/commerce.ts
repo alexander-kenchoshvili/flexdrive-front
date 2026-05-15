@@ -144,6 +144,15 @@ export interface WishlistResponse {
 }
 
 export type CheckoutPaymentMethod = "cash_on_delivery" | "card";
+export type CommercePaymentStatus =
+  | "pending"
+  | "authorized"
+  | "paid"
+  | "failed"
+  | "cancelled"
+  | "refund_pending"
+  | "refunded";
+
 export type CommerceOrderStatus =
   | "new"
   | "confirmed"
@@ -180,6 +189,7 @@ export interface CommerceOrderSummary {
   public_token: string;
   order_number: string;
   payment_method: CheckoutPaymentMethod;
+  payment_status: CommercePaymentStatus;
   status: CommerceOrderStatus;
   subtotal: string;
   total: string;
@@ -199,6 +209,7 @@ export interface OwnedOrderListItem {
   order_number: string;
   status: CommerceOrderStatus;
   payment_method: CheckoutPaymentMethod;
+  payment_status: CommercePaymentStatus;
   total: string;
   created_at: string;
   item_count: number;

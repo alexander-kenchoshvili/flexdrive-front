@@ -15,6 +15,8 @@ const {
   getOrderStatusBadgeClasses,
   getOrderStatusLabel,
   getPaymentMethodLabel,
+  getPaymentStatusBadgeClasses,
+  getPaymentStatusLabel,
 } = useCommercePresentation();
 
 const formatMoney = (value: string | number | null | undefined) =>
@@ -83,14 +85,26 @@ const miniItemMeta = (item: CommerceOrderItem) =>
             გუნდი შეკვეთას გადაამოწმებს და მიწოდების პროცესს დაგიდასტურებს.
           </p>
 
-          <div
-            :class="[
-              'mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold',
-              getOrderStatusBadgeClasses(order.status),
-            ]"
-          >
-            <span class="h-2.5 w-2.5 rounded-full bg-current" />
-            სტატუსი: {{ getOrderStatusLabel(order.status) }}
+          <div class="mt-5 flex flex-wrap items-center gap-2">
+            <div
+              :class="[
+                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold',
+                getOrderStatusBadgeClasses(order.status),
+              ]"
+            >
+              <span class="h-2.5 w-2.5 rounded-full bg-current" />
+              სტატუსი: {{ getOrderStatusLabel(order.status) }}
+            </div>
+
+            <div
+              :class="[
+                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold',
+                getPaymentStatusBadgeClasses(order.payment_status),
+              ]"
+            >
+              <span class="h-2.5 w-2.5 rounded-full bg-current" />
+              {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
+            </div>
           </div>
         </div>
 
@@ -115,7 +129,7 @@ const miniItemMeta = (item: CommerceOrderItem) =>
           class="overflow-hidden rounded-[24px] border border-border-default bg-surface shadow-[0_24px_60px_-38px_var(--shadow-color)]"
         >
           <div
-            class="grid divide-y divide-border-default sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+            class="grid divide-y divide-border-default sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x"
           >
             <div class="px-5 py-5">
               <p
@@ -140,6 +154,19 @@ const miniItemMeta = (item: CommerceOrderItem) =>
                 class="mt-3 text-sm font-semibold text-text-primary md:text-base"
               >
                 {{ getPaymentMethodLabel(order.payment_method) }}
+              </p>
+            </div>
+
+            <div class="px-5 py-5">
+              <p
+                class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+              >
+                გადახდის სტატუსი
+              </p>
+              <p
+                class="mt-3 text-sm font-semibold text-text-primary md:text-base"
+              >
+                {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
               </p>
             </div>
 
@@ -432,7 +459,7 @@ const miniItemMeta = (item: CommerceOrderItem) =>
                   {{ getPaymentMethodLabel(order.payment_method) }}
                 </p>
                 <p class="mt-1 text-xs text-text-secondary">
-                  გადახდის მეთოდი შეკვეთაში დაფიქსირდა.
+                  {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
                 </p>
               </div>
             </div>

@@ -24,7 +24,7 @@ const emit = defineEmits<{
   (event: "change-page", page: number): void;
 }>();
 
-const { getPaymentMethodLabel } = useCommercePresentation();
+const { getPaymentMethodLabel, getPaymentStatusLabel } = useCommercePresentation();
 
 const formatDate = (value: string) => {
   const date = new Date(value);
@@ -186,6 +186,7 @@ const goToPage = (page: number | null) => {
               </span>
               <span>{{ getOrderUnits(order) }} ცალი</span>
               <span>{{ getPaymentMethodLabel(order.payment_method) }}</span>
+              <span>{{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}</span>
             </div>
           </div>
 
