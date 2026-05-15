@@ -19,9 +19,17 @@ const router = useRouter();
 const route = useRoute();
 const globalStore = useGlobalStore();
 const { loginSchema } = useAuthValidationSchemas();
+const {
+  authenticateWithGoogle,
+  getGoogleAuthErrorMessage,
+} = useGoogleAuthFlow();
+const { isGoogleIdentityConfigured } = useGoogleIdentity();
 
 const errorMessage = ref("");
 const loading = ref(false);
+const googleLoading = ref(false);
+const hasGoogleAuth = computed(() => isGoogleIdentityConfigured());
+const isAuthBusy = computed(() => loading.value || googleLoading.value);
 
 const sectionEyebrow = computed(() => sanitizeText(props.data?.buttonText));
 
@@ -122,6 +130,28 @@ const loginUser = handleSubmit(async (values) => {
     loading.value = false;
   }
 });
+
+const loginWithGoogle = async (credential: string) => {
+  googleLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    await authenticateWithGoogle(credential);
+    await router.push(redirectTarget.value);
+  } catch (error: any) {
+    errorMessage.value = getGoogleAuthErrorMessage(
+      error,
+      "Google-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.",
+    );
+  } finally {
+    googleLoading.value = false;
+  }
+};
+
+const handleGoogleError = (message: string) => {
+  errorMessage.value =
+    message || "Google-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.";
+};
 </script>
 
 <template>
@@ -218,6 +248,47 @@ const loginUser = handleSubmit(async (values) => {
             </p>
           </div>
 
+          <div v-if="hasGoogleAuth" class="mb-5">
+            <GoogleAuthButton
+              context="signin"
+              :disabled="loading"
+              :loading="googleLoading"
+              @credential="loginWithGoogle"
+              @error="handleGoogleError"
+            />
+            <p
+              class="mt-3 text-center text-[11px] leading-5 text-text-muted"
+            >
+              Google-ით გაგრძელებით ეთანხმები
+              <NuxtLink
+                to="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
+              >
+                წესებს
+              </NuxtLink>
+              და
+              <NuxtLink
+                to="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
+              >
+                კონფიდენციალურობის პოლიტიკას
+              </NuxtLink>
+              .
+            </p>
+
+            <div class="mt-4 flex items-center gap-3">
+              <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
+              <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                ან
+              </span>
+              <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
+            </div>
+          </div>
+
           <BaseInput
             v-model="email"
             class="mb-3 sm:mb-4"
@@ -227,7 +298,7 @@ const loginUser = handleSubmit(async (values) => {
             autocomplete="email"
             placeholder="you@example.com"
             :error="errors.email"
-            :disabled="loading"
+            :disabled="isAuthBusy"
           />
 
           <BaseInput
@@ -238,7 +309,7 @@ const loginUser = handleSubmit(async (values) => {
             type="password"
             autocomplete="current-password"
             :error="errors.password"
-            :disabled="loading"
+            :disabled="isAuthBusy"
           />
 
           <div class="mb-4 flex justify-end">
@@ -261,7 +332,7 @@ const loginUser = handleSubmit(async (values) => {
             type="submit"
             :full-width="true"
             class="mt-2 rounded-[16px]"
-            :disabled="loading"
+            :disabled="isAuthBusy"
           >
             {{ loading ? "მიმდინარეობს შესვლა..." : "შესვლა" }}
           </BaseButton>
