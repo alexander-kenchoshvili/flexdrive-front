@@ -78,7 +78,7 @@ const rootStyle = computed(() => (attrs.style as any) ?? undefined);
 
 const controlClasses = computed(() => {
   const base =
-    "relative min-h-11 w-full rounded-lg border bg-surface py-3 pl-3 pr-10 text-left text-sm text-text-primary shadow-[0_1px_0_rgba(17,24,39,0.03)] transition-[border-color,background-color,box-shadow] duration-200 ease-out disabled:cursor-not-allowed disabled:bg-bg-muted disabled:text-text-muted disabled:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary";
+    "relative min-h-11 w-full rounded-lg border bg-surface py-3 pl-3 pr-10 text-left text-sm text-text-primary shadow-[0_1px_0_rgba(17,24,39,0.03)] transition-[border-color,background-color,box-shadow] duration-200 ease-out disabled:cursor-not-allowed disabled:bg-bg-muted disabled:text-text-muted disabled:opacity-80 focus:outline-none focus-visible:outline-none";
   const withError = "border-error focus-visible:border-error";
   const normal =
     "border-border-default hover:border-border-muted focus-visible:border-accent-primary";

@@ -70,6 +70,7 @@ Avoid keeping old styling just because it is already present. If a component is 
 - Avoid UI text overlap, clipped labels, unstable cards, or layout shifts.
 - Do not start temporary frontend/backend dev servers unless the user explicitly asks for a server/browser check.
 - Do not run Playwright or other browser automation unless the user explicitly asks for it. For routine visual/UI edits, rely on code inspection and normal build/type/test checks unless requested otherwise.
+- When running `npm run build`, use a long timeout from the first attempt, preferably at least 600000ms, because Nuxt production builds in this project often exceed two minutes on Windows. Do not report a short timeout as an intermediate user-facing issue; report only the final build result or a real actionable failure.
 
 ## Context7 Usage Rules
 
@@ -338,7 +339,41 @@ This file exists so the project context does not need to be re-explained in ever
 - Verification:
   - `npm run build` was run successfully during the main auth-page pass after forgot/reset/activate/resend changes.
   - Later typography/button-only tweaks were checked with `git diff --check`; no full build was run for those small class/component swaps.
-- Likely next redesign target after auth: static/legal/support pages, especially `/delivery`, `/returns`, `/payment-methods`, `/terms`, `/privacy-policy`, `/contact`, plus footer support/social content QA. Preserve existing business logic and API contracts.
+- Static/legal/support pages became the next redesign/content target after auth. Preserve existing page/component routing and CMS-driven data flow; the route still receives backend components and renders them through the shared legal layout described below.
+
+## Current Static/Legal Pages State - 2026-05-15
+
+- Static/legal page visual redesign is substantially complete for `/terms`, `/returns`, `/payment-methods`, `/privacy-policy`, and `/delivery`.
+- Shared frontend legal page system:
+  - `app/components/common/LegalPageLayout.vue`
+  - `app/components/common/LegalSmartPage.vue`
+  - `app/components/common/LegalSectionIcon.vue`
+  - `app/components/common/LegalOverviewCard.vue`
+  - `app/components/common/LegalDetailPanel.vue`
+  - `app/composables/useLegalPageSections.ts`
+- SmartComponents for `Terms`, `Delivery`, `Returns`, `PrivacyPolicy`, and `PaymentMethods` are thin wrappers around `LegalSmartPage`.
+- These pages use frontend Heroicons through `LegalSectionIcon`; backend `icon_svg` is intentionally ignored visually and new content migrations set `icon_svg` to `None`.
+- The overview cards smooth-scroll to their matching sections. Keep the native smooth-scroll behavior when editing these components.
+- Georgian long-word overflow was fixed in legal cards/panels by widening the left column and using normal `break-words`; do not reintroduce aggressive `overflow-wrap:anywhere` unless there is a real narrow-screen issue.
+- Backend CMS/content migrations created and applied locally and on staging:
+  - `0050` through `0055` refresh and refine `/terms`.
+  - `0056` through `0058` refresh and refine `/returns`.
+  - `0059` and `0060` refresh and trim `/payment-methods`.
+  - `0061` and `0062` refresh and refine `/privacy-policy`.
+  - `0063` refreshes `/delivery`.
+- Current legal/support content direction:
+  - `/terms`: practical FlexDrive terms for account/guest checkout, product info, compatibility responsibility, pricing/stock/technical errors, order confirmation, payment, delivery, returns, B2B, privacy/security. Warranty references were removed because FlexDrive does not offer a warranty in the first phase.
+  - `/returns`: 6 sections, company-protective but legally conscious wording. Uses `პროდუქტისა და თანხის დაბრუნება`; ordinary return timing uses `ჩაბარებიდან 14` rather than purchase date; installed/used parts are assessed individually.
+  - `/payment-methods`: 4 concise sections. Current live method is cash on delivery; online card/installment/part-payment text is written for future integrations without pretending those methods are currently active. Refund/cancel copy says online refunds are processed through the original payment channel.
+  - `/privacy-policy`: 5 concise sections covering auth/profile, cart/wishlist/buy-now, checkout/order, contact form, reCAPTCHA, cookies, analytics/GTM/Google Ads/Meta Pixel, payment providers, delivery partners, retention/security, and user rights.
+  - `/delivery`: 4 concise sections. Delivery timing starts after order confirmation; standard timing is Tbilisi `1-2 სამუშაო დღე`, regions `4-5 სამუშაო დღე`. Old same-day/13:00 copy was removed.
+- Placeholder contact/company data remains in legal content until company registration and real support details are available. Current placeholder addresses include `support@flexdrive.ge`, `returns@flexdrive.ge`, and `privacy@flexdrive.ge`.
+- Content migrations were applied to the staging Neon/Postgres database and verified after each pass. If staging UI still shows old content, suspect API/browser cache before changing code.
+- Tests updated/run for touched legal content:
+  - `pages.test_payment_methods_page`
+  - `pages.tests.GetCurrentContentAPITests.test_privacy_policy_page_includes_seeded_component`
+  - `pages.tests.GetCurrentContentAPITests.test_delivery_page_includes_seeded_component`
+- Next likely static/support step: redesign/refine `/contact`, then do footer legal/support/social/contact QA before starting the payment safety architecture work.
 
 ## Upcoming Payment Safety Work - 2026-05-15
 

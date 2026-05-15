@@ -4,19 +4,20 @@ import { useForm } from "vee-validate";
 import {
   ArrowRightIcon,
   ClockIcon,
+  CreditCardIcon,
   EnvelopeIcon,
   MapPinIcon,
   PhoneIcon,
+  ReceiptRefundIcon,
+  Squares2X2Icon,
+  TruckIcon,
 } from "@heroicons/vue/24/outline";
 import { CheckCircleIcon } from "@heroicons/vue/24/solid";
 import type { Component } from "vue";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
-import BaseRichText from "~/components/common/BaseRichText.vue";
 import { sanitizeText } from "~/composables/helpers";
 import type {
-  ContactExpectation,
   ContactNotice,
-  ContactReason,
   ContactShortcut,
   ContactTopic,
 } from "~/types/contact";
@@ -45,6 +46,9 @@ const { contactInquirySchema } = useContactValidationSchemas();
 
 const sectionTitle = computed(
   () => sanitizeText(props.data?.title) || "დაგვიკავშირდით",
+);
+const sectionSubtitle = computed(() =>
+  sanitizeText(props.data?.subtitle),
 );
 
 const rawItems = computed<ContentItemData[]>(() => {
@@ -84,7 +88,6 @@ const shortcuts = computed<ContactShortcut[]>(() =>
         slug,
         title: sanitizeText(item.title),
         description: sanitizeText(item.description),
-        iconSvg: sanitizeText(item.icon_svg),
         position: Number(item.position ?? index + 1),
         routePath: routePathFromSlug(slug),
       };
@@ -94,6 +97,15 @@ const shortcuts = computed<ContactShortcut[]>(() =>
       a.position === b.position ? a.id - b.id : a.position - b.position,
     ),
 );
+
+const shortcutIconMap: Record<string, Component> = {
+  catalog: Squares2X2Icon,
+  delivery: TruckIcon,
+  "payment-methods": CreditCardIcon,
+  returns: ReceiptRefundIcon,
+};
+
+const getShortcutIcon = (slug: string) => shortcutIconMap[slug] || ArrowRightIcon;
 
 const noticesBySlug = computed<Record<string, ContactNotice>>(() =>
   rawItems.value
@@ -114,36 +126,6 @@ const noticesBySlug = computed<Record<string, ContactNotice>>(() =>
       accumulator[item.slug] = item;
       return accumulator;
     }, {}),
-);
-
-const expectations = computed<ContactExpectation[]>(() =>
-  rawItems.value
-    .filter((item) => item.content_type === "contact_expectation")
-    .map((item, index) => ({
-      id: Number(item.id ?? index + 1),
-      title: sanitizeText(item.title),
-      description: sanitizeText(item.description),
-      position: Number(item.position ?? index + 1),
-    }))
-    .filter((item) => item.title || item.description)
-    .sort((a, b) =>
-      a.position === b.position ? a.id - b.id : a.position - b.position,
-    ),
-);
-
-const reasons = computed<ContactReason[]>(() =>
-  rawItems.value
-    .filter((item) => item.content_type === "contact_reason")
-    .map((item, index) => ({
-      id: Number(item.id ?? index + 1),
-      title: sanitizeText(item.title),
-      description: sanitizeText(item.description),
-      position: Number(item.position ?? index + 1),
-    }))
-    .filter((item) => item.title || item.description)
-    .sort((a, b) =>
-      a.position === b.position ? a.id - b.id : a.position - b.position,
-    ),
 );
 
 const topicOptions = computed(() =>
@@ -213,16 +195,10 @@ const responseNoteNotice = computed(
 const shortcutsIntroNotice = computed(
   () => noticesBySlug.value.shortcuts_intro ?? null,
 );
-const expectationsIntroNotice = computed(
-  () => noticesBySlug.value.expectations_intro ?? null,
-);
-const reasonsIntroNotice = computed(
-  () => noticesBySlug.value.reasons_intro ?? null,
-);
 
 const breadcrumbItems = computed(() => [
   { label: "მთავარი", to: "/" },
-  { label: sectionTitle.value },
+  { label: "კონტაქტი" },
 ]);
 
 const isSuccessModalOpen = ref(false);
@@ -364,397 +340,260 @@ const submitContactForm = handleSubmit(
 </script>
 
 <template>
-  <section class="relative overflow-hidden py-8 md:py-10 lg:py-12">
-    <div
-      class="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.18),transparent_58%),linear-gradient(180deg,var(--section-warm)_0%,transparent_100%)]"
-      aria-hidden="true"
-    />
-
-    <div class="container-fluid relative">
+  <section class="py-6 sm:py-8 lg:py-10">
+    <div class="container-fluid">
       <AppBreadcrumbs :items="breadcrumbItems" />
 
+      <header class="mt-5 max-w-3xl sm:mt-6">
+        <h1
+          class="upper text-3xl font-extrabold leading-tight text-text-primary sm:text-4xl lg:text-5xl"
+        >
+          {{ sectionTitle }}
+        </h1>
+        <p
+          v-if="sectionSubtitle"
+          class="mt-3 max-w-2xl text-sm leading-7 text-text-secondary sm:text-base sm:leading-8"
+        >
+          {{ sectionSubtitle }}
+        </p>
+      </header>
+
       <div
-        class="mt-6 rounded-[30px] border border-border-default bg-surface shadow-[0_26px_64px_-42px_var(--shadow-color)]"
+        class="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-6"
       >
-        <div class="px-5 py-6 md:px-8 md:py-8 lg:px-10">
-          <div
-            v-if="shortcuts.length"
-            class="rounded-[30px] border border-border-default bg-surface-2/60 p-5 md:p-6"
-          >
-            <div class="grid gap-3">
-              <div>
-                <p
-                  class="text-xs font-semibold uppercase tracking-[0.18em] text-accent-primary"
-                >
-                  სწრაფი გზამკვლევი
-                </p>
-                <h2 class="title-under-xs mt-2 text-2xl font-extrabold text-text-primary">
-                  {{
-                    shortcutsIntroNotice?.title ||
-                    "სანამ მოგვწერთ, ჯერ აქაც გადაახედეთ"
-                  }}
-                </h2>
-              </div>
-              <p class="subtitle-under-xs text-sm leading-7 text-text-secondary">
-                {{
-                  shortcutsIntroNotice?.description ||
-                  "ხშირი პროცესების დეტალები უკვე გამოყოფილია ცალკე გვერდებზე, რათა საჭირო პასუხი სწრაფად იპოვოთ."
-                }}
-              </p>
-            </div>
-
-            <div
-              class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4"
-            >
-              <NuxtLink
-                v-for="shortcut in shortcuts"
-                :key="shortcut.id"
-                :to="shortcut.routePath"
-                class="group rounded-[24px] will-change-transform border border-border-default bg-surface p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-accent-primary/35 hover:shadow-[0_18px_32px_-24px_var(--shadow-color)]"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <span
-                    class="grid h-12 w-12 place-items-center rounded-2xl bg-surface-2 text-accent-primary"
-                    aria-hidden="true"
-                    v-html="shortcut.iconSvg"
-                  />
-                  <ArrowRightIcon
-                    class="h-5 w-5 text-accent-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    aria-hidden="true"
-                  />
-                </div>
-
-                <h3 class="mt-5 text-lg font-bold leading-7 text-text-primary">
-                  {{ shortcut.title }}
-                </h3>
-                <p class="mt-3 text-sm leading-7 text-text-secondary">
-                  {{ shortcut.description }}
-                </p>
-              </NuxtLink>
-            </div>
+        <div
+          class="rounded-[22px] border border-border-default bg-surface p-4 shadow-[0_22px_52px_-40px_var(--shadow-color)] sm:rounded-[26px] sm:p-6 lg:p-7"
+        >
+          <div class="max-w-2xl">
+            <h2 class="text-xl font-extrabold text-text-primary sm:text-2xl">
+              შეტყობინების გაგზავნა
+            </h2>
+            <p class="mt-2 text-sm leading-7 text-text-secondary">
+              მიუთითეთ საკონტაქტო ინფორმაცია და მოკლედ აღწერეთ საკითხი.
+              შეკვეთის შემთხვევაში დაამატეთ შეკვეთის ნომერიც.
+            </p>
           </div>
 
-          <div
-            class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_360px] xl:gap-8"
+          <form
+            class="mt-5 grid gap-3.5 sm:gap-4 md:grid-cols-2"
+            novalidate
+            @submit.prevent="submitContactForm"
           >
-            <div
-              class="rounded-[30px] border border-border-default bg-[linear-gradient(180deg,var(--surface)_0%,var(--surface-2)_100%)] p-5 shadow-[0_22px_52px_-38px_var(--shadow-color)] md:p-7"
-            >
-              <div class="grid gap-3">
-                <div>
-                  <p
-                    class="text-xs font-semibold uppercase tracking-[0.18em] text-accent-primary"
-                  >
-                    ფორმა
+            <BaseInput
+              v-model="fullName"
+              v-bind="fullNameAttrs"
+              label="სახელი და გვარი"
+              name="full_name"
+              autocomplete="name"
+              placeholder="მაგ: ანა ბერიძე"
+              :error="errors.full_name"
+              :disabled="loading"
+            />
+
+            <BaseInput
+              v-model="phone"
+              v-bind="phoneAttrs"
+              label="ტელეფონი"
+              name="phone"
+              autocomplete="tel"
+              placeholder="+995 5XX XX XX XX"
+              :error="errors.phone"
+              :disabled="loading"
+            />
+
+            <BaseInput
+              v-model="email"
+              v-bind="emailAttrs"
+              class="md:col-span-2"
+              label="ელფოსტა"
+              type="email"
+              name="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              :error="errors.email"
+              :disabled="loading"
+            />
+
+            <BaseSelect
+              v-model="topicSlug"
+              v-bind="topicSlugAttrs"
+              label="საკითხის თემა"
+              name="topic_slug"
+              class="md:col-span-2"
+              placeholder="აირჩიეთ თემა"
+              :options="topicOptions"
+              :error="errors.topic_slug"
+              :disabled="loading || !topicOptions.length"
+            />
+
+            <BaseInput
+              v-model="orderNumber"
+              v-bind="orderNumberAttrs"
+              class="md:col-span-2"
+              label="შეკვეთის ნომერი (არასავალდებულო)"
+              name="order_number"
+              autocomplete="off"
+              placeholder="მაგ: ORD-20260515-000001"
+              :error="errors.order_number"
+              :disabled="loading"
+            />
+
+            <BaseTextarea
+              v-model="message"
+              v-bind="messageAttrs"
+              class="md:col-span-2"
+              label="შეტყობინება"
+              name="message"
+              placeholder="მოკლედ აღწერეთ რაში გჭირდებათ დახმარება."
+              :rows="5"
+              :error="errors.message"
+              :disabled="loading"
+            />
+
+            <div class="md:col-span-2">
+              <div
+                v-if="errorMessage"
+                class="mb-4 rounded-lg border border-error/20 bg-error/10 px-4 py-3 text-sm text-error"
+              >
+                {{ errorMessage }}
+              </div>
+
+              <div
+                class="flex flex-col gap-4 border-t border-border-default pt-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p class="text-xs leading-6 text-text-muted sm:max-w-md">
+                  {{
+                    responseNoteNotice?.description ||
+                    "სამუშაო საათებში შეტყობინებებს მაქსიმალურად სწრაფად ვამუშავებთ."
+                  }}
+                </p>
+
+                <BaseButton
+                  class="w-full sm:w-auto"
+                  type="submit"
+                  size="lg"
+                  :loading="loading"
+                  :disabled="loading"
+                >
+                  შეტყობინების გაგზავნა
+                </BaseButton>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <aside class="space-y-4">
+          <div
+            class="rounded-[22px] border border-border-default bg-surface p-4 shadow-[0_18px_44px_-38px_var(--shadow-color)] sm:rounded-[26px] sm:p-5"
+          >
+            <h2 class="text-lg font-extrabold text-text-primary">
+              {{ supportIntroNotice?.title || "სწრაფი კონტაქტი" }}
+            </h2>
+            <p class="mt-2 text-sm leading-7 text-text-secondary">
+              {{
+                supportIntroNotice?.description ||
+                "თუ მოკლე შეკითხვის სწრაფად გარკვევა გჭირდებათ, გამოიყენეთ პირდაპირი არხები."
+              }}
+            </p>
+
+            <div class="mt-4 divide-y divide-border-default">
+              <div
+                v-for="row in supportRows"
+                :key="`support-${row.key}`"
+                class="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <span
+                  class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border-default bg-surface-2 text-accent-primary"
+                >
+                  <component :is="row.icon" class="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-text-muted">
+                    {{ row.label }}
                   </p>
-                  <h2 class="title-under-xs mt-2 text-2xl font-extrabold text-text-primary">
-                    შეტყობინების გაგზავნა
-                  </h2>
-                </div>
-
-                <p class="subtitle-under-xs text-sm leading-7 text-text-secondary">
-                  რაც უფრო ზუსტად აღწერთ საკითხს, მით უფრო სწრაფად და სწორად
-                  მოგცემთ პასუხს ჩვენი გუნდი.
-                </p>
-              </div>
-
-              <form
-                class="mt-6 grid gap-4 md:grid-cols-2"
-                novalidate
-                @submit.prevent="submitContactForm"
-              >
-                <BaseInput
-                  v-model="fullName"
-                  v-bind="fullNameAttrs"
-                  label="სახელი და გვარი"
-                  name="full_name"
-                  autocomplete="name"
-                  placeholder="მაგ: ანა ბერიძე"
-                  :error="errors.full_name"
-                  :disabled="loading"
-                />
-
-                <BaseInput
-                  v-model="phone"
-                  v-bind="phoneAttrs"
-                  label="ტელეფონი"
-                  name="phone"
-                  autocomplete="tel"
-                  placeholder="+995 5XX XX XX XX"
-                  :error="errors.phone"
-                  :disabled="loading"
-                />
-
-                <BaseInput
-                  v-model="email"
-                  v-bind="emailAttrs"
-                  class="md:col-span-2"
-                  label="ელფოსტა"
-                  type="email"
-                  name="email"
-                  autocomplete="email"
-                  placeholder="you@example.com"
-                  :error="errors.email"
-                  :disabled="loading"
-                />
-
-                <BaseSelect
-                  v-model="topicSlug"
-                  v-bind="topicSlugAttrs"
-                  label="საკითხის თემა"
-                  name="topic_slug"
-                  class="md:col-span-2"
-                  placeholder="აირჩიეთ თემა"
-                  :options="topicOptions"
-                  :error="errors.topic_slug"
-                  :disabled="loading || !topicOptions.length"
-                />
-
-                <BaseInput
-                  v-model="orderNumber"
-                  v-bind="orderNumberAttrs"
-                  class="md:col-span-2"
-                  label="შეკვეთის ნომერი (არასავალდებულო)"
-                  name="order_number"
-                  autocomplete="off"
-                  placeholder="მაგ: AM-1024"
-                  :error="errors.order_number"
-                  :disabled="loading"
-                />
-
-                <BaseTextarea
-                  v-model="message"
-                  v-bind="messageAttrs"
-                  class="md:col-span-2"
-                  label="შეტყობინება"
-                  name="message"
-                  placeholder="მოკლედ აღწერეთ რაში გჭირდებათ დახმარება."
-                  :rows="6"
-                  :error="errors.message"
-                  :disabled="loading"
-                />
-
-                <div class="md:col-span-2">
-                  <div
-                    v-if="errorMessage"
-                    class="mb-4 rounded-[20px] border border-error/20 bg-error/10 px-4 py-3 text-sm text-error"
+                  <a
+                    v-if="row.href"
+                    :href="row.href"
+                    class="mt-1 block break-words text-sm font-bold text-text-primary transition-colors duration-200 hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
                   >
-                    {{ errorMessage }}
-                  </div>
-
-                  <div class="flex flex-col items-start gap-10">
-                    <p class="text-sm leading-7 text-text-secondary">
-                      {{
-                        responseNoteNotice?.description ||
-                        "სამუშაო საათებში შეტყობინებებს მაქსიმალურად სწრაფად ვამუშავებთ. არასამუშაო დროს დაგიკავშირდებით მომდევნო სამუშაო დღეს."
-                      }}
-                    </p>
-
-                    <BaseButton
-                      class="self-center"
-                      type="submit"
-                      size="lg"
-                      :loading="loading"
-                      :disabled="loading"
-                    >
-                      შეტყობინების გაგზავნა
-                    </BaseButton>
-                  </div>
+                    {{ row.value }}
+                  </a>
+                  <p v-else class="mt-1 break-words text-sm font-bold text-text-primary">
+                    {{ row.value }}
+                  </p>
                 </div>
-              </form>
+              </div>
             </div>
 
-            <div class="space-y-5">
-              <div
-                class="rounded-[28px] border border-border-default bg-[linear-gradient(180deg,var(--surface)_0%,var(--surface-2)_100%)] p-5 shadow-[0_22px_48px_-38px_var(--shadow-color)]"
+            <div v-if="footerSocials.length" class="mt-5 flex flex-wrap gap-2">
+              <a
+                v-for="social in footerSocials"
+                :key="`${social.type}-${social.url}`"
+                :href="social.url"
+                target="_blank"
+                rel="noreferrer"
+                class="rounded-lg border border-border-default bg-surface-2 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
               >
-                <p
-                  class="text-xs font-semibold uppercase tracking-[0.18em] text-accent-primary"
-                >
-                  დახმარება
-                </p>
-                <h2 class="title-under-xs mt-3 text-xl font-extrabold text-text-primary">
-                  {{ supportIntroNotice?.title || "სწრაფი კონტაქტი" }}
-                </h2>
-                <p class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary">
-                  {{
-                    supportIntroNotice?.description ||
-                    "თუ გსურთ მოკლე შეკითხვის სწრაფად გარკვევა, გამოიყენეთ ქვემოთ მოცემული პირდაპირი არხები."
-                  }}
-                </p>
-
-                <div class="mt-5 space-y-3">
-                  <div
-                    v-for="row in supportRows"
-                    :key="`support-${row.key}`"
-                    class="rounded-[20px] border border-border-default bg-surface px-4 py-3"
-                  >
-                    <div class="flex items-start gap-3">
-                      <span
-                        class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface-2 text-accent-primary"
-                      >
-                        <component
-                          :is="row.icon"
-                          class="h-5 w-5"
-                          aria-hidden="true"
-                        />
-                      </span>
-                      <div class="min-w-0">
-                        <p
-                          class="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted"
-                        >
-                          {{ row.label }}
-                        </p>
-                        <a
-                          v-if="row.href"
-                          :href="row.href"
-                          class="mt-1 block break-words text-sm font-semibold text-text-primary transition-colors duration-200 hover:text-accent-primary"
-                        >
-                          {{ row.value }}
-                        </a>
-                        <p
-                          v-else
-                          class="mt-1 break-words text-sm font-semibold text-text-primary"
-                        >
-                          {{ row.value }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  v-if="footerSocials.length"
-                  class="mt-5 flex flex-wrap gap-2"
-                >
-                  <a
-                    v-for="social in footerSocials"
-                    :key="`${social.type}-${social.url}`"
-                    :href="social.url"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="rounded-full border border-border-default bg-surface px-3 py-2 text-xs font-semibold text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
-                  >
-                    {{ social.label }}
-                  </a>
-                </div>
-              </div>
-
-              <div
-                v-if="responseNoteNotice?.title || responseNoteNotice?.html"
-                class="rounded-[28px] border border-border-default bg-surface p-5 shadow-[0_18px_42px_-34px_var(--shadow-color)]"
-              >
-                <h2
-                  v-if="responseNoteNotice?.title"
-                  class="title-under-xs text-xl font-extrabold text-text-primary"
-                >
-                  {{ responseNoteNotice.title }}
-                </h2>
-
-                <BaseRichText
-                  v-if="responseNoteNotice?.html"
-                  class="mt-4"
-                  :html="responseNoteNotice.html"
-                />
-              </div>
+                {{ social.label }}
+              </a>
             </div>
           </div>
+        </aside>
+      </div>
 
-          <div
-            v-if="expectations.length || reasons.length"
-            class="mt-8 grid gap-6 lg:grid-cols-2 xl:gap-8"
-          >
-            <div
-              v-if="expectations.length"
-              class="rounded-[30px] border border-border-default bg-[linear-gradient(180deg,var(--surface)_0%,var(--surface-2)_100%)] p-5 shadow-[0_22px_48px_-38px_var(--shadow-color)] md:p-6"
+      <section
+        v-if="shortcuts.length"
+        class="mt-4 rounded-[22px] border border-border-default bg-surface-2/70 p-4 sm:mt-5 sm:rounded-[26px] sm:p-5 lg:mt-6"
+        aria-labelledby="contact-shortcuts-heading"
+      >
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2
+              id="contact-shortcuts-heading"
+              class="text-lg font-extrabold text-text-primary sm:text-xl"
             >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.18em] text-accent-primary"
-              >
-                პროცესი
-              </p>
-              <h2 class="title-under-xs mt-2 text-2xl font-extrabold text-text-primary">
-                {{
-                  expectationsIntroNotice?.title || "რას უნდა ელოდოთ პასუხისგან"
-                }}
-              </h2>
-              <p class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary">
-                {{
-                  expectationsIntroNotice?.description ||
-                  "თითოეული მოთხოვნა ჯერ კონტექსტის მიხედვით მოწმდება, შემდეგ კი სწორი პროცესით ან პასუხისმგებელ არხზე გადადის."
-                }}
-              </p>
-
-              <div class="mt-6 space-y-4">
-                <div
-                  v-for="(expectation, index) in expectations"
-                  :key="expectation.id"
-                  class="rounded-[22px] border border-border-default bg-surface px-4 py-4"
-                >
-                  <div class="flex items-start gap-4">
-                    <span
-                      class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border-default bg-surface-2 text-sm font-bold text-accent-primary"
-                    >
-                      {{ String(index + 1).padStart(2, "0") }}
-                    </span>
-                    <div>
-                      <h3 class="text-base font-bold text-text-primary">
-                        {{ expectation.title }}
-                      </h3>
-                      <p class="mt-2 text-sm leading-7 text-text-secondary">
-                        {{ expectation.description }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-if="reasons.length"
-              class="rounded-[30px] border border-border-default bg-[linear-gradient(180deg,var(--surface)_0%,var(--surface-2)_100%)] p-5 shadow-[0_22px_48px_-38px_var(--shadow-color)] md:p-6"
-            >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.18em] text-accent-primary"
-              >
-                რატომ გვწერენ
-              </p>
-              <h2 class="title-under-xs mt-2 text-2xl font-extrabold text-text-primary">
-                {{ reasonsIntroNotice?.title || "რით შეგვიძლია დაგეხმაროთ" }}
-              </h2>
-              <p class="subtitle-under-xs mt-3 text-sm leading-7 text-text-secondary">
-                {{
-                  reasonsIntroNotice?.description ||
-                  "კონტაქტის გვერდი განსაკუთრებით გამოგადგებათ მაშინ, როცა გჭირდებათ შეკვეთის, პროდუქტის ან პროცესის დაზუსტება."
-                }}
-              </p>
-
-              <div class="mt-6 space-y-4">
-                <div
-                  v-for="reason in reasons"
-                  :key="reason.id"
-                  class="rounded-[22px] border border-border-default bg-surface px-4 py-4"
-                >
-                  <div class="flex items-start gap-3">
-                    <CheckCircleIcon
-                      class="mt-0.5 h-6 w-6 shrink-0 text-accent-primary"
-                      aria-hidden="true"
-                    />
-                    <div>
-                      <h3 class="text-base font-bold text-text-primary">
-                        {{ reason.title }}
-                      </h3>
-                      <p class="mt-2 text-sm leading-7 text-text-secondary">
-                        {{ reason.description }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              {{ shortcutsIntroNotice?.title || "სწრაფი ბმულები" }}
+            </h2>
+            <p class="mt-1 text-sm leading-6 text-text-secondary">
+              {{
+                shortcutsIntroNotice?.description ||
+                "ხშირი პროცესების დეტალები ცალკე გვერდებზეა დალაგებული."
+              }}
+            </p>
           </div>
         </div>
-      </div>
+
+        <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <NuxtLink
+            v-for="shortcut in shortcuts"
+            :key="shortcut.id"
+            :to="shortcut.routePath"
+            class="group flex min-h-[120px] flex-col justify-between rounded-lg border border-border-default bg-surface p-4 transition-[border-color,box-shadow] duration-200 hover:border-accent-primary hover:shadow-[0_16px_28px_-24px_var(--shadow-color)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <span
+                class="grid h-10 w-10 place-items-center rounded-lg bg-surface-2 text-accent-primary"
+                aria-hidden="true"
+              >
+                <component :is="getShortcutIcon(shortcut.slug)" class="h-5 w-5" />
+              </span>
+              <ArrowRightIcon
+                class="h-5 w-5 text-text-muted transition-colors duration-200 group-hover:text-accent-primary"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-base font-bold text-text-primary">
+                {{ shortcut.title }}
+              </h3>
+              <p class="mt-2 text-sm leading-6 text-text-secondary">
+                {{ shortcut.description }}
+              </p>
+            </div>
+          </NuxtLink>
+        </div>
+      </section>
     </div>
   </section>
 

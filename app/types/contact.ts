@@ -10,7 +10,6 @@ export type ContactShortcut = {
   slug: string;
   title: string;
   description: string;
-  iconSvg: string;
   position: number;
   routePath: string;
 };
@@ -21,20 +20,6 @@ export type ContactNotice = {
   title: string;
   description: string;
   html: string;
-  position: number;
-};
-
-export type ContactExpectation = {
-  id: number;
-  title: string;
-  description: string;
-  position: number;
-};
-
-export type ContactReason = {
-  id: number;
-  title: string;
-  description: string;
   position: number;
 };
 

@@ -57,7 +57,7 @@ const actualInputType = computed(() => {
 
 const inputClasses = computed(() => {
   const base =
-    "min-h-11 w-full rounded-lg border bg-surface px-3 py-3 text-sm text-text-primary placeholder:text-text-muted shadow-[0_1px_0_rgba(17,24,39,0.03)] transition-[border-color,background-color,box-shadow] duration-200 ease-out disabled:cursor-not-allowed disabled:bg-bg-muted disabled:text-text-muted disabled:opacity-80 focus:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary";
+    "min-h-11 w-full rounded-lg border bg-surface px-3 py-3 text-sm text-text-primary placeholder:text-text-muted shadow-[0_1px_0_rgba(17,24,39,0.03)] transition-[border-color,background-color,box-shadow] duration-200 ease-out disabled:cursor-not-allowed disabled:bg-bg-muted disabled:text-text-muted disabled:opacity-80 focus:bg-surface focus:outline-none focus-visible:outline-none";
   const paddingClasses = (() => {
     if (hasPrefixIcon.value && shouldShowPasswordToggle.value) return "pl-11 pr-11";
     if (hasPrefixIcon.value) return "pl-11 pr-3";
