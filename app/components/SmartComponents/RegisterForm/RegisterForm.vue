@@ -88,6 +88,16 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => route.query.facebook_error,
+  (message) => {
+    if (typeof message === "string" && message.trim()) {
+      errorMessage.value = message;
+    }
+  },
+  { immediate: true },
+);
+
 const closeSuccessModal = () => {
   isSuccessModalOpen.value = false;
   successMessage.value = "";
@@ -134,6 +144,11 @@ const submitForm = handleSubmit(async (values) => {
 const handleGoogleError = (message: string) => {
   errorMessage.value =
     message || "Google-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.";
+};
+
+const handleFacebookError = (message: string) => {
+  errorMessage.value =
+    message || "Facebook-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.";
 };
 </script>
 
@@ -355,10 +370,17 @@ const handleGoogleError = (message: string) => {
                 :return-path="route.fullPath"
                 @error="handleGoogleError"
               />
+              <FacebookAuthButton
+                context="signup"
+                :disabled="loading"
+                :redirect-to="redirectTarget"
+                :return-path="route.fullPath"
+                @error="handleFacebookError"
+              />
               <p
                 class="text-center text-[11px] leading-5 text-text-muted"
               >
-                Google-ით გაგრძელებით ეთანხმები
+                სოციალური ანგარიშით გაგრძელებით ეთანხმები
                 <NuxtLink
                   to="/terms"
                   target="_blank"

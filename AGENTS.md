@@ -342,6 +342,42 @@ This file exists so the project context does not need to be re-explained in ever
   - Later typography/button-only tweaks were checked with `git diff --check`; no full build was run for those small class/component swaps.
 - Static/legal/support pages became the next redesign/content target after auth. Preserve existing page/component routing and CMS-driven data flow; the route still receives backend components and renders them through the shared legal layout described below.
 
+## Current Social Auth State - 2026-05-16
+
+- Google sign-in/registration is implemented and considered complete for the current staging setup.
+- The first Google implementation used Google Identity Services/FedCM-style prompt behavior, but it was replaced because the prompt could be inconsistent across devices/accounts.
+- The current Google flow uses standard OAuth redirect:
+  - frontend login/register Google button navigates to `/auth/google/start`;
+  - Nuxt server routes proxy `/auth/google/start` and `/auth/google/callback` to the backend Google OAuth start/callback endpoints;
+  - Google receives the public redirect URI `https://flexdrive-front.vercel.app/auth/google/callback`;
+  - backend exchanges the authorization code, reuses the existing Google auth serializer/user creation path, sets auth cookies, and redirects the user back to the intended frontend path.
+- Frontend files involved:
+  - `app/components/common/GoogleAuthButton.vue`
+  - `server/routes/auth/google/start.get.ts`
+  - `server/routes/auth/google/callback.get.ts`
+  - login/register pages render the Google button below the primary submit button.
+- Backend files involved in the paired backend repo:
+  - `accounts/google_auth.py`
+  - `accounts/views.py`
+  - `accounts/urls.py`
+  - `accounts/tests.py`
+  - `config/settings.py`
+- Required staging configuration:
+  - Google Console authorized redirect URI: `https://flexdrive-front.vercel.app/auth/google/callback`
+  - Render backend env: `GOOGLE_OAUTH_REDIRECT_URI=https://flexdrive-front.vercel.app/auth/google/callback`
+  - Google client id and secret stay only in backend/runtime configuration; do not hard-code them in frontend files.
+- No database migration is required for the Google OAuth redirect flow itself.
+- Facebook sign-in/registration implementation was started in the same redirect-based pattern:
+  - backend adds `FacebookAccount`, Facebook OAuth helper, start/callback endpoints, admin visibility, and account tests;
+  - frontend adds a shared `SocialAuthButton`, `FacebookAuthButton`, `/auth/facebook/start`, `/auth/facebook/callback`, and login/register placement next to Google;
+  - Facebook requires a database migration: `accounts.0009_facebookaccount`.
+- Required Facebook staging configuration before live testing:
+  - Meta app credentials in Render backend env: `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`;
+  - Render backend env: `FACEBOOK_OAUTH_REDIRECT_URI=https://flexdrive-front.vercel.app/auth/facebook/callback`;
+  - Meta/Facebook Login valid redirect URI: `https://flexdrive-front.vercel.app/auth/facebook/callback`.
+- Facebook login cannot complete for accounts where Facebook does not return an email address; the backend intentionally rejects those because FlexDrive users require email.
+- Next auth step: finish Meta console setup with the user, run/apply `accounts.0009_facebookaccount` on staging, deploy frontend/backend, and test Facebook login/register end to end.
+
 ## Current Static/Legal Pages State - 2026-05-15
 
 - Static/legal page visual redesign is substantially complete for `/terms`, `/returns`, `/payment-methods`, `/privacy-policy`, and `/delivery`.

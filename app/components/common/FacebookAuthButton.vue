@@ -23,13 +23,13 @@ const emit = defineEmits<{
 
 <template>
   <SocialAuthButton
-    icon-name="google"
-    icon-container-class="bg-white"
-    label="Google-ით გაგრძელება"
-    loading-label="Google-ით მიმდინარეობს..."
-    opening-label="Google იხსნება..."
-    start-path="/auth/google/start"
-    error-message="Google შესვლის დაწყება ვერ მოხერხდა. სცადეთ თავიდან."
+    icon-name="facebook"
+    icon-container-class="bg-[#1877F2] text-white"
+    label="Facebook-ით გაგრძელება"
+    loading-label="Facebook-ით მიმდინარეობს..."
+    opening-label="Facebook იხსნება..."
+    start-path="/auth/facebook/start"
+    error-message="Facebook შესვლის დაწყება ვერ მოხერხდა. სცადეთ თავიდან."
     :disabled="props.disabled"
     :loading="props.loading"
     :redirect-to="props.redirectTo"
