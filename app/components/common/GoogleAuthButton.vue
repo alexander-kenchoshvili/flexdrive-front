@@ -19,25 +19,29 @@ const emit = defineEmits<{
   error: [message: string];
 }>();
 
-const buttonRoot = ref<HTMLElement | null>(null);
 const renderError = ref("");
 const configured = ref(false);
-let resizeObserver: ResizeObserver | null = null;
+const requestInFlight = ref(false);
 
-const { getGoogleClientId, renderGoogleButton } = useGoogleIdentity();
+const { getGoogleClientId, requestGoogleCredential } = useGoogleIdentity();
 
-const buttonText = computed(() =>
-  props.context === "signup" ? "signup_with" : "continue_with",
-);
+const isBusy = computed(() => props.loading || requestInFlight.value);
+
+const buttonLabel = computed(() => {
+  if (props.loading) {
+    return "Google-ით მიმდინარეობს...";
+  }
+
+  if (requestInFlight.value) {
+    return "Google იხსნება...";
+  }
+
+  return "Google-ით გაგრძელება";
+});
 
 const authContext = computed(() =>
   props.context === "signup" ? "signup" : "signin",
 );
-
-const getButtonWidth = () => {
-  const width = buttonRoot.value?.clientWidth || 320;
-  return Math.min(Math.max(Math.floor(width), 220), 400);
-};
 
 const handleGoogleCredential = (response: GoogleCredentialResponse) => {
   if (!response.credential) {
@@ -51,92 +55,52 @@ const handleGoogleCredential = (response: GoogleCredentialResponse) => {
   emit("credential", response.credential);
 };
 
-const renderButton = async () => {
-  if (import.meta.server || !buttonRoot.value || !configured.value) {
+const handleClick = async () => {
+  if (import.meta.server || !configured.value || props.disabled || isBusy.value) {
     return;
   }
 
-  await nextTick();
+  renderError.value = "";
+  requestInFlight.value = true;
 
   try {
-    await renderGoogleButton(
-      buttonRoot.value,
-      handleGoogleCredential,
-      {
-        type: "standard",
-        theme: "outline",
-        size: "large",
-        text: buttonText.value,
-        shape: "rectangular",
-        logo_alignment: "left",
-        width: getButtonWidth(),
-        locale: "ka",
-      },
-      authContext.value,
-    );
+    await requestGoogleCredential(handleGoogleCredential, authContext.value);
   } catch (error: any) {
     renderError.value =
-      error?.message || "Google შესვლის ღილაკის ჩატვირთვა ვერ მოხერხდა.";
+      error?.message || "Google შესვლის ფანჯარა ვერ გაიხსნა. სცადეთ თავიდან.";
     emit("error", renderError.value);
+  } finally {
+    requestInFlight.value = false;
   }
 };
 
 onMounted(async () => {
   configured.value = Boolean(getGoogleClientId());
-  await nextTick();
-  void renderButton();
-
-  if (buttonRoot.value && typeof ResizeObserver !== "undefined") {
-    let lastWidth = getButtonWidth();
-    resizeObserver = new ResizeObserver(() => {
-      const nextWidth = getButtonWidth();
-      if (Math.abs(nextWidth - lastWidth) < 12) {
-        return;
-      }
-
-      lastWidth = nextWidth;
-      void renderButton();
-    });
-    resizeObserver.observe(buttonRoot.value);
-  }
 });
-
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect();
-  resizeObserver = null;
-});
-
-watch(
-  () => props.context,
-  () => {
-    void renderButton();
-  },
-);
 </script>
 
 <template>
   <div v-if="configured" class="space-y-2">
-    <div class="relative min-h-[44px] w-full overflow-hidden rounded-lg">
-      <div
-        ref="buttonRoot"
-        class="flex min-h-[44px] w-full justify-center [&>div]:!mx-auto"
-      />
-
-      <div
-        v-if="disabled || loading"
-        class="absolute inset-0 flex items-center justify-center gap-2 rounded-lg border border-border-default bg-surface/90 px-4 text-sm font-semibold text-text-secondary backdrop-blur-sm"
-        aria-live="polite"
-      >
+    <BaseButton
+      type="button"
+      variant="secondary"
+      :full-width="true"
+      :disabled="disabled || isBusy"
+      :loading="isBusy"
+      class="rounded-[16px] border-border-default bg-surface-2 text-text-primary shadow-none hover:bg-surface hover:text-text-primary"
+      @click="handleClick"
+    >
+      <template #left>
         <span
-          v-if="loading"
-          class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white"
           aria-hidden="true"
-        />
-        <span>
-          {{ loading ? "Google-ით მიმდინარეობს..." : "Google შესვლა დროებით მიუწვდომელია" }}
+        >
+          <BaseIcon name="google" :size="16" />
         </span>
-      </div>
-    </div>
+      </template>
+
+      <span>{{ buttonLabel }}</span>
+    </BaseButton>
 
     <p v-if="renderError" class="text-center text-xs leading-5 text-error">
       {{ renderError }}

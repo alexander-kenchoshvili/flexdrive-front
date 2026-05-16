@@ -2,6 +2,8 @@ const GOOGLE_IDENTITY_SCRIPT_ID = "google-identity-services-script";
 const GOOGLE_IDENTITY_LOAD_TIMEOUT_MS = 10000;
 
 let googleIdentityLoadPromise: Promise<void> | null = null;
+let initializedGoogleClientId = "";
+let activeGoogleCredentialCallback: GoogleCredentialCallback | null = null;
 
 export interface GoogleCredentialResponse {
   credential?: string;
@@ -10,17 +12,6 @@ export interface GoogleCredentialResponse {
 }
 
 type GoogleCredentialCallback = (response: GoogleCredentialResponse) => void;
-
-interface GoogleButtonOptions {
-  type?: "standard" | "icon";
-  theme?: "outline" | "filled_blue" | "filled_black";
-  size?: "large" | "medium" | "small";
-  text?: "signin_with" | "signup_with" | "continue_with" | "signin";
-  shape?: "rectangular" | "pill" | "circle" | "square";
-  logo_alignment?: "left" | "center";
-  width?: number | string;
-  locale?: string;
-}
 
 interface GoogleInitializeOptions {
   client_id: string;
@@ -32,10 +23,52 @@ interface GoogleInitializeOptions {
   use_fedcm_for_prompt?: boolean;
 }
 
+interface GooglePromptMomentNotification {
+  isDisplayed?(): boolean;
+  isNotDisplayed?(): boolean;
+  isSkippedMoment?(): boolean;
+  isDismissedMoment?(): boolean;
+  getNotDisplayedReason?(): string;
+  getSkippedReason?(): string;
+  getDismissedReason?(): string;
+}
+
 const hasGoogleIdentity = () =>
   typeof window !== "undefined" &&
   typeof window.google?.accounts?.id?.initialize === "function" &&
-  typeof window.google?.accounts?.id?.renderButton === "function";
+  typeof window.google?.accounts?.id?.prompt === "function";
+
+const getPromptFailureMessage = (
+  notification: GooglePromptMomentNotification,
+) => {
+  const reason =
+    notification.getNotDisplayedReason?.() ||
+    notification.getSkippedReason?.() ||
+    notification.getDismissedReason?.() ||
+    "";
+
+  if (reason === "secure_http_required") {
+    return "Google შესვლას HTTPS მისამართი სჭირდება.";
+  }
+
+  if (reason === "unregistered_origin" || reason === "invalid_client") {
+    return "Google OAuth origin ან client ID არასწორად არის კონფიგურირებული.";
+  }
+
+  if (reason === "opt_out_or_no_session") {
+    return "ამ ბრაუზერში Google ანგარიში ვერ მოიძებნა. შედით Google-ში და სცადეთ თავიდან.";
+  }
+
+  if (reason === "suppressed_by_user") {
+    return "Google შესვლა დროებით შეზღუდულია ბრაუზერის მიერ. სცადეთ მოგვიანებით.";
+  }
+
+  if (reason === "tap_outside" || reason === "user_cancel") {
+    return "Google შესვლა შეწყდა.";
+  }
+
+  return "Google შესვლის ფანჯარა ვერ გაიხსნა. სცადეთ თავიდან.";
+};
 
 const loadGoogleIdentityScript = (): Promise<void> => {
   if (typeof window === "undefined") {
@@ -136,21 +169,29 @@ export const useGoogleIdentity = () => {
       throw new Error("Google შესვლის კლიენტი მიუწვდომელია.");
     }
 
+    activeGoogleCredentialCallback = callback;
+
+    if (initializedGoogleClientId === clientId) {
+      return;
+    }
+
     window.google.accounts.id.initialize({
       client_id: clientId,
-      callback,
+      callback: (response) => {
+        activeGoogleCredentialCallback?.(response);
+      },
       auto_select: false,
       cancel_on_tap_outside: true,
       context,
       ux_mode: "popup",
       use_fedcm_for_prompt: true,
     });
+
+    initializedGoogleClientId = clientId;
   };
 
-  const renderGoogleButton = async (
-    element: HTMLElement,
+  const requestGoogleCredential = async (
     callback: GoogleCredentialCallback,
-    options: GoogleButtonOptions = {},
     context: GoogleInitializeOptions["context"] = "signin",
   ) => {
     await initializeGoogleIdentity(callback, context);
@@ -159,14 +200,51 @@ export const useGoogleIdentity = () => {
       throw new Error("Google შესვლის კლიენტი მიუწვდომელია.");
     }
 
-    element.innerHTML = "";
-    window.google.accounts.id.renderButton(element, options);
+    await new Promise<void>((resolve, reject) => {
+      let settled = false;
+      let timeoutId = 0;
+
+      const settle = (handler: () => void) => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        window.clearTimeout(timeoutId);
+        handler();
+      };
+
+      timeoutId = window.setTimeout(() => {
+        settle(() => resolve());
+      }, 1500);
+
+      window.google?.accounts?.id?.prompt((notification) => {
+        if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
+          settle(() => reject(new Error(getPromptFailureMessage(notification))));
+          return;
+        }
+
+        if (notification.isDismissedMoment?.()) {
+          if (notification.getDismissedReason?.() === "credential_returned") {
+            settle(() => resolve());
+            return;
+          }
+
+          settle(() => reject(new Error(getPromptFailureMessage(notification))));
+          return;
+        }
+
+        if (notification.isDisplayed?.()) {
+          settle(() => resolve());
+        }
+      });
+    });
   };
 
   return {
     getGoogleClientId,
     isGoogleIdentityConfigured,
-    renderGoogleButton,
+    requestGoogleCredential,
   };
 };
 
@@ -176,7 +254,11 @@ declare global {
       accounts?: {
         id?: {
           initialize(options: GoogleInitializeOptions): void;
-          renderButton(parent: HTMLElement, options: GoogleButtonOptions): void;
+          prompt(
+            momentListener?: (
+              notification: GooglePromptMomentNotification,
+            ) => void,
+          ): void;
         };
       };
     };
