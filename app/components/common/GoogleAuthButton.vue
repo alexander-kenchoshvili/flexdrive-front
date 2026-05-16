@@ -1,31 +1,32 @@
 <script setup lang="ts">
-import type { GoogleCredentialResponse } from "~/composables/useGoogleIdentity";
-
 const props = withDefaults(
   defineProps<{
     context?: "signin" | "signup";
     disabled?: boolean;
     loading?: boolean;
+    redirectTo?: string;
+    returnPath?: string;
   }>(),
   {
     context: "signin",
     disabled: false,
     loading: false,
+    redirectTo: "/",
+    returnPath: "",
   },
 );
 
 const emit = defineEmits<{
-  credential: [credential: string];
   error: [message: string];
 }>();
 
 const renderError = ref("");
-const configured = ref(false);
 const requestInFlight = ref(false);
-
-const { getGoogleClientId, requestGoogleCredential } = useGoogleIdentity();
+const route = useRoute();
+const apiBaseUrl = useApiBaseUrl();
 
 const isBusy = computed(() => props.loading || requestInFlight.value);
+const configured = computed(() => Boolean(apiBaseUrl));
 
 const buttonLabel = computed(() => {
   if (props.loading) {
@@ -39,20 +40,12 @@ const buttonLabel = computed(() => {
   return "Google-ით გაგრძელება";
 });
 
-const authContext = computed(() =>
-  props.context === "signup" ? "signup" : "signin",
-);
-
-const handleGoogleCredential = (response: GoogleCredentialResponse) => {
-  if (!response.credential) {
-    const message = "Google ავტორიზაციის პასუხი ვერ მივიღეთ. სცადეთ თავიდან.";
-    renderError.value = message;
-    emit("error", message);
-    return;
-  }
-
-  renderError.value = "";
-  emit("credential", response.credential);
+const buildGoogleStartUrl = () => {
+  const endpoint = `${String(apiBaseUrl).replace(/\/$/, "")}/accounts/google/start/`;
+  const url = new URL(endpoint, window.location.origin);
+  url.searchParams.set("next", props.redirectTo || "/");
+  url.searchParams.set("return_path", props.returnPath || route.fullPath || "/login");
+  return url.toString();
 };
 
 const handleClick = async () => {
@@ -64,19 +57,14 @@ const handleClick = async () => {
   requestInFlight.value = true;
 
   try {
-    await requestGoogleCredential(handleGoogleCredential, authContext.value);
+    window.location.assign(buildGoogleStartUrl());
   } catch (error: any) {
     renderError.value =
-      error?.message || "Google შესვლის ფანჯარა ვერ გაიხსნა. სცადეთ თავიდან.";
+      error?.message || "Google შესვლის დაწყება ვერ მოხერხდა. სცადეთ თავიდან.";
     emit("error", renderError.value);
-  } finally {
     requestInFlight.value = false;
   }
 };
-
-onMounted(async () => {
-  configured.value = Boolean(getGoogleClientId());
-});
 </script>
 
 <template>

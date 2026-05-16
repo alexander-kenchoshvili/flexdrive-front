@@ -15,19 +15,12 @@ const route = useRoute();
 const globalStore = useGlobalStore();
 const { executeRecaptcha } = useRecaptcha();
 const { passwordHint, registerSchema } = useAuthValidationSchemas();
-const {
-  authenticateWithGoogle,
-  getGoogleAuthErrorMessage,
-} = useGoogleAuthFlow();
-const { isGoogleIdentityConfigured } = useGoogleIdentity();
 
 const successMessage = ref("");
 const errorMessage = ref("");
 const loading = ref(false);
-const googleLoading = ref(false);
 const isSuccessModalOpen = ref(false);
-const hasGoogleAuth = computed(() => isGoogleIdentityConfigured());
-const isAuthBusy = computed(() => loading.value || googleLoading.value);
+const isAuthBusy = computed(() => loading.value);
 
 const sectionEyebrow = computed(() => sanitizeText(props.data?.buttonText));
 
@@ -85,6 +78,16 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => route.query.google_error,
+  (message) => {
+    if (typeof message === "string" && message.trim()) {
+      errorMessage.value = message;
+    }
+  },
+  { immediate: true },
+);
+
 const closeSuccessModal = () => {
   isSuccessModalOpen.value = false;
   successMessage.value = "";
@@ -127,25 +130,6 @@ const submitForm = handleSubmit(async (values) => {
     loading.value = false;
   }
 });
-
-const registerWithGoogle = async (credential: string) => {
-  successMessage.value = "";
-  errorMessage.value = "";
-  googleLoading.value = true;
-  isSuccessModalOpen.value = false;
-
-  try {
-    await authenticateWithGoogle(credential);
-    await router.push(redirectTarget.value);
-  } catch (error: any) {
-    errorMessage.value = getGoogleAuthErrorMessage(
-      error,
-      "Google-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.",
-    );
-  } finally {
-    googleLoading.value = false;
-  }
-};
 
 const handleGoogleError = (message: string) => {
   errorMessage.value =
@@ -354,7 +338,7 @@ const handleGoogleError = (message: string) => {
             {{ errorMessage }}
           </div>
 
-          <div v-if="hasGoogleAuth" class="mt-5">
+          <div class="mt-5">
             <div class="mb-4 flex items-center gap-3">
               <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
               <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-muted">
@@ -367,8 +351,8 @@ const handleGoogleError = (message: string) => {
               <GoogleAuthButton
                 context="signup"
                 :disabled="loading"
-                :loading="googleLoading"
-                @credential="registerWithGoogle"
+                :redirect-to="redirectTarget"
+                :return-path="route.fullPath"
                 @error="handleGoogleError"
               />
               <p

@@ -19,17 +19,10 @@ const router = useRouter();
 const route = useRoute();
 const globalStore = useGlobalStore();
 const { loginSchema } = useAuthValidationSchemas();
-const {
-  authenticateWithGoogle,
-  getGoogleAuthErrorMessage,
-} = useGoogleAuthFlow();
-const { isGoogleIdentityConfigured } = useGoogleIdentity();
 
 const errorMessage = ref("");
 const loading = ref(false);
-const googleLoading = ref(false);
-const hasGoogleAuth = computed(() => isGoogleIdentityConfigured());
-const isAuthBusy = computed(() => loading.value || googleLoading.value);
+const isAuthBusy = computed(() => loading.value);
 
 const sectionEyebrow = computed(() => sanitizeText(props.data?.buttonText));
 
@@ -83,6 +76,16 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => route.query.google_error,
+  (message) => {
+    if (typeof message === "string" && message.trim()) {
+      errorMessage.value = message;
+    }
+  },
+  { immediate: true },
+);
+
 const loginUser = handleSubmit(async (values) => {
   loading.value = true;
   errorMessage.value = "";
@@ -130,23 +133,6 @@ const loginUser = handleSubmit(async (values) => {
     loading.value = false;
   }
 });
-
-const loginWithGoogle = async (credential: string) => {
-  googleLoading.value = true;
-  errorMessage.value = "";
-
-  try {
-    await authenticateWithGoogle(credential);
-    await router.push(redirectTarget.value);
-  } catch (error: any) {
-    errorMessage.value = getGoogleAuthErrorMessage(
-      error,
-      "Google-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.",
-    );
-  } finally {
-    googleLoading.value = false;
-  }
-};
 
 const handleGoogleError = (message: string) => {
   errorMessage.value =
@@ -296,7 +282,7 @@ const handleGoogleError = (message: string) => {
             {{ loading ? "მიმდინარეობს შესვლა..." : "შესვლა" }}
           </BaseButton>
 
-          <div v-if="hasGoogleAuth" class="mt-5">
+          <div class="mt-5">
             <div class="mb-4 flex items-center gap-3">
               <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
               <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-muted">
@@ -309,8 +295,8 @@ const handleGoogleError = (message: string) => {
               <GoogleAuthButton
                 context="signin"
                 :disabled="loading"
-                :loading="googleLoading"
-                @credential="loginWithGoogle"
+                :redirect-to="redirectTarget"
+                :return-path="route.fullPath"
                 @error="handleGoogleError"
               />
               <p
