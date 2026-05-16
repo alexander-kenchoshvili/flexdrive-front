@@ -25,5 +25,9 @@ export default defineEventHandler(async (event) => {
   return proxyRequest(event, target.toString(), {
     // Keep cookies on the frontend host so preview/staging domains work without shared subdomains.
     cookieDomainRewrite: "",
+    // OAuth redirects must reach the browser. If the server follows them, Google pages render under our /api URL.
+    fetchOptions: {
+      redirect: "manual",
+    },
   });
 });
