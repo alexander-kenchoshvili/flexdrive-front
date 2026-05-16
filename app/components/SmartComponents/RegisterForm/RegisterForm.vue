@@ -251,47 +251,6 @@ const handleGoogleError = (message: string) => {
             </p>
           </div>
 
-          <div v-if="hasGoogleAuth" class="mb-5">
-            <GoogleAuthButton
-              context="signup"
-              :disabled="loading"
-              :loading="googleLoading"
-              @credential="registerWithGoogle"
-              @error="handleGoogleError"
-            />
-            <p
-              class="mt-3 text-center text-[11px] leading-5 text-text-muted"
-            >
-              Google-ით გაგრძელებით ეთანხმები
-              <NuxtLink
-                to="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
-              >
-                წესებს
-              </NuxtLink>
-              და
-              <NuxtLink
-                to="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
-              >
-                კონფიდენციალურობის პოლიტიკას
-              </NuxtLink>
-              .
-            </p>
-
-            <div class="mt-4 flex items-center gap-3">
-              <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
-              <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-                ან
-              </span>
-              <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
-            </div>
-          </div>
-
           <BaseInput
             v-model="email"
             class="mb-3 sm:mb-4"
@@ -393,6 +352,49 @@ const handleGoogleError = (message: string) => {
             class="mt-4 rounded-[16px] border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error"
           >
             {{ errorMessage }}
+          </div>
+
+          <div v-if="hasGoogleAuth" class="mt-5">
+            <div class="mb-4 flex items-center gap-3">
+              <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
+              <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                ან
+              </span>
+              <span class="h-px flex-1 bg-border-default" aria-hidden="true" />
+            </div>
+
+            <div class="space-y-3">
+              <GoogleAuthButton
+                context="signup"
+                :disabled="loading"
+                :loading="googleLoading"
+                @credential="registerWithGoogle"
+                @error="handleGoogleError"
+              />
+              <p
+                class="text-center text-[11px] leading-5 text-text-muted"
+              >
+                Google-ით გაგრძელებით ეთანხმები
+                <NuxtLink
+                  to="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
+                >
+                  წესებს
+                </NuxtLink>
+                და
+                <NuxtLink
+                  to="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
+                >
+                  კონფიდენციალურობის პოლიტიკას
+                </NuxtLink>
+                .
+              </p>
+            </div>
           </div>
 
           <div class="mt-5 border-t border-border-default pt-4 text-center text-sm">
