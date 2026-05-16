@@ -23,10 +23,8 @@ const emit = defineEmits<{
 const renderError = ref("");
 const requestInFlight = ref(false);
 const route = useRoute();
-const apiBaseUrl = useApiBaseUrl();
 
 const isBusy = computed(() => props.loading || requestInFlight.value);
-const configured = computed(() => Boolean(apiBaseUrl));
 
 const buttonLabel = computed(() => {
   if (props.loading) {
@@ -41,15 +39,14 @@ const buttonLabel = computed(() => {
 });
 
 const buildGoogleStartUrl = () => {
-  const endpoint = `${String(apiBaseUrl).replace(/\/$/, "")}/accounts/google/start/`;
-  const url = new URL(endpoint, window.location.origin);
+  const url = new URL("/auth/google/start", window.location.origin);
   url.searchParams.set("next", props.redirectTo || "/");
   url.searchParams.set("return_path", props.returnPath || route.fullPath || "/login");
   return url.toString();
 };
 
 const handleClick = async () => {
-  if (import.meta.server || !configured.value || props.disabled || isBusy.value) {
+  if (import.meta.server || props.disabled || isBusy.value) {
     return;
   }
 
@@ -68,7 +65,7 @@ const handleClick = async () => {
 </script>
 
 <template>
-  <div v-if="configured" class="space-y-2">
+  <div class="space-y-2">
     <BaseButton
       type="button"
       variant="secondary"
