@@ -54,6 +54,7 @@ const cancelled = computed(() => isOrderCancelled(props.order.status));
 const totalUnits = computed(() =>
   props.order.items.reduce((sum, item) => sum + item.quantity, 0),
 );
+const isLegalBuyer = computed(() => props.order.buyer_type === "legal_entity");
 
 const resolveItemImage = (item: OwnedOrderDetail["items"][number]) => {
   const asset = item.primary_image;
@@ -479,7 +480,62 @@ const getTrackingStateLabel = (state: string) => {
             <p
               class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
             >
-              მყიდველი
+              მყიდველის ტიპი
+            </p>
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
+              {{ isLegalBuyer ? "იურიდიული პირი" : "ფიზიკური პირი" }}
+            </p>
+          </article>
+
+          <article
+            v-if="isLegalBuyer"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+          >
+            <p
+              class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+            >
+              კომპანია
+            </p>
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
+              {{ order.company_name }}
+            </p>
+          </article>
+
+          <article
+            v-if="isLegalBuyer"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+          >
+            <p
+              class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+            >
+              საიდენტიფიკაციო კოდი
+            </p>
+            <p class="mt-2 break-words text-base font-semibold text-text-primary">
+              {{ order.company_identification_code }}
+            </p>
+          </article>
+
+          <article
+            v-if="isLegalBuyer"
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
+          >
+            <p
+              class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+            >
+              იურიდიული მისამართი
+            </p>
+            <p class="mt-2 break-words text-base font-semibold leading-7 text-text-primary">
+              {{ order.company_legal_address }}
+            </p>
+          </article>
+
+          <article
+            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
+          >
+            <p
+              class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+            >
+              საკონტაქტო პირი
             </p>
             <p class="mt-2 break-words text-base font-semibold text-text-primary">
               {{ order.first_name }} {{ order.last_name }}

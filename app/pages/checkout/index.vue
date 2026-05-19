@@ -45,6 +45,13 @@ const {
   validateSubmit,
   setErrors,
   setFieldValue,
+  buyerType,
+  companyName,
+  companyNameAttrs,
+  companyIdentificationCode,
+  companyIdentificationCodeAttrs,
+  companyLegalAddress,
+  companyLegalAddressAttrs,
   firstName,
   firstNameAttrs,
   lastName,
@@ -260,6 +267,19 @@ const submitForm = validateSubmit(
     try {
       const recaptchaToken = await executeRecaptcha("checkout");
       const order = await checkoutOrder({
+        buyer_type: submittedValues.buyer_type,
+        company_name:
+          submittedValues.buyer_type === "legal_entity"
+            ? submittedValues.company_name.trim()
+            : "",
+        company_identification_code:
+          submittedValues.buyer_type === "legal_entity"
+            ? submittedValues.company_identification_code.trim()
+            : "",
+        company_legal_address:
+          submittedValues.buyer_type === "legal_entity"
+            ? submittedValues.company_legal_address.trim()
+            : "",
         first_name: submittedValues.first_name.trim(),
         last_name: submittedValues.last_name.trim(),
         email: submittedValues.email.trim(),
@@ -339,6 +359,10 @@ const submitForm = validateSubmit(
 watch(
   () => [
     firstName.value,
+    buyerType.value,
+    companyName.value,
+    companyIdentificationCode.value,
+    companyLegalAddress.value,
     lastName.value,
     email.value,
     phone.value,
@@ -472,6 +496,10 @@ useNoindexPage({
               </div>
 
               <CheckoutFormSections
+                v-model:buyer-type="buyerType"
+                v-model:company-name="companyName"
+                v-model:company-identification-code="companyIdentificationCode"
+                v-model:company-legal-address="companyLegalAddress"
                 v-model:first-name="firstName"
                 v-model:last-name="lastName"
                 v-model:email="email"
@@ -483,6 +511,9 @@ useNoindexPage({
                 v-model:payment-method="paymentMethod"
                 :disabled="submitPending"
                 :errors="errors"
+                :company-name-attrs="companyNameAttrs"
+                :company-identification-code-attrs="companyIdentificationCodeAttrs"
+                :company-legal-address-attrs="companyLegalAddressAttrs"
                 :first-name-attrs="firstNameAttrs"
                 :last-name-attrs="lastNameAttrs"
                 :email-attrs="emailAttrs"

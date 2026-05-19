@@ -49,6 +49,8 @@ const formattedCreatedAt = computed(() => {
 
 const miniItemMeta = (item: CommerceOrderItem) =>
   `${item.quantity} ც. · SKU: ${item.sku || "—"}`;
+
+const isLegalBuyer = computed(() => props.order.buyer_type === "legal_entity");
 </script>
 
 <template>
@@ -205,6 +207,52 @@ const miniItemMeta = (item: CommerceOrderItem) =>
             <div class="space-y-0">
               <div
                 class="flex flex-col gap-1 border-b border-border-default py-3 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
+              >
+                <span class="text-sm text-text-muted">მყიდველის ტიპი</span>
+                <span
+                  class="text-sm font-medium text-text-primary sm:text-right"
+                >
+                  {{ isLegalBuyer ? "იურიდიული პირი" : "ფიზიკური პირი" }}
+                </span>
+              </div>
+
+              <template v-if="isLegalBuyer">
+                <div
+                  class="flex flex-col gap-1 border-b border-border-default py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
+                >
+                  <span class="text-sm text-text-muted">კომპანია</span>
+                  <span
+                    class="break-words text-sm font-medium text-text-primary sm:max-w-[70%] sm:text-right"
+                  >
+                    {{ order.company_name }}
+                  </span>
+                </div>
+
+                <div
+                  class="flex flex-col gap-1 border-b border-border-default py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
+                >
+                  <span class="text-sm text-text-muted">საიდენტიფიკაციო კოდი</span>
+                  <span
+                    class="break-words text-sm font-medium text-text-primary sm:text-right"
+                  >
+                    {{ order.company_identification_code }}
+                  </span>
+                </div>
+
+                <div
+                  class="flex flex-col gap-1 border-b border-border-default py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
+                >
+                  <span class="text-sm text-text-muted">იურიდიული მისამართი</span>
+                  <span
+                    class="break-words text-sm font-medium leading-6 text-text-primary sm:max-w-[70%] sm:text-right"
+                  >
+                    {{ order.company_legal_address }}
+                  </span>
+                </div>
+              </template>
+
+              <div
+                class="flex flex-col gap-1 border-b border-border-default py-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
               >
                 <span class="text-sm text-text-muted">სახელი და გვარი</span>
                 <span

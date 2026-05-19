@@ -4,11 +4,14 @@ import BaseTextarea from "~/components/common/BaseTextarea.vue";
 import CheckoutPaymentMethodCard from "~/components/commerce/CheckoutPaymentMethodCard.vue";
 import CheckoutSectionHeader from "~/components/commerce/CheckoutSectionHeader.vue";
 import type { CheckoutFieldErrors } from "~/composables/commerce/useCheckoutForm";
-import type { CheckoutPaymentMethod } from "~/types/commerce";
+import type { CheckoutBuyerType, CheckoutPaymentMethod } from "~/types/commerce";
 
 defineProps<{
   disabled?: boolean;
   errors: CheckoutFieldErrors;
+  companyNameAttrs?: Record<string, unknown>;
+  companyIdentificationCodeAttrs?: Record<string, unknown>;
+  companyLegalAddressAttrs?: Record<string, unknown>;
   firstNameAttrs?: Record<string, unknown>;
   lastNameAttrs?: Record<string, unknown>;
   emailAttrs?: Record<string, unknown>;
@@ -18,6 +21,17 @@ defineProps<{
   noteAttrs?: Record<string, unknown>;
 }>();
 
+const buyerType = defineModel<CheckoutBuyerType>("buyerType", {
+  required: true,
+});
+const companyName = defineModel<string>("companyName", { required: true });
+const companyIdentificationCode = defineModel<string>(
+  "companyIdentificationCode",
+  { required: true },
+);
+const companyLegalAddress = defineModel<string>("companyLegalAddress", {
+  required: true,
+});
 const firstName = defineModel<string>("firstName", { required: true });
 const lastName = defineModel<string>("lastName", { required: true });
 const email = defineModel<string>("email", { required: true });
@@ -33,13 +47,124 @@ const paymentMethod = defineModel<CheckoutPaymentMethod>("paymentMethod", {
 const emit = defineEmits<{
   selectPaymentMethod: [method: CheckoutPaymentMethod];
 }>();
+
+const buyerTypeOptions: Array<{
+  value: CheckoutBuyerType;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "individual",
+    title: "ფიზიკური პირი",
+    description: "შეკვეთა გაფორმდება პირად საკონტაქტო მონაცემებზე.",
+  },
+  {
+    value: "legal_entity",
+    title: "იურიდიული პირი",
+    description: "შეკვეთას დაემატება კომპანიის რეკვიზიტები.",
+  },
+];
+
+const isLegalBuyer = computed(() => buyerType.value === "legal_entity");
+const firstNameLabel = computed(() =>
+  isLegalBuyer.value ? "საკონტაქტო პირის სახელი *" : "სახელი *",
+);
+const lastNameLabel = computed(() =>
+  isLegalBuyer.value ? "საკონტაქტო პირის გვარი *" : "გვარი *",
+);
 </script>
 
 <template>
   <section
     class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
-    <CheckoutSectionHeader :step="1" title="საკონტაქტო ინფორმაცია" />
+    <CheckoutSectionHeader :step="1" title="მყიდველის ინფორმაცია" />
+
+    <div
+      data-checkout-field="buyer_type"
+      class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2"
+    >
+      <label
+        v-for="option in buyerTypeOptions"
+        :key="option.value"
+        class="flex min-w-0 cursor-pointer items-start gap-3 rounded-[18px] border p-3 text-left transition-colors duration-200 sm:gap-4 sm:rounded-[20px] sm:p-5"
+        :class="[
+          buyerType === option.value
+            ? 'border-accent-primary bg-accent-primary/8 shadow-[0_18px_44px_-34px_rgba(255,107,53,0.4)]'
+            : 'border-border-default bg-surface-2 hover:border-accent-primary/60 hover:bg-surface',
+          disabled ? 'cursor-not-allowed opacity-70' : '',
+          errors.buyer_type ? 'border-error/40' : '',
+        ]"
+      >
+        <input
+          v-model="buyerType"
+          type="radio"
+          name="buyer_type"
+          class="mt-1 h-4 w-4 shrink-0 border-border-default bg-surface accent-accent-primary"
+          :value="option.value"
+          :disabled="disabled"
+        />
+
+        <span class="min-w-0">
+          <span class="block text-sm font-semibold text-text-primary">
+            {{ option.title }}
+          </span>
+          <span class="mt-1 block text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">
+            {{ option.description }}
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <p v-if="errors.buyer_type" class="mt-3 text-sm text-error">
+      {{ errors.buyer_type }}
+    </p>
+
+    <div
+      v-if="isLegalBuyer"
+      class="mt-4 grid gap-3 rounded-[20px] border border-border-default bg-surface-2 p-3 sm:mt-6 sm:gap-4 sm:p-4 md:grid-cols-2"
+    >
+      <BaseInput
+        v-model="companyName"
+        v-bind="companyNameAttrs"
+        name="company_name"
+        data-checkout-field="company_name"
+        label="კომპანიის დასახელება *"
+        autocomplete="organization"
+        placeholder="მაგალითად: შპს FlexDrive"
+        :error="errors.company_name"
+        :disabled="disabled"
+        required
+      />
+
+      <BaseInput
+        v-model="companyIdentificationCode"
+        v-bind="companyIdentificationCodeAttrs"
+        name="company_identification_code"
+        data-checkout-field="company_identification_code"
+        label="საიდენტიფიკაციო კოდი *"
+        inputmode="numeric"
+        maxlength="9"
+        placeholder="9-ნიშნა კოდი"
+        :error="errors.company_identification_code"
+        :disabled="disabled"
+        required
+      />
+
+      <BaseInput
+        v-model="companyLegalAddress"
+        v-bind="companyLegalAddressAttrs"
+        name="company_legal_address"
+        data-checkout-field="company_legal_address"
+        class="md:col-span-2"
+        label="იურიდიული მისამართი *"
+        autocomplete="street-address"
+        placeholder="კომპანიის რეგისტრირებული მისამართი"
+        :error="errors.company_legal_address"
+        :disabled="disabled"
+        required
+      />
+    </div>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
       <BaseInput
@@ -47,7 +172,7 @@ const emit = defineEmits<{
         v-bind="firstNameAttrs"
         name="first_name"
         data-checkout-field="first_name"
-        label="სახელი *"
+        :label="firstNameLabel"
         autocomplete="given-name"
         placeholder="შეიყვანე სახელი"
         :error="errors.first_name"
@@ -60,7 +185,7 @@ const emit = defineEmits<{
         v-bind="lastNameAttrs"
         name="last_name"
         data-checkout-field="last_name"
-        label="გვარი *"
+        :label="lastNameLabel"
         autocomplete="family-name"
         placeholder="შეიყვანე გვარი"
         :error="errors.last_name"
@@ -160,7 +285,7 @@ const emit = defineEmits<{
           to="/terms"
           target="_blank"
           rel="noopener noreferrer"
-          class="relative inline-block pb-[2px] font-semibold text-accent-primary no-underline after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-current after:opacity-60 after:content-[''] transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
+          class="font-semibold text-accent-primary no-underline transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
           @click.stop
         >
           წესებსა და პირობებს
@@ -170,7 +295,7 @@ const emit = defineEmits<{
           to="/privacy-policy"
           target="_blank"
           rel="noopener noreferrer"
-          class="relative inline-block pb-[2px] font-semibold text-accent-primary no-underline after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-current after:opacity-60 after:content-[''] transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
+          class="font-semibold text-accent-primary no-underline transition-colors duration-200 hover:text-accent-hover dark:text-[#ff8b63] dark:hover:text-[#ffb090]"
           @click.stop
         >
           კონფიდენციალურობის პოლიტიკას

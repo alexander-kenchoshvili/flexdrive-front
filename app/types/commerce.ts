@@ -144,6 +144,7 @@ export interface WishlistResponse {
 }
 
 export type CheckoutPaymentMethod = "cash_on_delivery" | "card";
+export type CheckoutBuyerType = "individual" | "legal_entity";
 export type CommercePaymentStatus =
   | "pending"
   | "authorized"
@@ -162,6 +163,10 @@ export type CommerceOrderStatus =
   | "cancelled";
 
 export interface CheckoutPayload {
+  buyer_type: CheckoutBuyerType;
+  company_name?: string;
+  company_identification_code?: string;
+  company_legal_address?: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -203,6 +208,10 @@ export interface CommerceOrderSummary {
   id: number;
   public_token: string;
   order_number: string;
+  buyer_type: CheckoutBuyerType;
+  company_name: string;
+  company_identification_code: string;
+  company_legal_address: string;
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
   status: CommerceOrderStatus;

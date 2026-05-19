@@ -377,6 +377,14 @@ This file exists so the project context does not need to be re-explained in ever
   - Meta/Facebook Login valid redirect URI: `https://flexdrive-front.vercel.app/auth/facebook/callback`.
 - Facebook login cannot complete for accounts where Facebook does not return an email address; the backend intentionally rejects those because FlexDrive users require email.
 - Next auth step: finish Meta console setup with the user, run/apply `accounts.0009_facebookaccount` on staging, deploy frontend/backend, and test Facebook login/register end to end.
+- Production Facebook launch checklist:
+  - add the production callback in Meta/Facebook Login valid redirect URIs: `https://<production-domain>/auth/facebook/callback`;
+  - set production backend env `FACEBOOK_OAUTH_REDIRECT_URI=https://<production-domain>/auth/facebook/callback`;
+  - add production app domain in Meta Basic Settings without protocol;
+  - fill production privacy policy, terms, category, app icon `1024x1024`, and user data deletion requirement;
+  - reset/rotate `FACEBOOK_APP_SECRET` if it has been exposed in screenshots or logs, then update the backend env and redeploy;
+  - complete Meta Publish/Live/App Review requirements for public users, especially access to `email` and `public_profile`, before expecting non-tester accounts to log in;
+  - keep staging tester-role testing separate from production public access.
 
 ## Current Static/Legal Pages State - 2026-05-15
 
@@ -475,6 +483,50 @@ This file exists so the project context does not need to be re-explained in ever
   - full backend command `C:\Users\kench\Desktop\flexdriveback\venv\Scripts\python.exe manage.py test commerce` passed with 96 tests OK.
 - Payment safety work still not fully implemented: the new reservation and transaction foundation is not yet connected to real online checkout, real bank redirect/callback/webhook, real authorization/capture, real installment/part-payment flows, or provider-driven refund/cancel flows.
 
+## Current Legal Entity Checkout State - 2026-05-20
+
+- Legal-entity buyer flow has been added to checkout as a practical first step, not as a full B2B privilege/discount system.
+- Checkout now supports `buyer_type`:
+  - `individual` keeps the existing physical-person checkout behavior.
+  - `legal_entity` reveals company fields while preserving the same cart/buy-now, validation, payment, reCAPTCHA, order creation, stock, and success-page flow.
+- Legal-entity fields currently collected:
+  - company name;
+  - 9-digit company identification code;
+  - company legal address;
+  - existing contact person fields remain `first_name`, `last_name`, `email`, and `phone`.
+- Frontend implementation uses the existing checkout form system and reusable components:
+  - `app/components/commerce/CheckoutFormSections.vue`
+  - `app/composables/commerce/useCheckoutForm.ts`
+  - `app/composables/useCommerceValidationSchemas.ts`
+  - `app/pages/checkout/index.vue`
+  - `app/pages/buy-now/checkout.vue`
+  - `app/types/commerce.ts`
+- Order success/profile detail views now display buyer type and company data when the order was created for a legal entity:
+  - `app/components/commerce/CheckoutSuccessSummary.vue`
+  - `app/components/profile/ProfileOrderDetail.vue`
+- Backend order persistence now stores a company snapshot directly on the order:
+  - `buyer_type`
+  - `company_name`
+  - `company_identification_code`
+  - `company_legal_address`
+- Company snapshot means the company data entered during checkout is copied onto that specific order. If a company changes name/address later, old orders still keep the exact company data used at purchase time.
+- Backend files involved in the paired backend repo:
+  - `commerce/models.py`
+  - `commerce/serializers.py`
+  - `commerce/services.py`
+  - `commerce/admin.py`
+  - `commerce/tests.py`
+  - `commerce/migrations/0012_order_buyer_company_snapshot.py`
+- Migration `commerce.0012_order_buyer_company_snapshot` has been applied locally and on staging Neon/Postgres.
+- Document generation and document business logic are intentionally paused:
+  - no tax invoice / VAT invoice flow;
+  - no waybill/RS upload checkbox;
+  - no invoice/proforma generation;
+  - no document PDF/email workflow;
+  - no RS.ge integration.
+- Reason for pause: company registration, VAT status, RS.ge/waybill requirements, cash receipt process, and accounting workflow still need confirmation before encoding document behavior in the product.
+- Do not add document checkboxes such as `RS-ზე ატვირთვა`, invoice generation, tax invoice generation, or waybill automation until the accounting/document flow is explicitly settled.
+
 ## Upcoming Payment Safety Work - 2026-05-15
 
 - Before real card, installment, or part-payment integrations go live, FlexDrive needs a carefully designed payment safety flow. This is high-priority work and must be implemented deliberately, with every step checked end to end.
@@ -501,3 +553,34 @@ This file exists so the project context does not need to be re-explained in ever
   - provider transaction id/reference fields that must be stored;
   - test credentials and sandbox URLs.
 - Do not connect the foundation to live checkout casually. The next payment phase should be a deliberate provider-integration phase: choose provider, map its statuses to the internal statuses, add provider adapter, add webhook/callback endpoints, then connect reservation + transaction + order creation end to end with tests.
+
+## Remaining Launch Roadmap - 2026-05-16
+
+- Payment safety/order state foundation is already implemented, but real bank/payment integration is intentionally deferred until the user finishes consultation with banks/providers and has concrete API rules, sandbox credentials, callback/webhook details, authorization/capture support, refund/cancel rules, and installment/part-payment lifecycle details. Do not start provider-specific payment work before that information exists.
+- Legal-entity checkout field collection is implemented. Remaining work is the accounting/document decision layer, not the basic buyer-type checkout branch:
+  - confirm whether/when tax invoices apply after company registration and VAT status are known;
+  - confirm whether waybills/RS.ge documents are required per delivery model and whether they are always generated or only for legal entities;
+  - decide if invoice/proforma flow is needed at all while the product primarily uses site checkout/card or cash-on-delivery;
+  - define admin document statuses only after the accounting process is clear.
+- Analytics and tracking implementation should use a privacy-conscious tag architecture:
+  - Use Google Tag Manager as the central tag container, then configure GA4 and Meta Pixel through GTM rather than hard-coding separate vendor scripts throughout the app.
+  - Use a first-party `dataLayer` event contract from Nuxt/frontend code so ecommerce events are consistent and testable.
+  - GA4 should follow Google's recommended ecommerce event model where relevant: `view_item`, `select_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_shipping_info`, `add_payment_info` when online payments exist, and `purchase`.
+  - Additional useful events: search, catalog filter usage, login, sign-up, contact submit, order lookup, wishlist add/remove, and checkout validation failure where safe and non-sensitive.
+  - Meta Pixel should be loaded through GTM after marketing consent and should receive only appropriate standard ecommerce events. Avoid sending sensitive personal data or raw internal notes.
+  - Final event names/parameters should be written down before implementation so GA4, GTM, and Pixel do not drift.
+- Cookie consent and privacy controls are still required before real analytics/marketing tags go live:
+  - Build a cookie consent banner/modal in Georgian matching the FlexDrive design system.
+  - Consent categories should include at minimum: necessary cookies always on, analytics, and marketing. Preferences can be added only if there is a real use for them.
+  - Default analytics/marketing consent should be denied until the user accepts the relevant category.
+  - Integrate GTM/GA4 Consent Mode through the consent state so tags respect the user's choices.
+  - Store consent choice, allow changing it later from footer/privacy settings, and update the privacy policy copy to explain analytics, GTM, Meta Pixel, cookies, and consent choices.
+- SEO final pass remains open:
+  - Audit page titles/descriptions, canonical URLs, Open Graph/Twitter metadata, robots/noindex rules, sitemap, product/category dynamic metadata, and 404/error metadata.
+  - Add/verify structured data where useful: Organization/WebSite, breadcrumbs, product data, and possibly FAQ/legal page schema only where content warrants it.
+  - Keep private/profile/checkout/order token pages noindexed; public catalog/product/legal/content pages should be indexable when production content is ready.
+  - Verify Georgian copy, product naming, category hierarchy, image alt text, canonical domain, and production robots/sitemap behavior before launch.
+- Full launch QA remains open:
+  - End-to-end checks across desktop and mobile for auth/social auth, catalog filters, product detail, cart, wishlist, checkout, guest order lookup, account/profile/orders, static/legal pages, and contact.
+  - Verify production env variables, secret rotation, Google/Facebook redirect URIs, Render/Vercel deployment order, database migrations, email delivery, reCAPTCHA, cookies, analytics consent, SEO indexability, and error states.
+  - For social auth production, complete Facebook production checklist and Google production redirect/domain configuration when a final production domain exists.
