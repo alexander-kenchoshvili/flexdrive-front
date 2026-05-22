@@ -86,6 +86,10 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: "ka",
       },
+      link: [
+        { rel: "icon", href: "/favicon.ico", sizes: "any" },
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      ],
       script: [
         {
           id: "theme-init",

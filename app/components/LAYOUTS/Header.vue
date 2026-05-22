@@ -180,14 +180,14 @@ onBeforeUnmount(() => {
           aria-label="FlexDrive"
         >
           <span class="inline-flex items-center md:hidden" aria-hidden="true">
-            <FlexdriveLogoHorizontal
+            <NewFlexdriveLogo
               variant="auto"
               decorative
               class="site-logo-horizontal"
             />
           </span>
           <span class="hidden items-center md:inline-flex" aria-hidden="true">
-            <FlexdriveLogo
+            <NewFlexdriveLogo
               variant="auto"
               decorative
               class="site-logo-image"
@@ -359,7 +359,7 @@ onBeforeUnmount(() => {
             aria-label="FlexDrive"
             @click="closeMobileMenu"
           >
-            <FlexdriveLogo variant="auto" class="mobile-drawer-logo" />
+            <NewFlexdriveLogo variant="auto" class="mobile-drawer-logo" />
           </NuxtLink>
 
           <button
@@ -441,7 +441,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .site-logo-link {
-  min-width: 142px;
+  min-width: 102px;
 }
 
 .site-logo-image {
@@ -450,8 +450,8 @@ onBeforeUnmount(() => {
 }
 
 .site-logo-horizontal {
-  height: 40px;
-  width: 142px;
+  height: 58px;
+  width: 102px;
 }
 
 .mobile-drawer-logo {
@@ -461,12 +461,12 @@ onBeforeUnmount(() => {
 
 @media (min-width: 640px) and (max-width: 767px) {
   .site-logo-link {
-    min-width: 154px;
+    min-width: 110px;
   }
 
   .site-logo-horizontal {
-    height: 44px;
-    width: 154px;
+    height: 62px;
+    width: 110px;
   }
 }
 
@@ -542,12 +542,12 @@ onBeforeUnmount(() => {
 
 @media (max-width: 479px) {
   .site-logo-link {
-    min-width: 132px;
+    min-width: 94px;
   }
 
   .site-logo-horizontal {
-    height: 38px;
-    width: 132px;
+    height: 53px;
+    width: 94px;
   }
 
   .header-action-cluster {
@@ -562,12 +562,12 @@ onBeforeUnmount(() => {
   }
 
   .site-logo-link {
-    min-width: 116px;
+    min-width: 84px;
   }
 
   .site-logo-horizontal {
-    height: 34px;
-    width: 116px;
+    height: 48px;
+    width: 84px;
   }
 
   .header-icon-button {
@@ -583,7 +583,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 359px) {
   .site-logo-link {
-    min-width: 104px;
+    min-width: 78px;
   }
 
   .site-logo-image {
@@ -592,8 +592,8 @@ onBeforeUnmount(() => {
   }
 
   .site-logo-horizontal {
-    height: 32px;
-    width: 104px;
+    height: 44px;
+    width: 78px;
   }
 
   .header-icon-button {

@@ -118,7 +118,7 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
             class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-90"
             aria-label="FlexDrive"
           >
-            <FlexdriveLogoHorizontal variant="on-dark" class="h-12 w-auto" />
+            <NewFlexdriveLogoHorizontal variant="on-dark" class="h-12 w-auto" />
           </NuxtLink>
 
           <p
