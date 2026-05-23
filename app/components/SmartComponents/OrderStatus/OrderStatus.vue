@@ -4,6 +4,7 @@ import {
   MagnifyingGlassIcon,
   PhoneIcon,
   ReceiptRefundIcon,
+  UserCircleIcon,
 } from "@heroicons/vue/24/outline";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import BaseButton from "~/components/common/BaseButton.vue";
@@ -32,6 +33,7 @@ const props = defineProps<{
   data?: OrderStatusData;
 }>();
 
+const globalStore = useGlobalStore();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
 const { lookupOrder } = useCommerceApi();
 const { executeRecaptcha } = useRecaptcha();
@@ -70,9 +72,20 @@ const errors = reactive({
 const loading = ref(false);
 const errorMessage = ref("");
 const order = ref<CommerceOrderLookupSummary | null>(null);
+const showGuestLookup = ref(false);
 
+const isAuthenticated = computed(
+  () => globalStore.authResolved && Boolean(globalStore.currentUser),
+);
 const trimmedOrderNumber = computed(() => form.order_number.trim());
 const trimmedPhone = computed(() => form.phone.trim());
+
+const showLookupForm = computed(
+  () => !isAuthenticated.value || showGuestLookup.value,
+);
+const showProfilePrompt = computed(
+  () => isAuthenticated.value && !showGuestLookup.value,
+);
 
 const formatMoney = (value: string | number | null | undefined) =>
   `${Number(value || 0).toFixed(2)} GEL`;
@@ -214,6 +227,10 @@ const submitLookup = async () => {
   }
 };
 
+const showOtherOrderLookup = () => {
+  showGuestLookup.value = true;
+};
+
 onMounted(async () => {
   const storedLookup = readStoredLookup();
   if (!storedLookup) return;
@@ -221,6 +238,10 @@ onMounted(async () => {
   form.order_number = storedLookup.order_number;
   form.phone = storedLookup.phone;
   order.value = storedLookup.result;
+
+  if (isAuthenticated.value) {
+    showGuestLookup.value = true;
+  }
 });
 </script>
 
@@ -249,7 +270,50 @@ onMounted(async () => {
             {{ sectionSubtitle }}
           </p>
 
-          <form class="mt-6 grid gap-4" novalidate @submit.prevent="submitLookup">
+          <div
+            v-if="showProfilePrompt"
+            class="mt-6 rounded-[18px] border border-accent-primary/25 bg-accent-primary/10 p-4 sm:p-5"
+          >
+            <div class="flex min-w-0 gap-3">
+              <span
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-accent-primary/30 bg-surface text-accent-primary"
+              >
+                <UserCircleIcon class="h-6 w-6" aria-hidden="true" />
+              </span>
+
+              <div class="min-w-0">
+                <h2 class="text-base font-extrabold text-text-primary sm:text-lg">
+                  შენი შეკვეთები პირად კაბინეტშია
+                </h2>
+                <p class="mt-2 text-sm leading-7 text-text-secondary">
+                  ნახე მიმდინარე სტატუსები, მიწოდება და შეკვეთების ისტორია ერთ ადგილას.
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <BaseButton as="nuxt-link" to="/profile/orders" size="lg" full-width>
+                ჩემი შეკვეთები
+              </BaseButton>
+
+              <BaseButton
+                type="button"
+                variant="secondary"
+                size="lg"
+                full-width
+                @click="showOtherOrderLookup"
+              >
+                სხვა შეკვეთის შემოწმება
+              </BaseButton>
+            </div>
+          </div>
+
+          <form
+            v-if="showLookupForm"
+            class="mt-6 grid gap-4"
+            novalidate
+            @submit.prevent="submitLookup"
+          >
             <BaseInput
               v-model="form.order_number"
               label="შეკვეთის ნომერი *"
