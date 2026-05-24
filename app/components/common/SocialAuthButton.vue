@@ -11,6 +11,7 @@ const props = withDefaults(
     loadingLabel: string;
     openingLabel: string;
     redirectTo?: string;
+    requiresSecureBrowser?: boolean;
     returnPath?: string;
     startPath: string;
   }>(),
@@ -21,6 +22,7 @@ const props = withDefaults(
     iconContainerClass: "bg-white",
     loading: false,
     redirectTo: "/",
+    requiresSecureBrowser: false,
     returnPath: "",
   },
 );
@@ -32,6 +34,7 @@ const emit = defineEmits<{
 const route = useRoute();
 const renderError = ref("");
 const requestInFlight = ref(false);
+const showSecureBrowserModal = ref(false);
 
 const isBusy = computed(() => props.loading || requestInFlight.value);
 
@@ -54,12 +57,33 @@ const buildStartUrl = () => {
   return url.toString();
 };
 
+const isSocialInAppBrowser = () => {
+  if (import.meta.server) {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent || "";
+  return /FBAN|FBAV|FB_IAB|FBIOS|FB4A|MessengerForiOS|Instagram|Line|TikTok|BytedanceWebview/i.test(
+    userAgent,
+  );
+};
+
+const closeSecureBrowserModal = () => {
+  showSecureBrowserModal.value = false;
+};
+
 const handleClick = () => {
   if (import.meta.server || props.disabled || isBusy.value) {
     return;
   }
 
   renderError.value = "";
+
+  if (props.requiresSecureBrowser && isSocialInAppBrowser()) {
+    showSecureBrowserModal.value = true;
+    return;
+  }
+
   requestInFlight.value = true;
 
   try {
@@ -99,5 +123,50 @@ const handleClick = () => {
     <p v-if="renderError" class="text-center text-xs leading-5 text-error">
       {{ renderError }}
     </p>
+
+    <BaseModal
+      :show="showSecureBrowserModal"
+      @close="closeSecureBrowserModal"
+    >
+      <template #header>
+        <div class="flex min-w-0 items-center gap-3">
+          <span
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border-default bg-surface-2"
+            aria-hidden="true"
+          >
+            <BaseIcon name="google" :size="18" />
+          </span>
+
+          <h2 class="upper text-base font-bold leading-6 text-text-primary sm:text-lg">
+            Google-ით შესვლა ბრაუზერში გააგრძელე
+          </h2>
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <p class="text-sm leading-6 text-text-secondary">
+          Messenger-ის შიდა ფანჯრიდან Google ზოგჯერ ბლოკავს ავტორიზაციას.
+          გახსენი საიტი Chrome-ში ან Safari-ში და შემდეგ სცადე შესვლა.
+        </p>
+
+        <div
+          class="rounded-lg border border-border-default bg-surface-2 px-4 py-3 text-sm leading-6 text-text-primary"
+        >
+          მენიუდან აირჩიე <span class="font-semibold">Open in browser</span>
+          ან გახსენი ბმული ჩვეულებრივ ბრაუზერში.
+        </div>
+      </div>
+
+      <template #footer>
+        <BaseButton
+          type="button"
+          size="sm"
+          class="w-full sm:w-auto"
+          @click="closeSecureBrowserModal"
+        >
+          გასაგებია
+        </BaseButton>
+      </template>
+    </BaseModal>
   </div>
 </template>
