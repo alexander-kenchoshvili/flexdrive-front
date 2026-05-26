@@ -127,6 +127,24 @@ export const useEcommerceAnalytics = () => {
   const gtmId = normalizeGtmId(config.public.gtmId);
   const isEnabled = import.meta.client && Boolean(gtmId);
 
+  const pushAnalyticsEvent = (
+    event: string,
+    eventParams: DataLayerItem = {},
+  ) => {
+    if (!isEnabled) {
+      return false;
+    }
+
+    const analyticsWindow = window as AnalyticsWindow;
+    analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
+    analyticsWindow.dataLayer.push({
+      event,
+      ...eventParams,
+    });
+
+    return true;
+  };
+
   const pushEcommerceEvent = (
     event: EcommerceEventName,
     items: EcommerceAnalyticsItemInput[],
@@ -207,6 +225,15 @@ export const useEcommerceAnalytics = () => {
     });
   };
 
+  const trackSearch = (searchTerm: string) => {
+    const normalizedSearchTerm = normalizeText(searchTerm);
+    if (!normalizedSearchTerm) return false;
+
+    return pushAnalyticsEvent("search", {
+      search_term: normalizedSearchTerm,
+    });
+  };
+
   const trackPurchase = ({
     transactionId,
     items,
@@ -249,6 +276,7 @@ export const useEcommerceAnalytics = () => {
     trackRemoveFromCart,
     trackBeginCheckout,
     trackAddPaymentInfo,
+    trackSearch,
     trackPurchase,
   };
 };

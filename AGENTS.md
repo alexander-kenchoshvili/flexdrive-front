@@ -587,7 +587,7 @@ This file exists so the project context does not need to be re-explained in ever
 
 ## Current Analytics and Pixel State - 2026-05-26
 
-- Frontend tracking is currently routed through Google Tag Manager rather than separate hard-coded vendor scripts.
+- Analytics/tagging architecture is implemented for development/staging. Frontend tracking is routed through Google Tag Manager rather than separate hard-coded vendor scripts.
 - Current GTM container used for development/staging testing: `GTM-MVNFL9TH`.
 - Current GA4 development property/measurement ID used through GTM: `G-CKQC30CKYJ`.
 - Current Meta dataset/pixel used through GTM: `1020718363721235` (`FlexDrive Web Pixel`).
@@ -601,15 +601,35 @@ This file exists so the project context does not need to be re-explained in ever
   - `begin_checkout`
   - `add_payment_info`
   - `purchase`
+- The frontend purchase event includes `event_id: purchase-{transaction_id}`. Keep this contract stable because Meta browser Pixel and backend Meta CAPI use it for purchase deduplication.
 - GTM tags currently configured:
   - `GA4 - Config - Development`
   - `GA4 Event - Ecommerce`
   - `Meta Pixel - Base`
   - `Meta Pixel - Ecommerce Events`
 - GTM trigger currently configured for ecommerce forwarding: `Ecommerce events - 2A`, matching the ecommerce event names above.
-- Staging validation was done through GTM Preview: GA4 ecommerce and Meta Pixel ecommerce tags fired successfully on staging actions such as `add_to_cart`; Meta Events Manager Test Events may lag or not show local/staging sessions reliably, so GTM Preview is the primary technical validation before production.
+- `Meta Pixel - Ecommerce Events` must pass `eventID` to `fbq('track', ...)` when `ecommerce.event_id` exists. This is required so browser Pixel purchase and server CAPI purchase are not counted as separate purchases.
+- Staging validation was done through GTM Preview: GA4 ecommerce and Meta Pixel ecommerce tags fired successfully on staging actions including `add_to_cart`, `begin_checkout`, and `purchase`; purchase `Data Layer` showed `event_id`.
+- Backend Meta Conversions API is implemented in the paired backend repo for `Purchase` only:
+  - backend file: `commerce/meta_conversions.py`
+  - checkout hooks: `commerce/views.py`
+  - settings/env keys: `META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN`, `META_CAPI_ENABLED`, `META_CAPI_GRAPH_API_VERSION`, `META_CAPI_TIMEOUT_SECONDS`, optional staging-only `META_CAPI_TEST_EVENT_CODE`
+  - server event id matches frontend browser event id: `purchase-{order_number}`
+  - customer matching data is hashed before sending to Meta; raw email/phone/name are not sent in the payload.
+- GA4 key events were marked in the GA4 UI for important ecommerce actions, including at least `purchase`, `begin_checkout`, and `add_to_cart`; `add_payment_info` may also be marked if it remains useful.
 - Google Analytics is the primary day-to-day reporting surface. Use GA4 reports such as Realtime and Traffic acquisition to understand active users, channels, source/medium, pages, and ecommerce events.
-- Meta Events Manager is primarily for pixel health, diagnostics, testing, and ads platform event delivery, not the main daily traffic dashboard.
-- Before production launch, decide whether to keep the same GTM/GA4/Meta IDs or create separate production GA4 stream/property and production Meta Pixel. Best practice is to separate production ad optimization data from development/staging test data.
+- Meta Events Manager is primarily for pixel/CAPI health, diagnostics, event match quality, and ads platform event delivery, not the main daily traffic dashboard.
+- Meta Pixel/CAPI becomes most useful after Facebook/Instagram ads start running. Ads are still configured manually in Meta Ads Manager; Pixel/CAPI provide optimization and remarketing signals such as product views, cart adds, checkout starts, wishlist adds, and purchases.
+
+### Production Analytics Launch Checklist
+
+- Frontend production env on Vercel must include `NUXT_PUBLIC_GTM_ID=GTM-MVNFL9TH` or the chosen production GTM container id, then production frontend must be redeployed.
+- Backend production env on Render must include `META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN`, `META_CAPI_ENABLED=true`, `META_CAPI_GRAPH_API_VERSION`, and `META_CAPI_TIMEOUT_SECONDS`. Do not store the actual token in docs or commits.
+- Do not set `META_CAPI_TEST_EVENT_CODE` in production. It is only for Meta Events Manager staging/test diagnostics.
+- Backend `FRONTEND_BASE_URL` must be the final production frontend domain, e.g. `https://flexdrive.ge`, so server-side event source URLs are correct.
+- GTM tags/triggers do not need to be recreated for production. Use GTM Preview on the production domain after deploy and verify `view_item`, `add_to_cart`, `begin_checkout`, and `purchase`; purchase must include `event_id`.
+- Best practice before public launch: create/use a production GA4 property or stream so staging/development test data does not pollute real reporting. If a new GA4 Measurement ID is chosen, update the GTM GA4 config tag accordingly and publish.
+- Decide whether the same Meta Pixel will be used for production ad optimization or whether a separate production dataset/pixel is required. If changed, update the GTM Meta Pixel base/ecommerce tags and backend `META_PIXEL_ID` together.
+- Verify GA4 Realtime and Traffic acquisition after production deploy; verify Meta Events Manager diagnostics after purchase tests. Meta reporting can lag.
 - Before real marketing/ads launch, implement consent/cookie controls so analytics and marketing tags respect user choices.
-- Future backend tracking phase: implement Meta Conversions API for reliable server-side purchase/conversion tracking with event deduplication against browser Pixel events. This requires a Meta access token and a carefully designed `event_id` strategy; do not add it casually without testing deduplication.
+- Production/privacy readiness still needs: Georgian consent banner, privacy policy confirmation, Meta domain verification for `flexdrive.ge`, and final ads-account checks before paid campaigns.
