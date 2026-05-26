@@ -18,6 +18,7 @@ import type {
   CheckoutPaymentMethod,
   CommerceBuyNowErrorCode,
   CommerceBuyNowIssue,
+  CommerceCheckoutSummaryItem,
 } from "~/types/commerce";
 
 type BreadcrumbItem = {
@@ -34,11 +35,13 @@ const globalStore = useGlobalStore();
 const buyNowStore = useBuyNowStore();
 const { checkoutBuyNow } = useCommerceApi();
 const { executeRecaptcha } = useRecaptcha();
+const { trackAddPaymentInfo, trackBeginCheckout } = useEcommerceAnalytics();
 
 const isClientReady = ref(false);
 const sessionBootstrapPending = ref(false);
 const submitPending = ref(false);
 const checkoutCompleted = ref(false);
+const trackedBeginCheckout = ref(false);
 const formError = ref<string | null>(null);
 const desktopSubmitFeedbackSelector = '[data-checkout-submit-feedback="desktop"]';
 
@@ -89,6 +92,21 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 
 const lineItemLabel = computed(() => `${buyNowStore.itemCount} პროდუქტი`);
 const returnToQuery = computed(() => sanitizeReturnTo(route.query.return_to));
+
+const toBuyNowCheckoutAnalyticsItem = (
+  item: CommerceCheckoutSummaryItem,
+) => ({
+  id: item.product_id,
+  slug: item.slug,
+  name: item.name,
+  sku: item.sku,
+  price: item.price,
+  quantity: item.quantity,
+});
+
+const buyNowCheckoutAnalyticsItems = computed(() =>
+  buyNowStore.summaryItems.map((item) => toBuyNowCheckoutAnalyticsItem(item)),
+);
 
 const buyNowInlineMessage = computed(() => {
   if (formError.value) {
@@ -306,6 +324,10 @@ const submitForm = validateSubmit(
     formError.value = null;
     setErrors({});
     submitPending.value = true;
+    trackAddPaymentInfo(
+      buyNowCheckoutAnalyticsItems.value,
+      submittedValues.payment_method,
+    );
 
     try {
       const recaptchaToken = await executeRecaptcha("checkout");
@@ -439,6 +461,32 @@ watch(
     if (resolved) {
       void bootstrapSession();
     }
+  },
+  { immediate: true },
+);
+
+watch(
+  [
+    isClientReady,
+    () => globalStore.authResolved,
+    () => buyNowStore.initialized,
+    () => buyNowStore.hasSession,
+    () => buyNowStore.summaryItems.length,
+  ],
+  ([clientReady, authResolved, sessionInitialized, hasSession]) => {
+    if (
+      trackedBeginCheckout.value ||
+      !clientReady ||
+      !authResolved ||
+      !sessionInitialized ||
+      !hasSession ||
+      !buyNowStore.summaryItems.length
+    ) {
+      return;
+    }
+
+    trackBeginCheckout(buyNowCheckoutAnalyticsItems.value);
+    trackedBeginCheckout.value = true;
   },
   { immediate: true },
 );

@@ -14,6 +14,7 @@ import {
 } from "~/composables/commerce/errorUtils";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import type {
+  CommerceCartItem,
   CheckoutPaymentMethod,
   CommerceCheckoutCartIssue,
 } from "~/types/commerce";
@@ -32,11 +33,13 @@ const globalStore = useGlobalStore();
 const cartStore = useCartStore();
 const { checkoutOrder } = useCommerceApi();
 const { executeRecaptcha } = useRecaptcha();
+const { trackAddPaymentInfo, trackBeginCheckout } = useEcommerceAnalytics();
 
 const isClientReady = ref(false);
 const cartBootstrapPending = ref(false);
 const submitPending = ref(false);
 const checkoutCompleted = ref(false);
+const trackedBeginCheckout = ref(false);
 const formError = ref<string | null>(null);
 const desktopSubmitFeedbackSelector = '[data-checkout-submit-feedback="desktop"]';
 
@@ -84,6 +87,20 @@ const cartPriceConfirmationLabel = computed(() =>
   cartStore.priceChangeCount === 1
     ? "განახლებული ფასის დადასტურება"
     : "განახლებული ფასების დადასტურება",
+);
+
+const toCheckoutAnalyticsItem = (item: CommerceCartItem) => ({
+  id: item.product_id,
+  slug: item.slug,
+  name: item.name,
+  sku: item.sku,
+  category: item.category?.name,
+  price: item.price,
+  quantity: item.quantity,
+});
+
+const checkoutAnalyticsItems = computed(() =>
+  cartStore.items.map((item) => toCheckoutAnalyticsItem(item)),
 );
 
 const isInitialLoading = computed(
@@ -263,6 +280,7 @@ const submitForm = validateSubmit(
     formError.value = null;
     setErrors({});
     submitPending.value = true;
+    trackAddPaymentInfo(checkoutAnalyticsItems.value, submittedValues.payment_method);
 
     try {
       const recaptchaToken = await executeRecaptcha("checkout");
@@ -405,6 +423,32 @@ watch(
     ) {
       void navigateTo("/cart");
     }
+  },
+  { immediate: true },
+);
+
+watch(
+  [
+    isClientReady,
+    () => globalStore.authResolved,
+    () => cartStore.initialized,
+    () => cartStore.isEmpty,
+    () => cartStore.items.length,
+  ],
+  ([clientReady, authResolved, cartInitialized, cartEmpty]) => {
+    if (
+      trackedBeginCheckout.value ||
+      !clientReady ||
+      !authResolved ||
+      !cartInitialized ||
+      cartEmpty ||
+      !cartStore.items.length
+    ) {
+      return;
+    }
+
+    trackBeginCheckout(checkoutAnalyticsItems.value);
+    trackedBeginCheckout.value = true;
   },
   { immediate: true },
 );

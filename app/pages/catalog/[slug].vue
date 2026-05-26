@@ -49,6 +49,7 @@ const { settings } = storeToRefs(siteSettingsStore);
 const cartStore = useCartStore();
 const buyNowStore = useBuyNowStore();
 const { getCatalogProduct } = useCatalogApi();
+const { trackAddToCart, trackViewItem } = useEcommerceAnalytics();
 const { galleryPlaceholderImages, cardPlaceholderImage } =
   useCatalogPlaceholderMedia();
 
@@ -148,6 +149,10 @@ const productDescription = computed(() =>
   sanitizeText(product.value?.description),
 );
 const productSku = computed(() => sanitizeText(product.value?.sku));
+const productManufacturerPartNumber = computed(() =>
+  sanitizeText(product.value?.manufacturer_part_number),
+);
+const productBrand = computed(() => sanitizeText(product.value?.brand?.name));
 
 const priceValue = computed(() => Number(product.value?.price || 0));
 const oldPriceValue = computed(() =>
@@ -202,6 +207,22 @@ const showCartNextStep = computed(
 const formattedCartTotal = computed(() => {
   const amount = Number(cartStore.total || 0);
   return Number.isNaN(amount) ? "0.00" : amount.toFixed(2);
+});
+const productAnalyticsItem = computed(() => {
+  if (!product.value) {
+    return null;
+  }
+
+  return {
+    id: product.value.id,
+    slug: product.value.slug,
+    name: productTitle.value,
+    sku: productSku.value,
+    manufacturerPartNumber: productManufacturerPartNumber.value,
+    category: productCategory.value,
+    brand: productBrand.value,
+    price: priceValue.value,
+  };
 });
 
 const galleryImages = computed<CatalogProductImage[]>(() => {
@@ -297,6 +318,26 @@ watch(
   { flush: "post" },
 );
 
+const trackedViewItemId = ref<number | string | null>(null);
+
+if (import.meta.client) {
+  watch(
+    productAnalyticsItem,
+    (nextAnalyticsItem) => {
+      if (
+        !nextAnalyticsItem?.id ||
+        trackedViewItemId.value === nextAnalyticsItem.id
+      ) {
+        return;
+      }
+
+      trackViewItem(nextAnalyticsItem);
+      trackedViewItemId.value = nextAnalyticsItem.id;
+    },
+    { immediate: true },
+  );
+}
+
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
   const items: BreadcrumbItem[] = [
     { label: "მთავარი", to: "/" },
@@ -319,8 +360,11 @@ const relatedProducts = computed<CatalogProductCardData[]>(() =>
     id: item.id,
     slug: item.slug,
     name: item.name,
+    sku: item.sku,
+    manufacturerPartNumber: item.manufacturer_part_number,
     subtitle: item.short_description,
     category: item.category?.name,
+    brand: item.brand?.name,
     price: Number(item.price),
     oldPrice: item.old_price ? Number(item.old_price) : null,
     image: item.primary_image,
@@ -485,6 +529,9 @@ const handleAddToCart = async () => {
 
   try {
     await cartStore.addItem(product.value.id, selectedQuantity.value);
+    if (productAnalyticsItem.value) {
+      trackAddToCart(productAnalyticsItem.value, selectedQuantity.value);
+    }
     cartFeedback.value = `${selectedQuantity.value} ცალი წარმატებით დაემატა კალათაში.`;
     cartFeedbackTone.value = "success";
   } catch {
@@ -669,6 +716,7 @@ const handleBuyNow = async () => {
 
                 <WishlistToggleButton
                   :product-id="product.id"
+                  :analytics-item="productAnalyticsItem"
                   label="სასურველებში შენახვა"
                 />
               </div>

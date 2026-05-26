@@ -16,6 +16,7 @@ definePageMeta({
 const globalStore = useGlobalStore();
 const wishlistStore = useWishlistStore();
 const cartStore = useCartStore();
+const { trackAddToCart } = useEcommerceAnalytics();
 const isClientReady = ref(false);
 const isAuthenticated = computed(() => Boolean(globalStore.currentUser));
 
@@ -55,6 +56,15 @@ const clearCartFeedback = () => {
   cartFeedbackTone.value = null;
 };
 
+const toWishlistAnalyticsItem = (item: WishlistItem) => ({
+  id: item.product_id,
+  slug: item.slug,
+  name: item.name,
+  category: item.category?.name,
+  price: item.price,
+  quantity: 1,
+});
+
 watch(
   shouldLoadWishlist,
   (canLoadWishlist) => {
@@ -91,6 +101,7 @@ const handleAddToCart = async (item: WishlistItem) => {
 
   try {
     await cartStore.addItem(item.product_id, 1);
+    trackAddToCart(toWishlistAnalyticsItem(item), 1);
     cartFeedback.value = `${item.name} წარმატებით დაემატა კალათაში.`;
     cartFeedbackTone.value = "success";
   } catch {

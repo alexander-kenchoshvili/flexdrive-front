@@ -90,6 +90,16 @@ const productMetaItems = computed(() =>
     productCode.value ? `კოდი: ${productCode.value}` : "",
   ].filter(Boolean),
 );
+const analyticsItem = computed(() => ({
+  id: props.product.id,
+  slug: props.product.slug,
+  name: props.product.name,
+  sku: props.product.sku,
+  manufacturerPartNumber: props.product.manufacturerPartNumber,
+  category: props.product.category,
+  brand: props.product.brand,
+  price: props.product.price,
+}));
 const vehicleFilterParts = computed(() =>
   [
     props.vehicleFilter.make,
@@ -130,6 +140,7 @@ const compatibilityBadge = computed(() => {
     <div class="absolute right-2.5 top-2.5 z-[3]">
       <WishlistToggleButton
         :product-id="product.id"
+        :analytics-item="analyticsItem"
         size="sm"
         label="სასურველებში შენახვა"
       />

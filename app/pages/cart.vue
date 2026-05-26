@@ -5,6 +5,7 @@ import CartEmptyState from "~/components/commerce/CartEmptyState.vue";
 import CartLineItem from "~/components/commerce/CartLineItem.vue";
 import CartPageSkeleton from "~/components/commerce/CartPageSkeleton.vue";
 import CartSummaryCard from "~/components/commerce/CartSummaryCard.vue";
+import type { CommerceCartItem } from "~/types/commerce";
 
 type BreadcrumbItem = {
   label: string;
@@ -17,8 +18,10 @@ definePageMeta({
 
 const globalStore = useGlobalStore();
 const cartStore = useCartStore();
+const { trackRemoveFromCart, trackViewCart } = useEcommerceAnalytics();
 const isClientReady = ref(false);
 const cartActionPending = ref(false);
+const trackedCartView = ref(false);
 const desktopPriceFeedbackSelector = '[data-cart-price-feedback="desktop"]';
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
@@ -27,6 +30,20 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 ]);
 
 const lineItemLabel = computed(() => `${cartStore.lineItemCount} პროდუქტი`);
+
+const toCartAnalyticsItem = (item: CommerceCartItem) => ({
+  id: item.product_id,
+  slug: item.slug,
+  name: item.name,
+  sku: item.sku,
+  category: item.category?.name,
+  price: item.price,
+  quantity: item.quantity,
+});
+
+const cartAnalyticsItems = computed(() =>
+  cartStore.items.map((item) => toCartAnalyticsItem(item)),
+);
 
 const isInitialLoading = computed(
   () =>
@@ -123,6 +140,17 @@ const confirmPrices = async () => {
   }
 };
 
+const handleRemoveItem = async (item: CommerceCartItem) => {
+  const analyticsItem = toCartAnalyticsItem(item);
+
+  try {
+    await cartStore.removeItem(item.id);
+    trackRemoveFromCart(analyticsItem);
+  } catch {
+    // Store error is already normalized for UI rendering.
+  }
+};
+
 const handlePrimaryCartAction = async () => {
   if (cartStore.mutating || cartStore.loading || cartActionPending.value) {
     return;
@@ -156,6 +184,30 @@ onMounted(() => {
   isClientReady.value = true;
   void syncAvailabilityAttentionState();
 });
+
+watch(
+  () => [
+    isClientReady.value,
+    globalStore.authResolved,
+    cartStore.initialized,
+    cartStore.items.length,
+  ],
+  () => {
+    if (
+      trackedCartView.value ||
+      !isClientReady.value ||
+      !globalStore.authResolved ||
+      !cartStore.initialized ||
+      !cartStore.items.length
+    ) {
+      return;
+    }
+
+    trackViewCart(cartAnalyticsItems.value);
+    trackedCartView.value = true;
+  },
+  { immediate: true },
+);
 
 useSeoMeta({
   title: "კალათა",
@@ -239,7 +291,7 @@ useSeoMeta({
               :disabled="cartStore.mutating"
               @increment="void cartStore.increment(item.id)"
               @decrement="void cartStore.decrement(item.id)"
-              @remove="void cartStore.removeItem(item.id)"
+              @remove="void handleRemoveItem(item)"
             />
           </div>
 

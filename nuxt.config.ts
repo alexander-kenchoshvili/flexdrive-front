@@ -77,6 +77,7 @@ export default defineNuxtConfig({
       defaultSeoImage: env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || "/favicon.ico",
       recaptchaSiteKey: env.NUXT_PUBLIC_RECAPTCHA_SITE_KEY,
       googleClientId: env.NUXT_PUBLIC_GOOGLE_CLIENT_ID,
+      gtmId: env.NUXT_PUBLIC_GTM_ID || "",
     },
   },
 

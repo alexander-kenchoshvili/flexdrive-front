@@ -18,6 +18,7 @@ definePageMeta({
 
 const route = useRoute();
 const { getOrderSummary } = useCommerceApi();
+const { trackPurchase } = useEcommerceAnalytics();
 
 const order = ref<CommerceOrderSummary | null>(null);
 const pending = ref(true);
@@ -30,6 +31,27 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
   { label: "შეკვეთის გაფორმება" },
   { label: "წარმატება" },
 ]);
+
+const purchaseAnalyticsItems = computed(() =>
+  (order.value?.items || []).map((item) => ({
+    id: item.id,
+    name: item.product_name,
+    sku: item.sku,
+    price: item.unit_price,
+    quantity: item.quantity,
+  })),
+);
+
+const trackLoadedPurchase = () => {
+  if (!order.value) return;
+
+  trackPurchase({
+    transactionId: order.value.order_number || order.value.public_token,
+    value: order.value.total,
+    paymentType: order.value.payment_method,
+    items: purchaseAnalyticsItems.value,
+  });
+};
 
 const resolveStatusCode = (error: unknown): number | null => {
   const normalized = error as
@@ -74,6 +96,14 @@ if (!order.value && !loadError.value) {
     statusMessage: "შეკვეთა ვერ მოიძებნა",
   });
 }
+
+onMounted(() => {
+  trackLoadedPurchase();
+});
+
+watch(order, () => {
+  trackLoadedPurchase();
+});
 
 useNoindexPage({
   title: "შეკვეთა მიღებულია",

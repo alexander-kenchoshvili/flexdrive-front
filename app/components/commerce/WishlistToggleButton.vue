@@ -2,22 +2,26 @@
 import { HeartIcon as HeartSolidIcon } from "@heroicons/vue/24/solid";
 import { HeartIcon as HeartOutlineIcon } from "@heroicons/vue/24/outline";
 import { useAuthBootstrap } from "~/composables/useAuthBootstrap";
+import type { EcommerceAnalyticsItemInput } from "~/composables/useEcommerceAnalytics";
 
 const props = withDefaults(
   defineProps<{
     productId: number;
     size?: "sm" | "md";
     label?: string;
+    analyticsItem?: EcommerceAnalyticsItemInput | null;
   }>(),
   {
     size: "md",
     label: "სასურველებში შენახვა",
+    analyticsItem: null,
   },
 );
 
 const globalStore = useGlobalStore();
 const wishlistStore = useWishlistStore();
 const { ensureAuthResolved } = useAuthBootstrap();
+const { trackAddToWishlist } = useEcommerceAnalytics();
 
 const isSaved = computed(() => wishlistStore.hasProduct(props.productId));
 const isPending = computed(() => wishlistStore.isMutatingProduct(props.productId));
@@ -42,12 +46,17 @@ const buttonClasses = computed(() => [
 const handleClick = async () => {
   if (isPending.value) return;
 
+  const wasSaved = isSaved.value;
+
   if (!globalStore.authResolved) {
     await ensureAuthResolved();
   }
 
   try {
     await wishlistStore.toggleItem(props.productId);
+    if (!wasSaved && isSaved.value && props.analyticsItem) {
+      trackAddToWishlist(props.analyticsItem);
+    }
   } catch {
     // Store-level error is enough for v1.
   }
