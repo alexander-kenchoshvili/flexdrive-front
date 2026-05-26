@@ -53,8 +53,6 @@ const {
   companyNameAttrs,
   companyIdentificationCode,
   companyIdentificationCodeAttrs,
-  companyLegalAddress,
-  companyLegalAddressAttrs,
   firstName,
   firstNameAttrs,
   lastName,
@@ -294,10 +292,6 @@ const submitForm = validateSubmit(
           submittedValues.buyer_type === "legal_entity"
             ? submittedValues.company_identification_code.trim()
             : "",
-        company_legal_address:
-          submittedValues.buyer_type === "legal_entity"
-            ? submittedValues.company_legal_address.trim()
-            : "",
         first_name: submittedValues.first_name.trim(),
         last_name: submittedValues.last_name.trim(),
         email: submittedValues.email.trim(),
@@ -380,7 +374,6 @@ watch(
     buyerType.value,
     companyName.value,
     companyIdentificationCode.value,
-    companyLegalAddress.value,
     lastName.value,
     email.value,
     phone.value,
@@ -543,7 +536,6 @@ useNoindexPage({
                 v-model:buyer-type="buyerType"
                 v-model:company-name="companyName"
                 v-model:company-identification-code="companyIdentificationCode"
-                v-model:company-legal-address="companyLegalAddress"
                 v-model:first-name="firstName"
                 v-model:last-name="lastName"
                 v-model:email="email"
@@ -557,7 +549,6 @@ useNoindexPage({
                 :errors="errors"
                 :company-name-attrs="companyNameAttrs"
                 :company-identification-code-attrs="companyIdentificationCodeAttrs"
-                :company-legal-address-attrs="companyLegalAddressAttrs"
                 :first-name-attrs="firstNameAttrs"
                 :last-name-attrs="lastNameAttrs"
                 :email-attrs="emailAttrs"

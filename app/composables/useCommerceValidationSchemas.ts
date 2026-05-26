@@ -9,7 +9,6 @@ const checkoutSchema = z
     buyer_type: z.enum(["individual", "legal_entity"]),
     company_name: z.string().trim(),
     company_identification_code: z.string().trim(),
-    company_legal_address: z.string().trim(),
     first_name: requiredText("შეიყვანე სახელი."),
     last_name: requiredText("შეიყვანე გვარი."),
     email: z.string().trim().refine((value) => !value || emailPattern.test(value), {
@@ -52,14 +51,6 @@ const checkoutSchema = z
         code: z.ZodIssueCode.custom,
         path: ["company_identification_code"],
         message: "შეიყვანე 9-ნიშნა საიდენტიფიკაციო კოდი.",
-      });
-    }
-
-    if (!values.company_legal_address) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["company_legal_address"],
-        message: "შეიყვანე იურიდიული მისამართი.",
       });
     }
   });

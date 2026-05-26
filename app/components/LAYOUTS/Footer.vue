@@ -5,6 +5,7 @@ import type { FooterLinkItem, FooterSocialItem } from "~/types/footer";
 
 const footerStore = useFooter();
 const { footer } = storeToRefs(footerStore);
+const { openCookiePreferences } = useCookieConsent();
 
 if (!footer.value) {
   await footerStore.fetchFooter();
@@ -243,7 +244,6 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
             </p>
 
             <nav
-              v-if="legalLinks.length"
               aria-label="Footer legal links"
               class="flex flex-wrap items-center gap-x-5 gap-y-2 sm:justify-end xl:justify-center"
             >
@@ -265,6 +265,14 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
                   {{ link.label }}
                 </NuxtLink>
               </template>
+
+              <button
+                type="button"
+                class="text-[12px] leading-5 text-footer-text-muted transition-colors duration-200 hover:text-footer-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
+                @click="openCookiePreferences"
+              >
+                ქუქიების პარამეტრები
+              </button>
             </nav>
 
             <div

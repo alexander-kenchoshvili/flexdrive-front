@@ -53,7 +53,7 @@ const scrollToSection = (event: MouseEvent, sectionId: string) => {
         >
           <div class="min-w-0 max-w-3xl">
             <h1
-              class="upper text-2xl font-extrabold leading-8 text-text-primary sm:text-[32px] sm:leading-[40px] lg:text-[38px] lg:leading-[46px]"
+              class="upper text-xl font-extrabold leading-7 text-text-primary sm:text-[32px] sm:leading-[40px] lg:text-[38px] lg:leading-[46px]"
             >
               {{ title }}
             </h1>

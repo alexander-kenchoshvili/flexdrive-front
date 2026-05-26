@@ -21,15 +21,17 @@ const getSystemTheme = (): Theme => {
   return "light";
 };
 
-const resolveInitialTheme = (): Theme => {
-  const cookieTheme = readThemeCookie();
-  if (cookieTheme) {
-    return cookieTheme;
-  }
+const resolveInitialTheme = (canUsePersistedTheme: boolean): Theme => {
+  if (canUsePersistedTheme) {
+    const cookieTheme = readThemeCookie();
+    if (cookieTheme) {
+      return cookieTheme;
+    }
 
-  const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
-  if (isTheme(storedTheme)) {
-    return storedTheme;
+    const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
+    if (isTheme(storedTheme)) {
+      return storedTheme;
+    }
   }
 
   return getSystemTheme();
@@ -43,7 +45,8 @@ export default defineNuxtPlugin({
   name: "theme-init-client",
   enforce: "pre",
   setup() {
-    const initialTheme = resolveInitialTheme();
+    const { preferencesConsentGranted } = useCookieConsent();
+    const initialTheme = resolveInitialTheme(preferencesConsentGranted.value);
     applyThemeClass(initialTheme);
 
     const themeState = useState<Theme>("theme", () => initialTheme);
@@ -55,11 +58,35 @@ export default defineNuxtPlugin({
       sameSite: "lax",
     });
 
-    if (!isTheme(themeCookie.value)) {
+    const clearPersistedTheme = () => {
+      themeCookie.value = undefined;
+      window.localStorage.removeItem(THEME_COOKIE_NAME);
+      document.cookie = `${THEME_COOKIE_NAME}=; Max-Age=0; path=/; SameSite=Lax`;
+    };
+
+    const persistTheme = (theme: Theme) => {
+      themeCookie.value = theme;
+      window.localStorage.setItem(THEME_COOKIE_NAME, theme);
+    };
+
+    if (preferencesConsentGranted.value && !isTheme(themeCookie.value)) {
       const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
       if (isTheme(storedTheme)) {
         themeCookie.value = storedTheme;
       }
     }
+
+    watch(
+      preferencesConsentGranted,
+      (isGranted) => {
+        if (isGranted) {
+          persistTheme(themeState.value);
+          return;
+        }
+
+        clearPersistedTheme();
+      },
+      { immediate: true },
+    );
   },
 });

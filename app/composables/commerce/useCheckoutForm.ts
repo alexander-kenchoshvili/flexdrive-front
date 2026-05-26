@@ -13,7 +13,6 @@ export type CheckoutFormValues = {
   buyer_type: CheckoutBuyerType;
   company_name: string;
   company_identification_code: string;
-  company_legal_address: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -32,7 +31,6 @@ export const checkoutFieldOrder: CheckoutFieldName[] = [
   "buyer_type",
   "company_name",
   "company_identification_code",
-  "company_legal_address",
   "first_name",
   "last_name",
   "email",
@@ -49,7 +47,6 @@ export const checkoutFieldSelectors: Record<CheckoutFieldName, string> = {
   company_name: '[data-checkout-field="company_name"]',
   company_identification_code:
     '[data-checkout-field="company_identification_code"]',
-  company_legal_address: '[data-checkout-field="company_legal_address"]',
   first_name: '[data-checkout-field="first_name"]',
   last_name: '[data-checkout-field="last_name"]',
   email: '[data-checkout-field="email"]',
@@ -79,7 +76,6 @@ export const useCheckoutForm = (options?: { profileKey?: string }) => {
       buyer_type: "individual",
       company_name: "",
       company_identification_code: "",
-      company_legal_address: "",
       first_name: "",
       last_name: "",
       email: "",
@@ -97,9 +93,6 @@ export const useCheckoutForm = (options?: { profileKey?: string }) => {
   const [companyName, companyNameAttrs] = defineField("company_name");
   const [companyIdentificationCode, companyIdentificationCodeAttrs] =
     defineField("company_identification_code");
-  const [companyLegalAddress, companyLegalAddressAttrs] = defineField(
-    "company_legal_address",
-  );
   const [lastName, lastNameAttrs] = defineField("last_name");
   const [email, emailAttrs] = defineField("email");
   const [phone, phoneAttrs] = defineField("phone");
@@ -326,8 +319,6 @@ export const useCheckoutForm = (options?: { profileKey?: string }) => {
     companyNameAttrs,
     companyIdentificationCode,
     companyIdentificationCodeAttrs,
-    companyLegalAddress,
-    companyLegalAddressAttrs,
     firstName,
     firstNameAttrs,
     lastName,

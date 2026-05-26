@@ -11,7 +11,6 @@ defineProps<{
   errors: CheckoutFieldErrors;
   companyNameAttrs?: Record<string, unknown>;
   companyIdentificationCodeAttrs?: Record<string, unknown>;
-  companyLegalAddressAttrs?: Record<string, unknown>;
   firstNameAttrs?: Record<string, unknown>;
   lastNameAttrs?: Record<string, unknown>;
   emailAttrs?: Record<string, unknown>;
@@ -29,9 +28,6 @@ const companyIdentificationCode = defineModel<string>(
   "companyIdentificationCode",
   { required: true },
 );
-const companyLegalAddress = defineModel<string>("companyLegalAddress", {
-  required: true,
-});
 const firstName = defineModel<string>("firstName", { required: true });
 const lastName = defineModel<string>("lastName", { required: true });
 const email = defineModel<string>("email", { required: true });
@@ -147,20 +143,6 @@ const lastNameLabel = computed(() =>
         maxlength="9"
         placeholder="9-ნიშნა კოდი"
         :error="errors.company_identification_code"
-        :disabled="disabled"
-        required
-      />
-
-      <BaseInput
-        v-model="companyLegalAddress"
-        v-bind="companyLegalAddressAttrs"
-        name="company_legal_address"
-        data-checkout-field="company_legal_address"
-        class="md:col-span-2"
-        label="იურიდიული მისამართი *"
-        autocomplete="street-address"
-        placeholder="კომპანიის რეგისტრირებული მისამართი"
-        :error="errors.company_legal_address"
         :disabled="disabled"
         required
       />

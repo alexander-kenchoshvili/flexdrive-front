@@ -1162,6 +1162,14 @@ const handleBuyNow = async () => {
   height: 100%;
 }
 
+@media (max-width: 639px) {
+  .product-mobile-buy-button,
+  .product-mobile-cart-button {
+    font-size: 12px;
+    line-height: 1.25rem;
+  }
+}
+
 @media (max-width: 1023px) and (max-height: 700px) {
   .product-mobile-purchase-shell {
     padding: 0.5rem 0.75rem;

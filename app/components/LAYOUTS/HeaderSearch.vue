@@ -31,6 +31,7 @@ const { getCatalogCategoriesRaw, getCatalogProductSuggestions } =
   useCatalogApi();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
 const { trackSearch } = useEcommerceAnalytics();
+const { functionalityConsentGranted } = useCookieConsent();
 
 const rootRef = ref<HTMLElement | null>(null);
 const mobileInputRef = ref<HTMLInputElement | null>(null);
@@ -115,8 +116,21 @@ const extractSearchQueryFromRoute = () => {
   return typeof queryValue === "string" ? queryValue : "";
 };
 
+const clearRecentSearches = () => {
+  recentSearches.value = [];
+
+  if (!import.meta.client) return;
+
+  window.localStorage.removeItem(RECENT_SEARCHES_KEY);
+};
+
 const loadRecentSearches = () => {
   if (!import.meta.client) return;
+
+  if (!functionalityConsentGranted.value) {
+    clearRecentSearches();
+    return;
+  }
 
   const rawValue = window.localStorage.getItem(RECENT_SEARCHES_KEY);
   if (!rawValue) return;
@@ -136,6 +150,12 @@ const loadRecentSearches = () => {
 
 const persistRecentSearches = () => {
   if (!import.meta.client) return;
+
+  if (!functionalityConsentGranted.value) {
+    clearRecentSearches();
+    return;
+  }
+
   window.localStorage.setItem(
     RECENT_SEARCHES_KEY,
     JSON.stringify(recentSearches.value.slice(0, RECENT_SEARCHES_LIMIT)),
@@ -145,6 +165,11 @@ const persistRecentSearches = () => {
 const saveRecentSearch = (value: string) => {
   const normalizedValue = value.trim();
   if (!normalizedValue || !import.meta.client) return;
+
+  if (!functionalityConsentGranted.value) {
+    clearRecentSearches();
+    return;
+  }
 
   recentSearches.value = [
     normalizedValue,
@@ -365,6 +390,15 @@ watch(isMobileViewport, (isMobile) => {
 watch(isMobileOpen, (isOpen) => {
   if (!import.meta.client) return;
   document.body.style.overflow = isOpen ? "hidden" : "";
+});
+
+watch(functionalityConsentGranted, (isGranted) => {
+  if (isGranted) {
+    loadRecentSearches();
+    return;
+  }
+
+  clearRecentSearches();
 });
 
 onMounted(() => {

@@ -514,21 +514,6 @@ const getTrackingStateLabel = (state: string) => {
               {{ order.company_identification_code }}
             </p>
           </article>
-
-          <article
-            v-if="isLegalBuyer"
-            class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4 md:col-span-2"
-          >
-            <p
-              class="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
-            >
-              იურიდიული მისამართი
-            </p>
-            <p class="mt-2 break-words text-base font-semibold leading-7 text-text-primary">
-              {{ order.company_legal_address }}
-            </p>
-          </article>
-
           <article
             class="min-w-0 rounded-[20px] border border-border-default bg-surface-2 px-4 py-4"
           >

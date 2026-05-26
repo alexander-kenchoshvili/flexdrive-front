@@ -166,7 +166,6 @@ export interface CheckoutPayload {
   buyer_type: CheckoutBuyerType;
   company_name?: string;
   company_identification_code?: string;
-  company_legal_address?: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -211,7 +210,6 @@ export interface CommerceOrderSummary {
   buyer_type: CheckoutBuyerType;
   company_name: string;
   company_identification_code: string;
-  company_legal_address: string;
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
   status: CommerceOrderStatus;

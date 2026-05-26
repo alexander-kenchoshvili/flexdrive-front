@@ -66,6 +66,16 @@ const readTrackedPurchases = () => {
 const hasTrackedPurchase = (transactionId: string) =>
   readTrackedPurchases().includes(transactionId);
 
+const clearTrackedPurchases = () => {
+  if (!import.meta.client) return;
+
+  try {
+    window.localStorage.removeItem(PURCHASE_STORAGE_KEY);
+  } catch {
+    // Analytics storage cleanup must not affect the storefront.
+  }
+};
+
 const rememberTrackedPurchase = (transactionId: string) => {
   if (!import.meta.client) return;
 
@@ -125,13 +135,26 @@ const buildDataLayerItem = (
 export const useEcommerceAnalytics = () => {
   const config = useRuntimeConfig();
   const gtmId = normalizeGtmId(config.public.gtmId);
+  const { trackingConsentGranted } = useCookieConsent();
   const isEnabled = import.meta.client && Boolean(gtmId);
+
+  if (import.meta.client) {
+    watch(
+      trackingConsentGranted,
+      (isGranted) => {
+        if (!isGranted) {
+          clearTrackedPurchases();
+        }
+      },
+      { immediate: true },
+    );
+  }
 
   const pushAnalyticsEvent = (
     event: string,
     eventParams: DataLayerItem = {},
   ) => {
-    if (!isEnabled) {
+    if (!isEnabled || !trackingConsentGranted.value) {
       return false;
     }
 
@@ -150,7 +173,7 @@ export const useEcommerceAnalytics = () => {
     items: EcommerceAnalyticsItemInput[],
     extraEcommerceParams: DataLayerItem = {},
   ) => {
-    if (!isEnabled) {
+    if (!isEnabled || !trackingConsentGranted.value) {
       return false;
     }
 
@@ -246,6 +269,10 @@ export const useEcommerceAnalytics = () => {
     paymentType?: string | null;
   }) => {
     const normalizedTransactionId = normalizeText(transactionId);
+
+    if (!isEnabled || !trackingConsentGranted.value) {
+      return;
+    }
 
     if (
       !normalizedTransactionId ||

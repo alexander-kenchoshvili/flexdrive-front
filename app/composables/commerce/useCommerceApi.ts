@@ -25,6 +25,8 @@ type CartItemUpdatePayload = {
 };
 
 export const useCommerceApi = () => {
+  const { marketingConsentGranted } = useCookieConsent();
+
   const resolveHeaders = (options?: CommerceRequestOptions) => {
     const nextHeaders = {
       ...(import.meta.server ? useRequestHeaders(["cookie"]) : {}),
@@ -35,6 +37,15 @@ export const useCommerceApi = () => {
       Object.entries(nextHeaders).filter(([, value]) => Boolean(value)),
     ) as Record<string, string>;
   };
+
+  const resolveMarketingConsentHeaders = () =>
+    resolveHeaders({
+      headers: {
+        "X-FlexDrive-Marketing-Consent": marketingConsentGranted.value
+          ? "granted"
+          : "denied",
+      },
+    });
 
   const getCart = async (options?: CommerceRequestOptions) => {
     return apiFetchRaw<CommerceCart>("/commerce/cart/", {
@@ -116,6 +127,7 @@ export const useCommerceApi = () => {
     return apiFetchRaw<CommerceOrderSummary>("/commerce/orders/checkout/", {
       method: "POST",
       body: payload,
+      headers: resolveMarketingConsentHeaders(),
     });
   };
 
@@ -123,6 +135,7 @@ export const useCommerceApi = () => {
     return apiFetchRaw<CommerceOrderSummary>("/commerce/buy-now/checkout/", {
       method: "POST",
       body: payload,
+      headers: resolveMarketingConsentHeaders(),
     });
   };
 

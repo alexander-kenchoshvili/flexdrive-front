@@ -37,14 +37,37 @@ const startThemeTransition = () => {
 };
 
 export const useTheme = () => {
+  const { preferencesConsentGranted } = useCookieConsent();
   const themeCookie = useCookie<Theme | undefined>(THEME_COOKIE_NAME, {
     path: "/",
     maxAge: THEME_COOKIE_MAX_AGE,
     sameSite: "lax",
   });
 
+  const clearPersistedTheme = () => {
+    themeCookie.value = undefined;
+
+    if (!import.meta.client) return;
+
+    window.localStorage.removeItem(THEME_COOKIE_NAME);
+    document.cookie = `${THEME_COOKIE_NAME}=; Max-Age=0; path=/; SameSite=Lax`;
+  };
+
+  const persistTheme = (nextTheme: Theme) => {
+    if (!preferencesConsentGranted.value) {
+      clearPersistedTheme();
+      return;
+    }
+
+    themeCookie.value = nextTheme;
+
+    if (import.meta.client) {
+      window.localStorage.setItem(THEME_COOKIE_NAME, nextTheme);
+    }
+  };
+
   const theme = useState<Theme>("theme", () => {
-    if (isTheme(themeCookie.value)) {
+    if (preferencesConsentGranted.value && isTheme(themeCookie.value)) {
       return themeCookie.value;
     }
 
@@ -52,9 +75,11 @@ export const useTheme = () => {
       if (document.documentElement.classList.contains("dark")) {
         return "dark";
       }
-      const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
-      if (isTheme(storedTheme)) {
-        return storedTheme;
+      if (preferencesConsentGranted.value) {
+        const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
+        if (isTheme(storedTheme)) {
+          return storedTheme;
+        }
       }
       return getSystemTheme();
     }
@@ -64,12 +89,11 @@ export const useTheme = () => {
 
   const setTheme = (nextTheme: Theme) => {
     theme.value = nextTheme;
-    themeCookie.value = nextTheme;
+    persistTheme(nextTheme);
 
     if (import.meta.client) {
       startThemeTransition();
       applyThemeClass(nextTheme);
-      window.localStorage.setItem(THEME_COOKIE_NAME, nextTheme);
     }
   };
 
@@ -86,6 +110,21 @@ export const useTheme = () => {
     } else {
       applyThemeClass(theme.value);
     }
+  }
+
+  if (import.meta.client) {
+    watch(
+      preferencesConsentGranted,
+      (isGranted) => {
+        if (isGranted) {
+          persistTheme(theme.value);
+          return;
+        }
+
+        clearPersistedTheme();
+      },
+      { immediate: true },
+    );
   }
 
   const isDark = computed(() => theme.value === "dark");

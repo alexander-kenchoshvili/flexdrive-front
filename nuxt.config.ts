@@ -96,7 +96,7 @@ export default defineNuxtConfig({
           id: "theme-init",
           //@ts-ignore
           children:
-            "(function(){try{var d=document.documentElement;var m=document.cookie.match(/(?:^|;\\s*)theme=(light|dark)(?:;|$)/);var t=m?m[1]:null;if(!t&&window.matchMedia){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();",
+            "(function(){try{var d=document.documentElement;var c=document.cookie.match(/(?:^|;\\s*)flexdrive_cookie_consent=([^;]+)(?:;|$)/);var p=false;if(c&&c[1]){try{var v=JSON.parse(decodeURIComponent(c[1]));p=!!(v&&v.version===1&&v.preferences===true);}catch(e){}}var m=p?document.cookie.match(/(?:^|;\\s*)theme=(light|dark)(?:;|$)/):null;var t=m?m[1]:null;if(!t&&window.matchMedia){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();",
         },
       ],
     },

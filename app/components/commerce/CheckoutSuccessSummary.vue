@@ -238,17 +238,6 @@ const isLegalBuyer = computed(() => props.order.buyer_type === "legal_entity");
                     {{ order.company_identification_code }}
                   </span>
                 </div>
-
-                <div
-                  class="flex flex-col gap-1 border-b border-border-default py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
-                >
-                  <span class="text-sm text-text-muted">იურიდიული მისამართი</span>
-                  <span
-                    class="break-words text-sm font-medium leading-6 text-text-primary sm:max-w-[70%] sm:text-right"
-                  >
-                    {{ order.company_legal_address }}
-                  </span>
-                </div>
               </template>
 
               <div

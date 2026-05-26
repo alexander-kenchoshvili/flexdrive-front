@@ -569,12 +569,12 @@ This file exists so the project context does not need to be re-explained in ever
   - Additional useful events: search, catalog filter usage, login, sign-up, contact submit, order lookup, wishlist add/remove, and checkout validation failure where safe and non-sensitive.
   - Meta Pixel should be loaded through GTM after marketing consent and should receive only appropriate standard ecommerce events. Avoid sending sensitive personal data or raw internal notes.
   - Final event names/parameters should be written down before implementation so GA4, GTM, and Pixel do not drift.
-- Cookie consent and privacy controls are still required before real analytics/marketing tags go live:
-  - Build a cookie consent banner/modal in Georgian matching the FlexDrive design system.
-  - Consent categories should include at minimum: necessary cookies always on, analytics, and marketing. Preferences can be added only if there is a real use for them.
-  - Default analytics/marketing consent should be denied until the user accepts the relevant category.
-  - Integrate GTM/GA4 Consent Mode through the consent state so tags respect the user's choices.
-  - Store consent choice, allow changing it later from footer/privacy settings, and update the privacy policy copy to explain analytics, GTM, Meta Pixel, cookies, and consent choices.
+- Cookie consent and privacy controls are implemented. Keep analytics/marketing consent combined for now unless the user explicitly asks to split them later:
+  - Georgian cookie consent banner/modal exists and matches the FlexDrive design direction.
+  - Necessary cookies stay always on; preferences/functionality/tracking choices are stored in consent state.
+  - Default analytics/marketing tracking consent is denied until the user accepts tracking.
+  - GTM/GA4 Consent Mode is driven from the saved consent state and updated when the user changes consent later.
+  - Consent can be changed later from footer/privacy controls, and the privacy policy copy covers analytics, GTM, Meta Pixel, cookies, and consent choices.
 - SEO final pass remains open:
   - Audit page titles/descriptions, canonical URLs, Open Graph/Twitter metadata, robots/noindex rules, sitemap, product/category dynamic metadata, and 404/error metadata.
   - Add/verify structured data where useful: Organization/WebSite, breadcrumbs, product data, and possibly FAQ/legal page schema only where content warrants it.
@@ -605,11 +605,14 @@ This file exists so the project context does not need to be re-explained in ever
 - GTM tags currently configured:
   - `GA4 - Config - Development`
   - `GA4 Event - Ecommerce`
+  - `GA4 Event - Search`
   - `Meta Pixel - Base`
   - `Meta Pixel - Ecommerce Events`
 - GTM trigger currently configured for ecommerce forwarding: `Ecommerce events - 2A`, matching the ecommerce event names above.
+- GTM search tracking is configured with `GA4 Event - Search`, custom event trigger `Search event`, and data layer variable `DLV - search_term`. The frontend sends `event: search` with `search_term` when the user submits search or opens a selected suggestion/result, not on every keystroke.
+- Later GA4 follow-up: add a GA4 custom dimension for `search_term` so searched words are easy to view as a table in GA4 reports/explorations. This is GA4 configuration, not code.
 - `Meta Pixel - Ecommerce Events` must pass `eventID` to `fbq('track', ...)` when `ecommerce.event_id` exists. This is required so browser Pixel purchase and server CAPI purchase are not counted as separate purchases.
-- Staging validation was done through GTM Preview: GA4 ecommerce and Meta Pixel ecommerce tags fired successfully on staging actions including `add_to_cart`, `begin_checkout`, and `purchase`; purchase `Data Layer` showed `event_id`.
+- Staging validation was done through GTM Preview: GA4 ecommerce and Meta Pixel ecommerce tags fired successfully on staging actions including `add_to_cart`, `begin_checkout`, and `purchase`; purchase `Data Layer` showed `event_id`; site search fired `search` with `search_term`.
 - Backend Meta Conversions API is implemented in the paired backend repo for `Purchase` only:
   - backend file: `commerce/meta_conversions.py`
   - checkout hooks: `commerce/views.py`
@@ -621,6 +624,18 @@ This file exists so the project context does not need to be re-explained in ever
 - Meta Events Manager is primarily for pixel/CAPI health, diagnostics, event match quality, and ads platform event delivery, not the main daily traffic dashboard.
 - Meta Pixel/CAPI becomes most useful after Facebook/Instagram ads start running. Ads are still configured manually in Meta Ads Manager; Pixel/CAPI provide optimization and remarketing signals such as product views, cart adds, checkout starts, wishlist adds, and purchases.
 
+## Current Cookie Consent State - 2026-05-27
+
+- Cookie consent banner/modal implementation is complete for the current launch scope.
+- The banner is hydration-safe: it renders after client hydration so it does not create Nuxt SSR/client mismatch warnings.
+- Consent is stored in the `flexdrive_cookie_consent` cookie with necessary cookies always on.
+- Analytics and marketing are intentionally treated as one tracking choice for now. Do not split them unless the user explicitly asks.
+- GTM loading and ecommerce/search analytics events are gated by tracking consent. When consent changes later, the frontend sends GTM Consent Mode updates instead of relying only on the first page load.
+- Preferences consent gates persisted theme storage. If preferences are denied or revoked, theme cookie/localStorage persistence is cleared.
+- Functionality consent gates persisted recent-search storage. If functionality is denied or revoked, recent-search localStorage is cleared.
+- Checkout/buy-now checkout continues to pass marketing consent to the backend so Meta CAPI purchase sending stays consent-aware.
+- Remaining operational check before paid ads/public launch: verify in GTM Preview that GA4 and Meta Pixel tags respect denied consent, especially that Meta Pixel does not fire from an unconditional All Pages trigger when tracking consent is denied.
+
 ### Production Analytics Launch Checklist
 
 - Frontend production env on Vercel must include `NUXT_PUBLIC_GTM_ID=GTM-MVNFL9TH` or the chosen production GTM container id, then production frontend must be redeployed.
@@ -628,8 +643,9 @@ This file exists so the project context does not need to be re-explained in ever
 - Do not set `META_CAPI_TEST_EVENT_CODE` in production. It is only for Meta Events Manager staging/test diagnostics.
 - Backend `FRONTEND_BASE_URL` must be the final production frontend domain, e.g. `https://flexdrive.ge`, so server-side event source URLs are correct.
 - GTM tags/triggers do not need to be recreated for production. Use GTM Preview on the production domain after deploy and verify `view_item`, `add_to_cart`, `begin_checkout`, and `purchase`; purchase must include `event_id`.
+- Verify production site search in GTM Preview and GA4: submitted searches should fire `search` and include `search_term`. Add the GA4 custom dimension for `search_term` before relying on search-term tables.
 - Best practice before public launch: create/use a production GA4 property or stream so staging/development test data does not pollute real reporting. If a new GA4 Measurement ID is chosen, update the GTM GA4 config tag accordingly and publish.
 - Decide whether the same Meta Pixel will be used for production ad optimization or whether a separate production dataset/pixel is required. If changed, update the GTM Meta Pixel base/ecommerce tags and backend `META_PIXEL_ID` together.
 - Verify GA4 Realtime and Traffic acquisition after production deploy; verify Meta Events Manager diagnostics after purchase tests. Meta reporting can lag.
-- Before real marketing/ads launch, implement consent/cookie controls so analytics and marketing tags respect user choices.
-- Production/privacy readiness still needs: Georgian consent banner, privacy policy confirmation, Meta domain verification for `flexdrive.ge`, and final ads-account checks before paid campaigns.
+- Before real marketing/ads launch, verify consent/cookie controls in GTM Preview so analytics and marketing tags respect user choices.
+- Production/privacy readiness still needs: privacy policy confirmation, Meta domain verification for `flexdrive.ge`, GTM consent verification on production, and final ads-account checks before paid campaigns.

@@ -9,6 +9,9 @@ const wishlistStore = useWishlistStore();
 const { logout } = useAuth();
 const { isDark, toggleTheme } = useTheme();
 
+const DESKTOP_MENU_QUERY = "(min-width: 1024px)";
+let desktopMenuMediaQuery: MediaQueryList | null = null;
+
 const isMobileMenuOpen = ref(false);
 const isAccountDialogOpen = ref(false);
 const desktopSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
@@ -35,7 +38,7 @@ const showAuthenticatedAuthUi = computed(
 );
 
 const themeToggleLabel = computed(() =>
-  isDark.value ? "ლაით მოუდზე გადასვლა" : "დარქ მოუდზე გადასვლა",
+  isDark.value ? "ღიაზე გადასვლა" : "მუქზე გადასვლა",
 );
 
 const cartItemCount = computed(() => cartStore.itemCount);
@@ -92,6 +95,12 @@ const closeMobileMenu = () => {
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+const handleDesktopMenuChange = (event: MediaQueryListEvent | MediaQueryList) => {
+  if (event.matches) {
+    closeMobileMenu();
+  }
 };
 
 const openMobileSearch = async () => {
@@ -160,10 +169,16 @@ onMounted(() => {
   if (globalStore.authResolved) {
     void ensureCommerceStateLoaded();
   }
+
+  desktopMenuMediaQuery = window.matchMedia(DESKTOP_MENU_QUERY);
+  handleDesktopMenuChange(desktopMenuMediaQuery);
+  desktopMenuMediaQuery.addEventListener("change", handleDesktopMenuChange);
 });
 
 onBeforeUnmount(() => {
   if (!import.meta.client) return;
+  desktopMenuMediaQuery?.removeEventListener("change", handleDesktopMenuChange);
+  desktopMenuMediaQuery = null;
   document.body.style.overflow = "";
 });
 </script>
@@ -394,11 +409,11 @@ onBeforeUnmount(() => {
                 </Transition>
               </span>
               <span class="min-w-0">
-                <span class="block text-sm font-semibold text-text-primary">
-                  {{ isDark ? "დარქ მოუდი" : "ლაით მოუდი" }}
+                <span class="upper block text-sm font-semibold text-text-primary">
+                  {{ isDark ? "მუქი რეჟიმი" : "ღია რეჟიმი" }}
                 </span>
                 <span class="mt-0.5 block truncate text-xs text-text-muted">
-                  {{ isDark ? "ლაითზე გადასვლა" : "დარქზე გადასვლა" }}
+                  {{ isDark ? "ღიაზე გადასვლა" : "მუქზე გადასვლა" }}
                 </span>
               </span>
             </span>

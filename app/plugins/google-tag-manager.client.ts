@@ -1,11 +1,11 @@
-type DataLayerItem = Record<string, unknown>;
-
 type AnalyticsWindow = Window & {
-  dataLayer?: DataLayerItem[];
+  dataLayer?: unknown[];
+  gtag?: (...args: unknown[]) => void;
   __flexdriveGtmId?: string;
 };
 
 const GTM_ID_PATTERN = /^GTM-[A-Z0-9]+$/;
+type ConsentValue = "granted" | "denied";
 
 const normalizeGtmId = (value: unknown) => {
   if (typeof value !== "string") return "";
@@ -26,25 +26,91 @@ export default defineNuxtPlugin({
 
     const analyticsWindow = window as AnalyticsWindow;
 
-    if (analyticsWindow.__flexdriveGtmId === gtmId) {
-      return;
+    const {
+      preferencesConsentGranted,
+      functionalityConsentGranted,
+      trackingConsentGranted,
+    } = useCookieConsent();
+    const gtmScriptEnabled = ref(analyticsWindow.__flexdriveGtmId === gtmId);
+
+    const ensureDataLayer = () => {
+      analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
+      analyticsWindow.gtag =
+        analyticsWindow.gtag ||
+        ((...args: unknown[]) => {
+          analyticsWindow.dataLayer?.push(args);
+        });
+    };
+
+    const resolveConsentValue = (isGranted: boolean): ConsentValue =>
+      isGranted ? "granted" : "denied";
+
+    const consentState = computed<Record<string, ConsentValue>>(() => {
+      const trackingConsent = resolveConsentValue(trackingConsentGranted.value);
+
+      return {
+        ad_storage: trackingConsent,
+        analytics_storage: trackingConsent,
+        ad_user_data: trackingConsent,
+        ad_personalization: trackingConsent,
+        functionality_storage: resolveConsentValue(
+          functionalityConsentGranted.value,
+        ),
+        personalization_storage: resolveConsentValue(
+          preferencesConsentGranted.value,
+        ),
+        security_storage: "granted",
+      };
+    });
+
+    const applyGoogleConsent = (command: "default" | "update") => {
+      ensureDataLayer();
+      analyticsWindow.gtag?.("consent", command, consentState.value);
+    };
+
+    useHead(() => ({
+      script: gtmScriptEnabled.value
+        ? [
+            {
+              key: "google-tag-manager",
+              src: `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(gtmId)}`,
+              async: true,
+            },
+          ]
+        : [],
+    }));
+
+    const loadGtm = () => {
+      ensureDataLayer();
+
+      if (analyticsWindow.__flexdriveGtmId === gtmId) {
+        gtmScriptEnabled.value = true;
+        return;
+      }
+
+      analyticsWindow.dataLayer.push({
+        "gtm.start": Date.now(),
+        event: "gtm.js",
+      });
+      analyticsWindow.__flexdriveGtmId = gtmId;
+      gtmScriptEnabled.value = true;
+    };
+
+    applyGoogleConsent("default");
+
+    if (trackingConsentGranted.value) {
+      loadGtm();
     }
 
-    analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
-    analyticsWindow.dataLayer.push({
-      "gtm.start": Date.now(),
-      event: "gtm.js",
-    });
-    analyticsWindow.__flexdriveGtmId = gtmId;
+    watch(
+      consentState,
+      () => {
+        applyGoogleConsent("update");
 
-    useHead({
-      script: [
-        {
-          key: "google-tag-manager",
-          src: `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(gtmId)}`,
-          async: true,
-        },
-      ],
-    });
+        if (trackingConsentGranted.value) {
+          loadGtm();
+        }
+      },
+    );
   },
 });
