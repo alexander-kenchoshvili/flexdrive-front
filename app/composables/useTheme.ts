@@ -102,17 +102,6 @@ export const useTheme = () => {
   };
 
   if (import.meta.client) {
-    const htmlTheme: Theme = document.documentElement.classList.contains("dark")
-      ? "dark"
-      : "light";
-    if (theme.value !== htmlTheme) {
-      theme.value = htmlTheme;
-    } else {
-      applyThemeClass(theme.value);
-    }
-  }
-
-  if (import.meta.client) {
     watch(
       preferencesConsentGranted,
       (isGranted) => {

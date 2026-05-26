@@ -44,13 +44,12 @@ const applyThemeClass = (theme: Theme) => {
 export default defineNuxtPlugin({
   name: "theme-init-client",
   enforce: "pre",
-  setup() {
+  setup(nuxtApp) {
     const { preferencesConsentGranted } = useCookieConsent();
     const initialTheme = resolveInitialTheme(preferencesConsentGranted.value);
     applyThemeClass(initialTheme);
 
     const themeState = useState<Theme>("theme", () => initialTheme);
-    themeState.value = initialTheme;
 
     const themeCookie = useCookie<Theme | undefined>(THEME_COOKIE_NAME, {
       path: "/",
@@ -69,24 +68,29 @@ export default defineNuxtPlugin({
       window.localStorage.setItem(THEME_COOKIE_NAME, theme);
     };
 
-    if (preferencesConsentGranted.value && !isTheme(themeCookie.value)) {
-      const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
-      if (isTheme(storedTheme)) {
-        themeCookie.value = storedTheme;
-      }
-    }
+    nuxtApp.hook("app:mounted", () => {
+      themeState.value = initialTheme;
+      applyThemeClass(initialTheme);
 
-    watch(
-      preferencesConsentGranted,
-      (isGranted) => {
-        if (isGranted) {
-          persistTheme(themeState.value);
-          return;
+      if (preferencesConsentGranted.value && !isTheme(themeCookie.value)) {
+        const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
+        if (isTheme(storedTheme)) {
+          themeCookie.value = storedTheme;
         }
+      }
 
-        clearPersistedTheme();
-      },
-      { immediate: true },
-    );
+      watch(
+        preferencesConsentGranted,
+        (isGranted) => {
+          if (isGranted) {
+            persistTheme(themeState.value);
+            return;
+          }
+
+          clearPersistedTheme();
+        },
+        { immediate: true },
+      );
+    });
   },
 });
