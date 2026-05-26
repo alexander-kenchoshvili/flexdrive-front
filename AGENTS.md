@@ -584,3 +584,32 @@ This file exists so the project context does not need to be re-explained in ever
   - End-to-end checks across desktop and mobile for auth/social auth, catalog filters, product detail, cart, wishlist, checkout, guest order lookup, account/profile/orders, static/legal pages, and contact.
   - Verify production env variables, secret rotation, Google/Facebook redirect URIs, Render/Vercel deployment order, database migrations, email delivery, reCAPTCHA, cookies, analytics consent, SEO indexability, and error states.
   - For social auth production, complete Facebook production checklist and Google production redirect/domain configuration when a final production domain exists.
+
+## Current Analytics and Pixel State - 2026-05-26
+
+- Frontend tracking is currently routed through Google Tag Manager rather than separate hard-coded vendor scripts.
+- Current GTM container used for development/staging testing: `GTM-MVNFL9TH`.
+- Current GA4 development property/measurement ID used through GTM: `G-CKQC30CKYJ`.
+- Current Meta dataset/pixel used through GTM: `1020718363721235` (`FlexDrive Web Pixel`).
+- Vercel frontend staging/preview must have `NUXT_PUBLIC_GTM_ID=GTM-MVNFL9TH` and must be redeployed after changing the env var.
+- Current Nuxt frontend sends ecommerce events to `dataLayer`; GTM forwards them to GA4 and Meta Pixel:
+  - `view_item`
+  - `add_to_cart`
+  - `add_to_wishlist`
+  - `view_cart`
+  - `remove_from_cart`
+  - `begin_checkout`
+  - `add_payment_info`
+  - `purchase`
+- GTM tags currently configured:
+  - `GA4 - Config - Development`
+  - `GA4 Event - Ecommerce`
+  - `Meta Pixel - Base`
+  - `Meta Pixel - Ecommerce Events`
+- GTM trigger currently configured for ecommerce forwarding: `Ecommerce events - 2A`, matching the ecommerce event names above.
+- Staging validation was done through GTM Preview: GA4 ecommerce and Meta Pixel ecommerce tags fired successfully on staging actions such as `add_to_cart`; Meta Events Manager Test Events may lag or not show local/staging sessions reliably, so GTM Preview is the primary technical validation before production.
+- Google Analytics is the primary day-to-day reporting surface. Use GA4 reports such as Realtime and Traffic acquisition to understand active users, channels, source/medium, pages, and ecommerce events.
+- Meta Events Manager is primarily for pixel health, diagnostics, testing, and ads platform event delivery, not the main daily traffic dashboard.
+- Before production launch, decide whether to keep the same GTM/GA4/Meta IDs or create separate production GA4 stream/property and production Meta Pixel. Best practice is to separate production ad optimization data from development/staging test data.
+- Before real marketing/ads launch, implement consent/cookie controls so analytics and marketing tags respect user choices.
+- Future backend tracking phase: implement Meta Conversions API for reliable server-side purchase/conversion tracking with event deduplication against browser Pixel events. This requires a Meta access token and a carefully designed `event_id` strategy; do not add it casually without testing deduplication.

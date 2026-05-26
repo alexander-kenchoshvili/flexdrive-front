@@ -90,6 +90,9 @@ const buildItemId = (item: EcommerceAnalyticsItemInput) =>
   normalizeText(item.id) ||
   normalizeText(item.slug);
 
+const buildPurchaseEventId = (transactionId: string) =>
+  `purchase-${transactionId}`;
+
 const buildDataLayerItem = (
   item: EcommerceAnalyticsItemInput,
   quantity = item.quantity,
@@ -225,6 +228,7 @@ export const useEcommerceAnalytics = () => {
     }
 
     const eventSent = pushEcommerceEvent("purchase", items, {
+      event_id: buildPurchaseEventId(normalizedTransactionId),
       transaction_id: normalizedTransactionId,
       value: toMoney(toNumber(value)),
       ...(normalizeText(paymentType)
