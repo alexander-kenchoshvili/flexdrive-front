@@ -68,12 +68,13 @@ export default defineNuxtConfig({
       siteUrl: publicSiteUrl,
       siteEnv: env.NUXT_PUBLIC_SITE_ENV || env.NODE_ENV || "development",
       allowIndexing,
-      siteName: env.NUXT_PUBLIC_SITE_NAME || "Auto Accessories Store",
+      siteName: env.NUXT_PUBLIC_SITE_NAME || "FlexDrive",
       defaultSeoTitle:
-        env.NUXT_PUBLIC_DEFAULT_SEO_TITLE || "ავტომობილის აქსესუარების მაღაზია",
+        env.NUXT_PUBLIC_DEFAULT_SEO_TITLE ||
+        "FlexDrive - ავტონაწილების ონლაინ მაღაზია",
       defaultSeoDescription:
         env.NUXT_PUBLIC_DEFAULT_SEO_DESCRIPTION ||
-        "იპოვეთ ხარისხიანი ავტომობილის აქსესუარები ყოველდღიური გამოყენებისა და ავტომობილის გაუმჯობესებისთვის.",
+        "შეიძინე ხარისხიანი ავტონაწილები FlexDrive-ზე. მოძებნე ნაწილი OEM-ით, SKU-ით ან კატეგორიით და შეუკვეთე ონლაინ მარტივად.",
       defaultSeoImage: env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || "/favicon.ico",
       recaptchaSiteKey: env.NUXT_PUBLIC_RECAPTCHA_SITE_KEY,
       googleClientId: env.NUXT_PUBLIC_GOOGLE_CLIENT_ID,

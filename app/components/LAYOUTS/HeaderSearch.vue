@@ -36,9 +36,9 @@ const { functionalityConsentGranted } = useCookieConsent();
 const rootRef = ref<HTMLElement | null>(null);
 const mobileInputRef = ref<HTMLInputElement | null>(null);
 
-const RECENT_SEARCHES_KEY = "automate-header-searches";
+const RECENT_SEARCHES_KEY = "flexdrive-header-searches";
 const RECENT_SEARCHES_LIMIT = 5;
-const searchPlaceholder = "მოძებნე ნაწილი, OEM, SKU ან VIN";
+const searchPlaceholder = "მოძებნე ნაწილი, OEM ან SKU";
 const quickSearchModes = [
   {
     label: "ნაწილი",
@@ -46,11 +46,7 @@ const quickSearchModes = [
   },
   {
     label: "OEM/SKU",
-    copy: "კოდით ან არტიკულით",
-  },
-  {
-    label: "VIN",
-    copy: "მომავალი VIN flow-სთვის",
+    copy: "პროდუქტის კოდით",
   },
 ];
 
@@ -70,7 +66,7 @@ const lastCompletedQuery = ref("");
 
 const emptyStateTitle = "სწრაფი ძებნა";
 const emptyStateCopy =
-  "დაიწყე ნაწილის სახელის, OEM-ის, SKU-ის ან VIN-ის ჩაწერა, ან აირჩიე კატეგორია.";
+  "დაიწყე ნაწილის სახელის, OEM-ის ან SKU-ის ჩაწერა, ან აირჩიე კატეგორია.";
 
 const normalizedSearchText = computed(() => searchText.value.trim());
 const quickCategories = computed(() => categories.value.slice(0, 5));
@@ -751,7 +747,7 @@ defineExpose({
                     ვიპოვეთ.
                   </p>
                   <p class="mt-2 text-sm leading-6 text-text-secondary">
-                    სცადე სხვა სიტყვა, OEM, SKU, VIN ან გადადი სრულ კატალოგში.
+                    სცადე სხვა სიტყვა, OEM ან SKU, ან გადადი სრულ კატალოგში.
                   </p>
 
                   <button
@@ -804,7 +800,7 @@ defineExpose({
             {{ mobileTriggerLabel }}
           </span>
           <span class="mt-0.5 block text-xs text-text-muted">
-            OEM, SKU ან VIN
+            OEM ან SKU
           </span>
         </span>
       </button>
@@ -831,7 +827,7 @@ defineExpose({
                   სწრაფი ძებნა
                 </p>
                 <p class="mt-1 text-sm text-text-secondary">
-                  ნაწილი, OEM, SKU ან VIN ერთ ველში
+                  ნაწილი, OEM ან SKU ერთ ველში
                 </p>
               </div>
 
@@ -1101,7 +1097,7 @@ defineExpose({
                 “{{ normalizedSearchText }}” შესაბამის პროდუქტებში ვერ ვიპოვეთ.
               </p>
               <p class="mt-2 text-sm leading-6 text-text-secondary">
-                სცადე სხვა სიტყვა, OEM, SKU, VIN ან აირჩიე კატეგორია ქვემოთ.
+                სცადე სხვა სიტყვა, OEM ან SKU, ან აირჩიე კატეგორია ქვემოთ.
               </p>
 
               <div class="mt-4 flex flex-wrap gap-2">

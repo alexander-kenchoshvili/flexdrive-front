@@ -60,13 +60,28 @@ export const buildRobotsTxt = ({
   allowIndexing,
   sitemapUrl,
 }: BuildRobotsTxtInput) => {
-  const lines = ["User-agent: *"];
+  const socialPreviewBots = [
+    "facebookexternalhit",
+    "Facebot",
+    "Twitterbot",
+    "LinkedInBot",
+    "TelegramBot",
+    "Discordbot",
+    "WhatsApp",
+  ];
+  const lines: string[] = [];
 
   if (!allowIndexing) {
+    for (const bot of socialPreviewBots) {
+      lines.push(`User-agent: ${bot}`, "Allow: /", "");
+    }
+
+    lines.push("User-agent: *");
     lines.push("Disallow: /");
     return lines.join("\n");
   }
 
+  lines.push("User-agent: *");
   lines.push("Allow: /");
 
   if (sitemapUrl) {

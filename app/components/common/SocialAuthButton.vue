@@ -126,6 +126,7 @@ const handleClick = () => {
 
     <BaseModal
       :show="showSecureBrowserModal"
+      aria-label="Google-ით შესვლის ინსტრუქცია"
       @close="closeSecureBrowserModal"
     >
       <template #header>

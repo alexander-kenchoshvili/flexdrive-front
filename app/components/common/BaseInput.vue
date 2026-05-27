@@ -42,6 +42,8 @@ const attrs = useAttrs();
 
 const uid = useId();
 const inputId = computed(() => props.id || props.name || `input-${uid}`);
+const errorId = computed(() => `${inputId.value}-error`);
+const hintId = computed(() => `${inputId.value}-hint`);
 const isPasswordVisible = ref(false);
 
 const isPasswordType = computed(() => props.type === "password");
@@ -80,13 +82,40 @@ const togglePasswordVisibility = () => {
   isPasswordVisible.value = !isPasswordVisible.value;
 };
 
+const passwordToggleLabel = computed(() =>
+  isPasswordVisible.value ? "პაროლის დამალვა" : "პაროლის ჩვენება",
+);
+
 const rootClass = computed(() => (attrs.class as any) ?? undefined);
 const rootStyle = computed(() => (attrs.style as any) ?? undefined);
+
+const forwardedDescribedBy = computed(() => {
+  const describedBy = attrs["aria-describedby"];
+  return typeof describedBy === "string" ? describedBy.trim() : "";
+});
+
+const inputDescribedBy = computed(() => {
+  const ids: string[] = [];
+
+  if (forwardedDescribedBy.value) {
+    ids.push(forwardedDescribedBy.value);
+  }
+
+  if (props.error) {
+    ids.push(errorId.value);
+  } else if (props.hint) {
+    ids.push(hintId.value);
+  }
+
+  return ids.join(" ") || undefined;
+});
 
 const inputAttrs = computed(() => {
   const cloned = { ...(attrs as Record<string, unknown>) };
   delete cloned.class;
   delete cloned.style;
+  delete cloned["aria-describedby"];
+  delete cloned["aria-invalid"];
   return cloned;
 });
 </script>
@@ -121,6 +150,8 @@ const inputAttrs = computed(() => {
         :autocomplete="autocomplete || undefined"
         :required="required"
         :disabled="disabled"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="inputDescribedBy"
         :class="inputClasses"
         v-bind="inputAttrs"
         @input="onInput"
@@ -130,8 +161,8 @@ const inputAttrs = computed(() => {
         v-if="shouldShowPasswordToggle"
         type="button"
         class="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-md p-0 leading-none text-text-muted transition-colors hover:bg-surface-2 hover:text-text-secondary focus-visible:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
-        :aria-label="isPasswordVisible ? 'Hide password' : 'Show password'"
-        :title="isPasswordVisible ? 'Hide password' : 'Show password'"
+        :aria-label="passwordToggleLabel"
+        :title="passwordToggleLabel"
         :disabled="disabled"
         @mousedown.prevent
         @click="togglePasswordVisibility"
@@ -140,11 +171,16 @@ const inputAttrs = computed(() => {
       </button>
     </div>
 
-    <p v-if="error" class="mt-2 text-sm font-medium text-error">
+    <p
+      v-if="error"
+      :id="errorId"
+      class="mt-2 text-sm font-medium text-error"
+    >
       {{ error }}
     </p>
     <p
       v-else-if="hint"
+      :id="hintId"
       class="mt-2 text-xs leading-5 text-text-muted"
     >
       {{ hint }}

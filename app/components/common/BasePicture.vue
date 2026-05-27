@@ -83,7 +83,7 @@ const mobileSrc = computed(() =>
 );
 
 const hasSource = computed(() => Boolean(desktopSrc.value));
-const altValue = computed(() => props.alt?.trim() || "Image");
+const altValue = computed(() => props.alt?.trim() || "");
 
 const imageClass = computed(() => {
   const fitClassMap: Record<ObjectFitMode, string> = {
