@@ -16,6 +16,7 @@ const {
   rejectOptionalCookies,
   closeCookiePreferences,
 } = useCookieConsent();
+const { isDark } = useTheme();
 
 const draft = reactive({
   preferences: false,
@@ -33,7 +34,7 @@ const optionalOptions: ConsentOption[] = [
   {
     key: "preferences",
     label: "პრეფერენციები",
-    description: "ინახავს დამატებით არჩევანებს, რომლებიც საიტის გამოყენებას გიმარტივებს.",
+    description: "ინახავს არჩევანს, რაც საიტის გამოყენებას ამარტივებს.",
   },
   {
     key: "functionality",
@@ -185,19 +186,28 @@ const switchThumbClass = (isEnabled: boolean) =>
   >
     <template #header>
       <div class="min-w-0">
-        <h2 class="upper text-xl font-extrabold leading-7 text-text-primary">
+        <h2
+          class="upper text-lg font-extrabold leading-6 text-text-primary sm:text-xl sm:leading-7"
+        >
           ქუქის პარამეტრები
         </h2>
       </div>
     </template>
 
-    <div class="max-h-[min(58dvh,420px)] space-y-2 overflow-y-auto pr-1">
+    <div
+      class="cookie-settings-scroll max-h-[min(46dvh,300px)] space-y-1.5 overflow-y-auto pr-2.5 sm:max-h-[min(58dvh,420px)] sm:space-y-2 sm:pr-3"
+      :class="{ 'cookie-settings-scroll-dark': isDark }"
+    >
       <div
-        class="flex items-center justify-between gap-3 rounded-[14px] border border-border-default bg-surface-2 p-3"
+        class="flex items-center justify-between gap-2.5 rounded-[12px] border border-border-default bg-surface-2 p-2.5 sm:gap-3 sm:rounded-[14px] sm:p-3"
       >
         <div class="min-w-0">
-          <p class="upper text-sm font-bold text-text-primary">აუცილებელი</p>
-          <p class="mt-1 text-xs leading-5 text-text-secondary">
+          <p class="upper text-[13px] font-bold text-text-primary sm:text-sm">
+            აუცილებელი
+          </p>
+          <p
+            class="mt-0.5 text-[11px] leading-4 text-text-secondary sm:mt-1 sm:text-xs sm:leading-5"
+          >
             ავტორიზაცია, კალათა, შეკვეთა და უსაფრთხოება.
           </p>
         </div>
@@ -207,10 +217,10 @@ const switchThumbClass = (isEnabled: boolean) =>
           role="switch"
           aria-checked="true"
           disabled
-          class="relative h-6 w-11 shrink-0 cursor-not-allowed rounded-full border border-accent-primary bg-accent-primary/20 opacity-80 transition-colors duration-200"
+          class="relative h-5 w-10 shrink-0 cursor-not-allowed rounded-full border border-accent-primary bg-accent-primary/20 opacity-80 transition-colors duration-200 sm:h-6 sm:w-11"
         >
           <span
-            class="absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200"
+            class="absolute left-1 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200 sm:h-4 sm:w-4"
             :class="switchThumbClass(true)"
           />
         </button>
@@ -219,13 +229,15 @@ const switchThumbClass = (isEnabled: boolean) =>
       <div
         v-for="option in optionalOptions"
         :key="option.key"
-        class="flex items-center justify-between gap-3 rounded-[14px] border border-border-default bg-surface-2 p-3 transition-colors hover:border-accent-primary/60"
+        class="flex items-center justify-between gap-2.5 rounded-[12px] border border-border-default bg-surface-2 p-2.5 transition-colors hover:border-accent-primary/60 sm:gap-3 sm:rounded-[14px] sm:p-3"
       >
         <div class="min-w-0">
-          <p class="upper text-sm font-bold text-text-primary">
+          <p class="upper text-[13px] font-bold text-text-primary sm:text-sm">
             {{ option.label }}
           </p>
-          <p class="mt-1 text-xs leading-5 text-text-secondary">
+          <p
+            class="mt-0.5 text-[11px] leading-4 text-text-secondary sm:mt-1 sm:text-xs sm:leading-5"
+          >
             {{ option.description }}
           </p>
         </div>
@@ -234,7 +246,7 @@ const switchThumbClass = (isEnabled: boolean) =>
           type="button"
           role="switch"
           :aria-checked="draft[option.key]"
-          class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          class="relative h-5 w-10 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary sm:h-6 sm:w-11"
           :class="
             draft[option.key]
               ? 'border-accent-primary bg-accent-primary/20'
@@ -243,7 +255,7 @@ const switchThumbClass = (isEnabled: boolean) =>
           @click="toggleOption(option.key)"
         >
           <span
-            class="absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200"
+            class="absolute left-1 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200 sm:h-4 sm:w-4"
             :class="switchThumbClass(draft[option.key])"
           />
         </button>
@@ -251,11 +263,12 @@ const switchThumbClass = (isEnabled: boolean) =>
     </div>
 
     <template #footer>
-      <div class="grid w-full gap-2 sm:grid-cols-3">
+      <div class="grid w-full grid-cols-3 gap-1.5 sm:gap-2">
         <BaseButton
           type="button"
           size="sm"
           :full-width="true"
+          class="!px-1.5 !text-[11px] sm:!px-3 sm:!text-sm"
           @click="acceptAllCookies"
         >
           დათანხმება
@@ -266,6 +279,7 @@ const switchThumbClass = (isEnabled: boolean) =>
           variant="secondary"
           size="sm"
           :full-width="true"
+          class="!px-1.5 !text-[11px] sm:!px-3 sm:!text-sm"
           @click="rejectOptionalCookies"
         >
           უარყოფა
@@ -276,6 +290,7 @@ const switchThumbClass = (isEnabled: boolean) =>
           variant="ghost"
           size="sm"
           :full-width="true"
+          class="!px-1.5 !text-[11px] sm:!px-3 sm:!text-sm"
           @click="savePreferences"
         >
           შენახვა
@@ -284,3 +299,45 @@ const switchThumbClass = (isEnabled: boolean) =>
     </template>
   </BaseModal>
 </template>
+
+<style scoped>
+.cookie-settings-scroll {
+  scrollbar-color: var(--border-muted) transparent;
+  scrollbar-width: thin;
+}
+
+.cookie-settings-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cookie-settings-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cookie-settings-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: var(--border-muted);
+  background-clip: content-box;
+}
+
+.cookie-settings-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-primary);
+}
+
+.cookie-settings-scroll-dark {
+  scrollbar-color: var(--accent-primary) transparent;
+}
+
+.cookie-settings-scroll-dark::-webkit-scrollbar-thumb {
+  background-color: color-mix(
+    in srgb,
+    var(--accent-primary) 70%,
+    var(--surface-3)
+  );
+}
+
+.cookie-settings-scroll-dark::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-hover);
+}
+</style>

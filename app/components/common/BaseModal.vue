@@ -163,7 +163,7 @@ onBeforeUnmount(() => {
           @keydown="handlePanelKeydown"
         >
           <div
-            class="flex items-start justify-between gap-4 border-b border-border-default pb-4"
+            class="flex items-center justify-between gap-4 border-b border-border-default pb-4"
           >
             <slot name="header">
               <h2
