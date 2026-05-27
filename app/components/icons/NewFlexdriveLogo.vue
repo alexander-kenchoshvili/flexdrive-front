@@ -300,7 +300,7 @@ const titleId = useId();
 }
 
 .new-flexdrive-logo[data-variant="on-dark"],
-:global(html.dark) .new-flexdrive-logo[data-variant="auto"] {
+html.dark .new-flexdrive-logo[data-variant="auto"] {
   --logo-green-darkest: #789b2f;
   --logo-green-shadow: #84a937;
   --logo-green-deep: #8ab23a;
