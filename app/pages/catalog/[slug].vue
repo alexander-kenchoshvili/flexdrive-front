@@ -683,7 +683,7 @@ const handleBuyNow = async () => {
               </p>
 
               <h1
-                class="title-under-xs mt-3 text-[30px] font-extrabold leading-tight text-text-primary md:text-[38px]"
+                class="title-under-xs upper mt-3 text-[30px] font-extrabold leading-tight text-text-primary md:text-[38px]"
               >
                 {{ productTitle }}
               </h1>
@@ -1036,7 +1036,7 @@ const handleBuyNow = async () => {
         >
           <div class="mb-6 flex flex-col gap-2">
             <h2
-              class="title-under-xs text-[28px] font-extrabold text-text-primary md:text-[32px]"
+              class="title-under-xs upper text-[28px] font-extrabold text-text-primary md:text-[32px]"
             >
               მსგავსი პროდუქტები
             </h2>

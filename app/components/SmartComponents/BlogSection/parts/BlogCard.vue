@@ -87,7 +87,7 @@ const pictureData = computed(() => {
 
       <p
         v-if="excerpt"
-        class="blog-card-excerpt mt-1.5 text-[13px] font-medium leading-5 text-text-secondary"
+        class="blog-card-excerpt mt-1.5 pb-[3px] text-[13px] font-medium leading-5 text-text-secondary"
       >
         {{ excerpt }}
       </p>
