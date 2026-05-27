@@ -11,7 +11,7 @@ const buildRobotsTxt = ({
 
   if (!allowIndexing) {
     lines.push("User-agent: *");
-    lines.push("Disallow:");
+    lines.push("Disallow: /");
     return lines.join("\n");
   }
 

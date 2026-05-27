@@ -54,3 +54,10 @@ Before production go-live:
 3. Keep `NUXT_PUBLIC_ALLOW_INDEXING=false` on staging forever.
 4. Verify backend `seo_noindex` values for public CMS pages.
 5. Add `sitemap.xml` in the sitemap task so `robots.txt` can advertise it.
+
+## Open Social Preview Follow-Up
+
+- Facebook Sharing Debugger currently returns `403` on the Vercel staging domain.
+- A temporary static `/meta-debug-test` route reproduced the same debugger result, so the issue was not isolated to homepage SSR, backend API calls, CMS content, DB access, or Open Graph metadata.
+- Keep staging noindexed and do not leave temporary diagnostic routes deployed.
+- Re-test Facebook/Messenger link preview after a real production domain or dedicated custom staging subdomain is connected to Vercel.

@@ -636,6 +636,14 @@ This file exists so the project context does not need to be re-explained in ever
 - Checkout/buy-now checkout continues to pass marketing consent to the backend so Meta CAPI purchase sending stays consent-aware.
 - Remaining operational check before paid ads/public launch: verify in GTM Preview that GA4 and Meta Pixel tags respect denied consent, especially that Meta Pixel does not fire from an unconditional All Pages trigger when tracking consent is denied.
 
+## Current SEO/Social Preview Follow-Up - 2026-05-27
+
+- Default SEO copy and default social preview image are configured through backend `SiteSettings` and frontend runtime fallbacks.
+- Staging `NUXT_PUBLIC_ALLOW_INDEXING` must remain `false`; staging pages should stay `noindex, nofollow`, and staging `robots.txt` should block indexing/crawling according to the current SEO matrix.
+- Facebook Sharing Debugger currently returns `403` for the Vercel staging domain even after direct browser/crawler-style requests return `200`. A temporary backend-free `/meta-debug-test` route reproduced the same Meta Debugger `403`, so the issue is not proven to be homepage SSR, backend, DB, CMS, or Open Graph metadata.
+- The temporary `/meta-debug-test` route was removed after diagnostics. Do not leave diagnostic social-preview routes deployed.
+- Revisit this before public launch when a real production domain or dedicated custom staging subdomain exists. Test Facebook/Messenger preview on the custom domain, then decide whether the issue is resolved by domain setup or needs Vercel/Meta support escalation.
+
 ### Production Analytics Launch Checklist
 
 - Frontend production env on Vercel must include `NUXT_PUBLIC_GTM_ID=GTM-MVNFL9TH` or the chosen production GTM container id, then production frontend must be redeployed.
