@@ -165,34 +165,42 @@ const titleId = useId();
       fill="#345103"
     />
     <path
+      class="logo-flex-shadow"
       d="M221.334 348.191L246.704 306.569L255.452 348.191H275.573L278.198 363.326H258.077L246.704 323.596L223.084 363.326H203.838L200.338 348.191H221.334Z"
       fill="#090A0A"
     />
     <path
+      class="logo-flex-shadow"
       d="M240.578 287.648L226.58 230.891L225.705 232.783L238.828 287.648H240.578Z"
       fill="#020203"
     />
     <path
+      class="logo-flex-face"
       d="M240.581 287.648L226.583 230.891H244.955L255.453 264.945L277.324 230.891H295.695L259.827 287.648L275.574 348.189H255.453L246.704 306.567L221.334 348.189H200.338L240.581 287.648Z"
       fill="#303234"
     />
     <path
+      class="logo-flex-shadow"
       d="M259.824 287.648L295.692 230.891L300.066 242.242L263.323 300.891L259.824 287.648Z"
       fill="#090A0A"
     />
     <path
+      class="logo-flex-face"
       d="M69.986 346.297L96.2308 230.891H110.228L90.107 319.81H130.349L124.225 346.297H69.986Z"
       fill="#303234"
     />
     <path
+      class="logo-flex-shadow"
       d="M72.6105 363.324L69.986 346.297H124.225L130.349 319.81L135.598 331.161L128.6 363.324H72.6105Z"
       fill="#111213"
     />
     <path
+      class="logo-flex-shadow"
       d="M110.227 230.891L90.1061 319.81H98.8544L115.476 242.242L110.227 230.891Z"
       fill="#111213"
     />
     <path
+      class="logo-flex-face"
       d="M0 346.297L16.6218 276.297H69.1117L58.6137 300.892H24.4953L14.8721 346.297H0Z"
       fill="#303234"
     />
@@ -202,6 +210,7 @@ const titleId = useId();
       fill="#0A0B0D"
     />
     <path
+      class="logo-flex-face"
       d="M18.371 257.379H19.2459L77.8596 255.487L86.608 229H30.6187L18.371 257.379Z"
       fill="#303234"
     />
@@ -268,8 +277,8 @@ const titleId = useId();
   --logo-neutral-face: #202629;
   --logo-neutral-plate: #5f676b;
   --logo-neutral-plate-alt: #6b7478;
-  --logo-flex-e-face: #2d3639;
-  --logo-flex-e-shadow: var(--logo-neutral-shadow);
+  --logo-flex-face: #303234;
+  --logo-flex-shadow: #0a0b0d;
   display: block;
 }
 
@@ -295,12 +304,12 @@ const titleId = useId();
   --logo-neutral-face: #202629;
   --logo-neutral-plate: #5f676b;
   --logo-neutral-plate-alt: #6b7478;
-  --logo-flex-e-face: #2d3639;
-  --logo-flex-e-shadow: var(--logo-neutral-shadow);
+  --logo-flex-face: #303234;
+  --logo-flex-shadow: #0a0b0d;
 }
 
 .new-flexdrive-logo[data-variant="on-dark"],
-html.dark .new-flexdrive-logo[data-variant="auto"] {
+:global(html.dark .new-flexdrive-logo[data-variant="auto"]) {
   --logo-green-darkest: #789b2f;
   --logo-green-shadow: #84a937;
   --logo-green-deep: #8ab23a;
@@ -322,8 +331,8 @@ html.dark .new-flexdrive-logo[data-variant="auto"] {
   --logo-neutral-face: #f7faf2;
   --logo-neutral-plate: #c6d0c2;
   --logo-neutral-plate-alt: #d3ddce;
-  --logo-flex-e-face: var(--logo-neutral-face);
-  --logo-flex-e-shadow: var(--logo-neutral-shadow);
+  --logo-flex-face: #f7faf2;
+  --logo-flex-shadow: #c7d1c0;
 }
 
 .new-flexdrive-logo [fill="#112000"],
@@ -426,15 +435,14 @@ html.dark .new-flexdrive-logo[data-variant="auto"] {
   fill: var(--logo-neutral-plate-alt);
 }
 
+.new-flexdrive-logo .logo-flex-face,
 .new-flexdrive-logo .logo-flex-e-face {
-  fill: var(--logo-flex-e-face);
+  fill: var(--logo-flex-face);
 }
 
-.new-flexdrive-logo .logo-flex-e-shadow {
-  fill: var(--logo-flex-e-shadow);
-}
-
+.new-flexdrive-logo .logo-flex-shadow,
+.new-flexdrive-logo .logo-flex-e-shadow,
 .new-flexdrive-logo .logo-flex-f-shadow {
-  fill: var(--logo-neutral-shadow-alt);
+  fill: var(--logo-flex-shadow);
 }
 </style>

@@ -23,6 +23,8 @@ const allowIndexing = parseBoolean(env.NUXT_PUBLIC_ALLOW_INDEXING, false);
 const shouldTrustLocalTls =
   !isProduction &&
   /^https:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(internalApiUrl);
+const themeInitScript =
+  "(function(){try{var d=document.documentElement;var m=document.cookie.match(/(?:^|;\\s*)theme=(light|dark)(?:;|$)/);var t=m?m[1]:null;if(!t&&window.localStorage){var s=window.localStorage.getItem('theme');if(s==='light'||s==='dark'){t=s;}}if(!t&&window.matchMedia){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();";
 
 export default defineNuxtConfig({
   devServer: {
@@ -96,8 +98,7 @@ export default defineNuxtConfig({
         {
           id: "theme-init",
           //@ts-ignore
-          children:
-            "(function(){try{var d=document.documentElement;var c=document.cookie.match(/(?:^|;\\s*)flexdrive_cookie_consent=([^;]+)(?:;|$)/);var p=false;if(c&&c[1]){try{var v=JSON.parse(decodeURIComponent(c[1]));p=!!(v&&v.version===1&&v.preferences===true);}catch(e){}}var m=p?document.cookie.match(/(?:^|;\\s*)theme=(light|dark)(?:;|$)/):null;var t=m?m[1]:null;if(!t&&window.matchMedia){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();",
+          children: themeInitScript,
         },
       ],
     },

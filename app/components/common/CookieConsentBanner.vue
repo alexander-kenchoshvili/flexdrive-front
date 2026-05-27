@@ -33,7 +33,7 @@ const optionalOptions: ConsentOption[] = [
   {
     key: "preferences",
     label: "პრეფერენციები",
-    description: "ინახავს პარამეტრებს, მაგალითად ვიზუალურ რეჟიმს.",
+    description: "ინახავს დამატებით არჩევანებს, რომლებიც საიტის გამოყენებას გიმარტივებს.",
   },
   {
     key: "functionality",

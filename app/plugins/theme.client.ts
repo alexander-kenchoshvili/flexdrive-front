@@ -21,17 +21,15 @@ const getSystemTheme = (): Theme => {
   return "light";
 };
 
-const resolveInitialTheme = (canUsePersistedTheme: boolean): Theme => {
-  if (canUsePersistedTheme) {
-    const cookieTheme = readThemeCookie();
-    if (cookieTheme) {
-      return cookieTheme;
-    }
+const resolveInitialTheme = (): Theme => {
+  const cookieTheme = readThemeCookie();
+  if (cookieTheme) {
+    return cookieTheme;
+  }
 
-    const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
-    if (isTheme(storedTheme)) {
-      return storedTheme;
-    }
+  const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
+  if (isTheme(storedTheme)) {
+    return storedTheme;
   }
 
   return getSystemTheme();
@@ -45,8 +43,7 @@ export default defineNuxtPlugin({
   name: "theme-init-client",
   enforce: "pre",
   setup(nuxtApp) {
-    const { preferencesConsentGranted } = useCookieConsent();
-    const initialTheme = resolveInitialTheme(preferencesConsentGranted.value);
+    const initialTheme = resolveInitialTheme();
     applyThemeClass(initialTheme);
 
     const themeState = useState<Theme>("theme", () => initialTheme);
@@ -56,12 +53,6 @@ export default defineNuxtPlugin({
       maxAge: THEME_COOKIE_MAX_AGE,
       sameSite: "lax",
     });
-
-    const clearPersistedTheme = () => {
-      themeCookie.value = undefined;
-      window.localStorage.removeItem(THEME_COOKIE_NAME);
-      document.cookie = `${THEME_COOKIE_NAME}=; Max-Age=0; path=/; SameSite=Lax`;
-    };
 
     const persistTheme = (theme: Theme) => {
       themeCookie.value = theme;
@@ -76,25 +67,9 @@ export default defineNuxtPlugin({
         themeState,
         (nextTheme) => {
           applyThemeClass(nextTheme);
-
-          if (preferencesConsentGranted.value) {
-            persistTheme(nextTheme);
-          }
+          persistTheme(nextTheme);
         },
         { flush: "sync", immediate: true },
-      );
-
-      watch(
-        preferencesConsentGranted,
-        (isGranted) => {
-          if (isGranted) {
-            persistTheme(themeState.value);
-            return;
-          }
-
-          clearPersistedTheme();
-        },
-        { immediate: true },
       );
     });
   },
