@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { XMarkIcon } from "@heroicons/vue/24/outline";
 import type { CookieConsentDraft } from "~/composables/useCookieConsent";
 
 type ConsentOption = {
@@ -26,7 +25,9 @@ const draft = reactive({
 
 const isHydrated = ref(false);
 const settingsOpen = ref(false);
-const previousBodyOverflow = ref<string | null>(null);
+const isSettingsModalOpen = computed(
+  () => isHydrated.value && shouldShowCookieBanner.value && settingsOpen.value,
+);
 
 const optionalOptions: ConsentOption[] = [
   {
@@ -67,31 +68,6 @@ watch(
 );
 
 watch(consent, syncDraft);
-
-watch(
-  () => shouldShowCookieBanner.value && settingsOpen.value,
-  (isModalOpen) => {
-    if (!import.meta.client) return;
-
-    if (isModalOpen) {
-      previousBodyOverflow.value = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return;
-    }
-
-    if (previousBodyOverflow.value !== null) {
-      document.body.style.overflow = previousBodyOverflow.value;
-      previousBodyOverflow.value = null;
-    }
-  },
-  { immediate: true },
-);
-
-onBeforeUnmount(() => {
-  if (!import.meta.client || previousBodyOverflow.value === null) return;
-
-  document.body.style.overflow = previousBodyOverflow.value;
-});
 
 onMounted(() => {
   isHydrated.value = true;
@@ -199,135 +175,112 @@ const switchThumbClass = (isEnabled: boolean) =>
         </div>
       </section>
     </Transition>
-
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <section
-        v-if="isHydrated && shouldShowCookieBanner && settingsOpen"
-        class="fixed inset-0 z-[80] flex items-end bg-black/65 px-3 py-3 backdrop-blur-[2px] sm:items-center sm:justify-center sm:p-4"
-        aria-label="ქუქიების პარამეტრები"
-      >
-        <div
-          class="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-default bg-[color:var(--surface)] text-text-primary shadow-[0_24px_80px_-42px_var(--shadow-color)]"
-        >
-          <div
-            class="flex shrink-0 items-center justify-between gap-3 p-4 pb-3 sm:p-5 sm:pb-3"
-          >
-            <div class="min-w-0">
-              <h2 class="upper text-xl font-extrabold leading-7">
-                ქუქის პარამეტრები
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border-default bg-surface-2 text-text-secondary transition-colors hover:border-accent-primary hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
-              aria-label="დახურვა"
-              @click="closeSettings"
-            >
-              <XMarkIcon class="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div class="min-h-0 space-y-2 overflow-y-auto px-4 pb-3 sm:px-5">
-            <div
-              class="flex items-center justify-between gap-3 rounded-[14px] border border-border-default bg-surface-2 p-3"
-            >
-              <div class="min-w-0">
-                <p class="upper text-sm font-bold text-text-primary">აუცილებელი</p>
-                <p class="mt-1 text-xs leading-5 text-text-secondary">
-                  ავტორიზაცია, კალათა, შეკვეთა და უსაფრთხოება.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                role="switch"
-                aria-checked="true"
-                disabled
-                class="relative h-6 w-11 shrink-0 cursor-not-allowed rounded-full border border-accent-primary bg-accent-primary/20 opacity-80 transition-colors duration-200"
-              >
-                <span
-                  class="absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200"
-                  :class="switchThumbClass(true)"
-                />
-              </button>
-            </div>
-
-            <div
-              v-for="option in optionalOptions"
-              :key="option.key"
-              class="flex items-center justify-between gap-3 rounded-[14px] border border-border-default bg-surface-2 p-3 transition-colors hover:border-accent-primary/60"
-            >
-              <div class="min-w-0">
-                <p class="upper text-sm font-bold text-text-primary">
-                  {{ option.label }}
-                </p>
-                <p class="mt-1 text-xs leading-5 text-text-secondary">
-                  {{ option.description }}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="draft[option.key]"
-                class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
-                :class="
-                  draft[option.key]
-                    ? 'border-accent-primary bg-accent-primary/20'
-                    : 'border-border-default bg-surface'
-                "
-                @click="toggleOption(option.key)"
-              >
-                <span
-                  class="absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200"
-                  :class="switchThumbClass(draft[option.key])"
-                />
-              </button>
-            </div>
-          </div>
-
-          <div
-            class="grid shrink-0 gap-2 border-t border-border-default bg-[color:var(--surface)] p-4 pt-3 sm:grid-cols-3 sm:p-5 sm:pt-3"
-          >
-            <BaseButton
-              type="button"
-              size="sm"
-              :full-width="true"
-              @click="acceptAllCookies"
-            >
-              დათანხმება
-            </BaseButton>
-
-            <BaseButton
-              type="button"
-              variant="secondary"
-              size="sm"
-              :full-width="true"
-              @click="rejectOptionalCookies"
-            >
-              უარყოფა
-            </BaseButton>
-
-            <BaseButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              :full-width="true"
-              @click="savePreferences"
-            >
-              შენახვა
-            </BaseButton>
-          </div>
-        </div>
-      </section>
-    </Transition>
   </Teleport>
+
+  <BaseModal
+    :show="isSettingsModalOpen"
+    aria-label="ქუქიების პარამეტრები"
+    close-label="დახურვა"
+    @close="closeSettings"
+  >
+    <template #header>
+      <div class="min-w-0">
+        <h2 class="upper text-xl font-extrabold leading-7 text-text-primary">
+          ქუქის პარამეტრები
+        </h2>
+      </div>
+    </template>
+
+    <div class="max-h-[min(58dvh,420px)] space-y-2 overflow-y-auto pr-1">
+      <div
+        class="flex items-center justify-between gap-3 rounded-[14px] border border-border-default bg-surface-2 p-3"
+      >
+        <div class="min-w-0">
+          <p class="upper text-sm font-bold text-text-primary">აუცილებელი</p>
+          <p class="mt-1 text-xs leading-5 text-text-secondary">
+            ავტორიზაცია, კალათა, შეკვეთა და უსაფრთხოება.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked="true"
+          disabled
+          class="relative h-6 w-11 shrink-0 cursor-not-allowed rounded-full border border-accent-primary bg-accent-primary/20 opacity-80 transition-colors duration-200"
+        >
+          <span
+            class="absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200"
+            :class="switchThumbClass(true)"
+          />
+        </button>
+      </div>
+
+      <div
+        v-for="option in optionalOptions"
+        :key="option.key"
+        class="flex items-center justify-between gap-3 rounded-[14px] border border-border-default bg-surface-2 p-3 transition-colors hover:border-accent-primary/60"
+      >
+        <div class="min-w-0">
+          <p class="upper text-sm font-bold text-text-primary">
+            {{ option.label }}
+          </p>
+          <p class="mt-1 text-xs leading-5 text-text-secondary">
+            {{ option.description }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="draft[option.key]"
+          class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          :class="
+            draft[option.key]
+              ? 'border-accent-primary bg-accent-primary/20'
+              : 'border-border-default bg-surface'
+          "
+          @click="toggleOption(option.key)"
+        >
+          <span
+            class="absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-accent-primary transition-transform duration-200"
+            :class="switchThumbClass(draft[option.key])"
+          />
+        </button>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="grid w-full gap-2 sm:grid-cols-3">
+        <BaseButton
+          type="button"
+          size="sm"
+          :full-width="true"
+          @click="acceptAllCookies"
+        >
+          დათანხმება
+        </BaseButton>
+
+        <BaseButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          :full-width="true"
+          @click="rejectOptionalCookies"
+        >
+          უარყოფა
+        </BaseButton>
+
+        <BaseButton
+          type="button"
+          variant="ghost"
+          size="sm"
+          :full-width="true"
+          @click="savePreferences"
+        >
+          შენახვა
+        </BaseButton>
+      </div>
+    </template>
+  </BaseModal>
 </template>
