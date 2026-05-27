@@ -72,12 +72,17 @@ export default defineNuxtPlugin({
       themeState.value = initialTheme;
       applyThemeClass(initialTheme);
 
-      if (preferencesConsentGranted.value && !isTheme(themeCookie.value)) {
-        const storedTheme = window.localStorage.getItem(THEME_COOKIE_NAME);
-        if (isTheme(storedTheme)) {
-          themeCookie.value = storedTheme;
-        }
-      }
+      watch(
+        themeState,
+        (nextTheme) => {
+          applyThemeClass(nextTheme);
+
+          if (preferencesConsentGranted.value) {
+            persistTheme(nextTheme);
+          }
+        },
+        { flush: "sync", immediate: true },
+      );
 
       watch(
         preferencesConsentGranted,

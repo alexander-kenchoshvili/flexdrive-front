@@ -15,20 +15,12 @@ const props = withDefaults(
 );
 
 const titleId = useId();
-const { isDark } = useTheme();
-const resolvedVariant = computed(() => {
-  if (props.variant !== "auto") {
-    return props.variant;
-  }
-
-  return isDark.value ? "on-dark" : "on-light";
-});
 </script>
 
 <template>
   <svg
     class="new-flexdrive-logo"
-    :data-variant="resolvedVariant"
+    :data-variant="props.variant"
     width="650"
     height="369"
     viewBox="0 0 650 369"
@@ -307,7 +299,8 @@ const resolvedVariant = computed(() => {
   --logo-flex-e-shadow: var(--logo-neutral-shadow);
 }
 
-.new-flexdrive-logo[data-variant="on-dark"] {
+.new-flexdrive-logo[data-variant="on-dark"],
+:global(html.dark) .new-flexdrive-logo[data-variant="auto"] {
   --logo-green-darkest: #789b2f;
   --logo-green-shadow: #84a937;
   --logo-green-deep: #8ab23a;
