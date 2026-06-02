@@ -101,6 +101,7 @@ await loadFeaturedProducts();
 
 <template>
   <section
+    v-if="productsPending || productsError || featuredProducts.length"
     class="overflow-hidden border-y border-border-default bg-bg-primary py-8 md:py-10 lg:py-12"
   >
     <div class="container-fluid">
@@ -149,13 +150,6 @@ await loadFeaturedProducts();
         class="rounded-lg border border-error/35 bg-surface p-4 text-center text-[14px] font-medium leading-5 text-text-secondary"
       >
         გამორჩეული პროდუქტების ჩატვირთვა ვერ მოხერხდა.
-      </div>
-
-      <div
-        v-else-if="!featuredProducts.length"
-        class="rounded-lg border border-dashed border-border-default bg-surface p-4 text-center text-[14px] font-medium leading-5 text-text-muted"
-      >
-        ამ ეტაპზე გამორჩეული პროდუქტები არ არის.
       </div>
 
       <div v-else>
