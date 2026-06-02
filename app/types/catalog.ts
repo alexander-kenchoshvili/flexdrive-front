@@ -71,6 +71,8 @@ export interface CatalogProductListItem {
   price: string;
   old_price: string | null;
   on_sale: boolean;
+  price_available: boolean;
+  purchasable: boolean;
   is_new: boolean;
   is_featured: boolean;
   is_universal_fitment: boolean;
@@ -78,7 +80,9 @@ export interface CatalogProductListItem {
   brand: CatalogBrandRef | null;
   category: CatalogCategoryRef;
   placement: string;
+  placement_label?: string;
   side: string;
+  side_label?: string;
   primary_image: CatalogImageAsset;
   compatibility: CatalogProductCompatibility | null;
   seo?: SeoPayload | null;
@@ -216,6 +220,8 @@ export interface CatalogProductCardData {
   placement?: string;
   side?: string;
   price: number;
+  priceAvailable?: boolean;
+  purchasable?: boolean;
   oldPrice?: number | null;
   image?: CatalogImageAsset | null;
   isNew?: boolean;
@@ -232,6 +238,8 @@ export interface CatalogProductSuggestion {
   sku: string;
   manufacturer_part_number: string;
   price: string;
+  price_available?: boolean;
+  purchasable?: boolean;
   in_stock: boolean;
   brand: CatalogBrandRef | null;
   category: CatalogCategoryRef;

@@ -2,6 +2,7 @@
 import {
   ArrowRightIcon,
   CheckCircleIcon,
+  ExclamationCircleIcon,
   TagIcon,
   XCircleIcon,
 } from "@heroicons/vue/20/solid";
@@ -32,6 +33,13 @@ const hasDiscount = computed(
   () =>
     typeof props.product.oldPrice === "number" &&
     props.product.oldPrice > props.product.price,
+);
+const priceAvailable = computed(() => props.product.priceAvailable !== false);
+const formattedPrice = computed(() => props.product.price.toFixed(2));
+const formattedOldPrice = computed(() =>
+  typeof props.product.oldPrice === "number"
+    ? props.product.oldPrice.toFixed(2)
+    : "",
 );
 
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
@@ -67,6 +75,14 @@ const badge = computed(() => {
 });
 
 const availability = computed(() => {
+  if (!priceAvailable.value) {
+    return {
+      label: "ფასი დასაზუსტებელია",
+      class: "border-warning/35 bg-surface text-warning",
+      icon: ExclamationCircleIcon,
+    };
+  }
+
   if (props.product.inStock === false) {
     return {
       label: "არ არის მარაგში",
@@ -81,13 +97,9 @@ const availability = computed(() => {
     icon: CheckCircleIcon,
   };
 });
-const productCode = computed(
-  () => props.product.manufacturerPartNumber || props.product.sku || "",
-);
 const productMetaItems = computed(() =>
   [
     props.product.brand ? `ბრენდი: ${props.product.brand}` : "",
-    productCode.value ? `კოდი: ${productCode.value}` : "",
   ].filter(Boolean),
 );
 const analyticsItem = computed(() => ({
@@ -246,13 +258,13 @@ const compatibilityBadge = computed(() => {
         <span
           class="min-w-0 text-[20px] font-extrabold leading-none text-accent-primary sm:text-[22px]"
         >
-          {{ product.price }} GEL
+          {{ formattedPrice }} GEL
         </span>
         <span
           v-if="hasDiscount && typeof product.oldPrice === 'number'"
           class="shrink-0 text-[12px] font-semibold leading-4 text-text-muted line-through sm:text-[13px]"
         >
-          {{ product.oldPrice }} GEL
+          {{ formattedOldPrice }} GEL
         </span>
       </div>
 

@@ -1,0 +1,476 @@
+{
+  "exported_at": "2026-05-29 22:58:06",
+  "api_meta": {
+    "page": 1,
+    "limit": 1000,
+    "count": 1000,
+    "synced_at": "2026-05-29 19:27:19"
+  },
+  "full_count": 3782,
+  "full_pages": [
+    1000,
+    1000,
+    1000,
+    782
+  ],
+  "in_stock_count": 1304,
+  "in_stock_pages": [
+    1000,
+    304
+  ],
+  "original_text_count": 940,
+  "subaru_original_exact_count": 938,
+  "qty_positive_count": 1304,
+  "price_set_count": 1731,
+  "usable_qty_and_price_count": 1276,
+  "missing_empty": {
+    "code": {
+      "missing": 0,
+      "empty": 0
+    },
+    "oem": {
+      "missing": 0,
+      "empty": 1602
+    },
+    "name": {
+      "missing": 0,
+      "empty": 0
+    },
+    "brand": {
+      "missing": 0,
+      "empty": 0
+    },
+    "model": {
+      "missing": 0,
+      "empty": 0
+    },
+    "generation": {
+      "missing": 0,
+      "empty": 574
+    },
+    "manufacturer": {
+      "missing": 0,
+      "empty": 16
+    },
+    "qty": {
+      "missing": 0,
+      "empty": 0
+    },
+    "dealer_price": {
+      "missing": 0,
+      "empty": 2051
+    },
+    "currency": {
+      "missing": 0,
+      "empty": 0
+    }
+  },
+  "top_manufacturers": [
+    [
+      "TYG",
+      1123
+    ],
+    [
+      "Suo Lun",
+      1098
+    ],
+    [
+      "Subaru Original",
+      938
+    ],
+    [
+      "FSL",
+      203
+    ],
+    [
+      "TYC",
+      110
+    ],
+    [
+      "JPN Parts",
+      58
+    ],
+    [
+      "AKKO STAR",
+      56
+    ],
+    [
+      "AI PU ST HK",
+      56
+    ],
+    [
+      "AJSparts",
+      37
+    ],
+    [
+      "Subaru",
+      19
+    ],
+    [
+      "",
+      16
+    ],
+    [
+      "Valvoline",
+      14
+    ],
+    [
+      "Gordon",
+      12
+    ],
+    [
+      "Amsoil",
+      12
+    ],
+    [
+      "TYGP",
+      11
+    ],
+    [
+      "Ehome",
+      6
+    ],
+    [
+      "UFI",
+      5
+    ],
+    [
+      "CTR",
+      2
+    ],
+    [
+      "MOSOL",
+      1
+    ],
+    [
+      "SKIPPER",
+      1
+    ]
+  ],
+  "top_brands": [
+    [
+      "Subaru",
+      1201
+    ],
+    [
+      "Subaru - Original",
+      938
+    ],
+    [
+      "ელექტრო საქონელი",
+      522
+    ],
+    [
+      "Volkswagen",
+      327
+    ],
+    [
+      "Hyundai",
+      117
+    ],
+    [
+      "Toyota_Old",
+      104
+    ],
+    [
+      "Toyota",
+      91
+    ],
+    [
+      "Honda",
+      85
+    ],
+    [
+      "KIA",
+      82
+    ],
+    [
+      "Jeep",
+      74
+    ],
+    [
+      "Mazda",
+      58
+    ],
+    [
+      "ზეთები",
+      35
+    ],
+    [
+      "Audi",
+      31
+    ],
+    [
+      "Mercedes",
+      27
+    ],
+    [
+      "BMW",
+      26
+    ],
+    [
+      "Lexus",
+      23
+    ],
+    [
+      "Ford",
+      17
+    ],
+    [
+      "AutoService",
+      15
+    ],
+    [
+      "Tesla",
+      6
+    ],
+    [
+      "Mitsubishi",
+      3
+    ]
+  ],
+  "original_samples": [
+    {
+      "code": "001480",
+      "oem": "",
+      "name": "კაპოტი",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001481",
+      "oem": "",
+      "name": "ცხაურა",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001482",
+      "oem": "",
+      "name": "წინა კრილო (LH)",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001483",
+      "oem": "",
+      "name": "წინა კრილო (RH)",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001484",
+      "oem": "",
+      "name": "წინა ბამპერი",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001485",
+      "oem": "",
+      "name": "ფარი (LH)",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001486",
+      "oem": "",
+      "name": "ფარი (RH)",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001487",
+      "oem": "",
+      "name": "სარკე (LH)",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001488",
+      "oem": "",
+      "name": "სარკე (RH)",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    },
+    {
+      "code": "001489",
+      "oem": "",
+      "name": "რადიატორების ზბორი",
+      "brand": "Subaru - Original",
+      "model": "Subaru - Original",
+      "generation": "XV 13-17",
+      "manufacturer": "Subaru Original",
+      "qty": 0,
+      "dealer_price": null,
+      "currency": "GEL"
+    }
+  ],
+  "sample": [
+    {
+      "code": "000010",
+      "oem": "84927FJ010",
+      "name": "ტუმანიკის სამაგრი (RH)",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-15",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 40.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000011",
+      "oem": "84927FJ020",
+      "name": "ტუმანიკის სამაგრი (LH)",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-15",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 50.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000012",
+      "oem": "84001FJ080",
+      "name": "წინა ფარი (LH)",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 200.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000013",
+      "oem": "84001FJ090",
+      "name": "წინა ფარი (RH)",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 200.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000014",
+      "oem": "84001FJ090BK",
+      "name": "წინა ფარი (LH) შავი",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 250.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000015",
+      "oem": "",
+      "name": "წინა ფარი (RH) შავი",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 1,
+      "dealer_price": 250.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000016",
+      "oem": "57704FJ040",
+      "name": "უკანა ბამპერი",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 270.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000017",
+      "oem": "91122FJ020",
+      "name": "ცხაურა (სტანდარტული)",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 320.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000018",
+      "oem": "84913FG420",
+      "name": "სანისლე უკანა სტოპი",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 70.0,
+      "currency": "GEL"
+    },
+    {
+      "code": "000019",
+      "oem": "J1010FJ010V2",
+      "name": "ცხაურა (შავი)",
+      "brand": "Subaru",
+      "model": "XV",
+      "generation": "XV 12-17",
+      "manufacturer": "Suo Lun",
+      "qty": 0,
+      "dealer_price": 450.0,
+      "currency": "GEL"
+    }
+  ]
+}

@@ -636,6 +636,36 @@ This file exists so the project context does not need to be re-explained in ever
 - Checkout/buy-now checkout continues to pass marketing consent to the backend so Meta CAPI purchase sending stays consent-aware.
 - Remaining operational check before paid ads/public launch: verify in GTM Preview that GA4 and Meta Pixel tags respect denied consent, especially that Meta Pixel does not fire from an unconditional All Pages trigger when tracking consent is denied.
 
+## Current Supplier API Import Direction - 2026-05-29
+
+- Cross Motors supplier data is expected through a REST API, not Google Sheets, for the real supplier integration. Keep the earlier Google Sheets importer available as a fallback/testing path unless the user explicitly asks to remove it.
+- The API fields observed so far are: `code`, `oem`, `name`, `brand`, `model`, `generation`, `manufacturer`, `qty`, `dealer_price`, and `currency`.
+- Temporary 2026-06-02 supplier feed decision: do not send the `in_stock_only` query parameter from the Cross Motors importer. The supplier API currently defaults to in-stock non-original parts when the parameter is omitted, while `in_stock_only=false` returns out-of-stock rows mixed with original parts. Until the supplier fixes a clean all-non-original feed, development/staging imports should use the omitted-parameter default feed.
+- Treat supplier API `brand` as the vehicle make, supplier API `model` as the vehicle model, and supplier API `manufacturer` as the part manufacturer/product brand. Do not map supplier `brand` directly to product brand.
+- The site should never show original/OEM-used original supplier parts in the storefront. Exclude rows such as `manufacturer = Subaru Original` or `brand = Subaru - Original` from storefront-visible products.
+- For development and staging, show all non-original products even when `dealer_price` is missing, so the business team can review data quality. Missing supplier price should render as a placeholder customer price such as `0.00 GEL` until the business decides a stricter rule.
+- Longer term before production, revisit missing-price behavior. A safer production rule may be to keep non-original products with no `dealer_price` in review/draft or hide purchase actions until a valid supplier price exists.
+- Non-original out-of-stock products can remain visible as out of stock when they have enough product data. They must not be purchasable while `qty <= 0`.
+- Production stock-sync risk to resolve before real launch: supplier import currently overwrites local product stock from the supplier feed. Before production orders, define how imports interact with local pending orders, stock reservations, completed orders, cancellations, and retries so a later supplier sync cannot accidentally erase locally reserved/sold quantities or make unavailable stock purchasable again.
+- Normalized import mapping should keep raw supplier data for audit/debugging and derive clean fields:
+  - `code` -> supplier code and stable SKU, e.g. `CM-000015`.
+  - `oem` -> manufacturer/OEM part number when present.
+  - `name` -> product name and source text for placement/side/category parsing.
+  - `manufacturer` -> product brand/part manufacturer.
+  - `brand` -> vehicle make.
+  - `model` -> vehicle model.
+  - `generation` -> raw generation plus parsed `year_from`/`year_to` where reliable.
+  - `dealer_price` -> supplier price.
+  - `qty` -> stock quantity.
+- Generation parsing must support multiple observed formats, including `XV 12-17`, `Crosstrek 18-`, `RAV4 2013-2018`, `K5 2021-`, `RAV-4 '13-'18`, and single-year values like `Outback 23`. Unknown non-empty generation formats must be reported in dry-run/import diagnostics instead of silently ignored.
+- Name parsing should derive side and placement conservatively:
+  - `(LH)` -> left.
+  - `(RH)` -> right.
+  - Georgian words like `წინა`, `უკანა`, `ზედა`, `ქვედა`, `შიდა`, `გარე` -> placement labels.
+- Store normalized enum/internal values consistently for code stability where backend models require values like `front`, `rear`, `left`, and `right`, but expose Georgian labels in frontend/API presentation such as `წინა`, `უკანა`, `მარცხენა`, and `მარჯვენა`.
+- Category assignment should be rule-based from product name where possible, with an explicit review/uncategorized fallback for unknown cases. Do not let category parsing failures corrupt product data.
+- Import tooling should support dry-run diagnostics before commit. Diagnostics should include total rows, excluded original rows, non-original rows, missing prices, missing generation, unknown generation formats, missing manufacturer, unknown category guesses, and visibility/purchasability counts.
+
 ## Current SEO/Social Preview Follow-Up - 2026-05-27
 
 - Default SEO copy and default social preview image are configured through backend `SiteSettings` and frontend runtime fallbacks.

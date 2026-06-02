@@ -155,6 +155,7 @@ const productManufacturerPartNumber = computed(() =>
 const productBrand = computed(() => sanitizeText(product.value?.brand?.name));
 
 const priceValue = computed(() => Number(product.value?.price || 0));
+const priceAvailable = computed(() => product.value?.price_available !== false);
 const oldPriceValue = computed(() =>
   product.value?.old_price ? Number(product.value.old_price) : null,
 );
@@ -179,22 +180,36 @@ const remainingAddableQuantity = computed(() =>
   Math.max(0, maxSelectableQuantity.value - quantityAlreadyInCart.value),
 );
 const hasRemainingStockForCart = computed(
-  () => Boolean(product.value?.in_stock) && remainingAddableQuantity.value > 0,
+  () =>
+    Boolean(product.value?.in_stock) &&
+    priceAvailable.value &&
+    remainingAddableQuantity.value > 0,
 );
-const hasStockForBuyNow = computed(() => Boolean(product.value?.in_stock));
+const hasStockForBuyNow = computed(
+  () => Boolean(product.value?.in_stock) && priceAvailable.value,
+);
 const canAddSelectedQuantityToCart = computed(
   () =>
     hasRemainingStockForCart.value &&
     selectedQuantity.value <= remainingAddableQuantity.value,
 );
 const canDecreaseQuantity = computed(
-  () => Boolean(product.value?.in_stock) && selectedQuantity.value > 1,
+  () =>
+    Boolean(product.value?.in_stock) &&
+    priceAvailable.value &&
+    selectedQuantity.value > 1,
 );
 const canIncreaseQuantity = computed(
   () =>
     Boolean(product.value?.in_stock) &&
+    priceAvailable.value &&
     selectedQuantity.value < maxSelectableQuantity.value,
 );
+const productPurchaseLabel = computed(() => {
+  if (!priceAvailable.value) return "ფასი დასაზუსტებელია";
+  if (!product.value?.in_stock) return "მარაგში არ არის";
+  return "";
+});
 const discountPercent = computed(() => {
   if (!hasDiscount.value || !oldPriceValue.value) return null;
   return Math.round(
@@ -366,6 +381,8 @@ const relatedProducts = computed<CatalogProductCardData[]>(() =>
     category: item.category?.name,
     brand: item.brand?.name,
     price: Number(item.price),
+    priceAvailable: item.price_available,
+    purchasable: item.purchasable,
     oldPrice: item.old_price ? Number(item.old_price) : null,
     image: item.primary_image,
     isNew: item.is_new,
@@ -434,7 +451,7 @@ const productSchema = computed(() => {
     description: productSeoDescription.value,
     image: productSeoImage.value,
     sku: productSku.value || undefined,
-    price: priceValue.value,
+    price: priceAvailable.value ? priceValue.value : null,
     currency: "GEL",
     inStock: Boolean(product.value.in_stock),
     brandName: siteName.value,
@@ -508,7 +525,7 @@ const decrementQuantity = () => {
 };
 
 const handleAddToCart = async () => {
-  if (!product.value || !product.value.in_stock) return;
+  if (!product.value || !product.value.in_stock || !priceAvailable.value) return;
 
   if (remainingAddableQuantity.value <= 0) {
     cartFeedback.value =
@@ -699,12 +716,20 @@ const handleBuyNow = async () => {
                 <span
                   :class="[
                     'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
-                    product.in_stock
+                    !priceAvailable
+                      ? 'border-warning/30 bg-warning/10 text-warning'
+                      : product.in_stock
                       ? 'border-success/30 bg-success/10 text-success'
                       : 'border-warning/30 bg-warning/10 text-warning',
                   ]"
                 >
-                  {{ product.in_stock ? "მარაგშია" : "მარაგში არ არის" }}
+                  {{
+                    !priceAvailable
+                      ? "ფასი დასაზუსტებელია"
+                      : product.in_stock
+                        ? "მარაგშია"
+                        : "მარაგში არ არის"
+                  }}
                 </span>
 
                 <span
@@ -746,9 +771,13 @@ const handleBuyNow = async () => {
                   </span>
                 </div>
 
-                <p class="mt-3 text-sm text-text-secondary">
+                <p v-if="priceAvailable" class="mt-3 text-sm text-text-secondary">
                   დაამატე პროდუქტი კალათაში ან დაგვიკავშირდი, თუ დამატებითი
                   კონსულტაცია გჭირდება.
+                </p>
+                <p v-else class="mt-3 text-sm text-warning">
+                  ფასი მომწოდებელთან დასაზუსტებელია. პროდუქტი ჩანს კატალოგში,
+                  მაგრამ შეძენა დროებით გამორთულია.
                 </p>
               </div>
 
@@ -823,23 +852,29 @@ const handleBuyNow = async () => {
                 </div>
 
                 <p
-                  v-if="remainingAddableQuantity < 1"
+                  v-if="priceAvailable && remainingAddableQuantity < 1"
                   class="text-sm text-warning"
                 >
                   ამ პროდუქტის მთელი ხელმისაწვდომი რაოდენობა უკვე გაქვს კალათაში.
                 </p>
 
                 <p
-                  v-else-if="quantityAlreadyInCart > 0"
+                  v-else-if="priceAvailable && quantityAlreadyInCart > 0"
                   class="text-sm text-text-secondary"
                 >
                   კალათაში უკვე გაქვს {{ quantityAlreadyInCart }} ცალი. დამატებით
                   შეგიძლია მაქსიმუმ {{ remainingAddableQuantity }} ცალი.
                 </p>
 
-                <p v-if="product.in_stock" class="text-sm text-text-secondary">
+                <p
+                  v-if="product.in_stock && priceAvailable"
+                  class="text-sm text-text-secondary"
+                >
                   სწრაფი ყიდვა იყენებს მიმდინარე მარაგს და შეგიძლია შეიძინო
                   მაქსიმუმ {{ maxSelectableQuantity }} ცალი.
+                </p>
+                <p v-else-if="!priceAvailable" class="text-sm text-warning">
+                  ფასი დასაზუსტებელია, ამიტომ ყიდვა დროებით გამორთულია.
                 </p>
                 <p v-else class="text-sm text-warning">
                   პროდუქტი ამჟამად მარაგში არ არის.
@@ -856,11 +891,11 @@ const handleBuyNow = async () => {
                   full-width
                   @click="handleBuyNow"
                 >
-                  {{ product.in_stock ? "ახლავე ყიდვა" : "მარაგში არ არის" }}
+                  {{ productPurchaseLabel || "ახლავე ყიდვა" }}
                 </BaseButton>
 
                 <BaseButton
-                  v-if="product.in_stock"
+                  v-if="product.in_stock && priceAvailable"
                   type="button"
                   variant="secondary"
                   class="px-6 py-3.5 text-sm upper"
@@ -869,7 +904,7 @@ const handleBuyNow = async () => {
                   full-width
                   @click="handleAddToCart"
                 >
-                  {{ product.in_stock ? "კალათაში დამატება" : "მარაგში არ არის" }}
+                  კალათაში დამატება
                 </BaseButton>
               </div>
 
@@ -1101,17 +1136,17 @@ const handleBuyNow = async () => {
             variant="primary"
             :class="[
               'product-mobile-buy-button w-full !p-0 text-[12px] upper sm:text-sm',
-              product.in_stock ? '' : 'col-span-2',
+              product.in_stock && priceAvailable ? '' : 'col-span-2',
             ]"
             :loading="buyNowPending"
             :disabled="!hasStockForBuyNow"
             @click="handleBuyNow"
           >
-            {{ product.in_stock ? "ახლავე ყიდვა" : "მარაგში არ არის" }}
+            {{ productPurchaseLabel || "ახლავე ყიდვა" }}
           </BaseButton>
 
           <BaseButton
-            v-if="product.in_stock"
+            v-if="product.in_stock && priceAvailable"
             type="button"
             variant="secondary"
             class="product-mobile-cart-button w-full !p-0 text-[12px] upper sm:text-sm"

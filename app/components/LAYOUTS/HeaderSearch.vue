@@ -307,6 +307,24 @@ const goToCategory = async (category: CatalogCategoryItem) => {
   await router.push(buildCatalogCategoryPath(category.slug));
 };
 
+const suggestionPriceLabel = (suggestion: CatalogProductSuggestion) => {
+  const price = Number(suggestion.price || 0);
+  return Number.isFinite(price) ? price.toFixed(2) : "0.00";
+};
+const suggestionStatusLabel = (suggestion: CatalogProductSuggestion) => {
+  if (suggestion.price_available === false) return "ფასი დასაზუსტებელია";
+  return suggestion.in_stock ? "მარაგშია" : "არ არის";
+};
+const suggestionStatusClass = (suggestion: CatalogProductSuggestion) => {
+  if (suggestion.price_available === false) {
+    return "border-warning/20 bg-warning/10 text-warning";
+  }
+
+  return suggestion.in_stock
+    ? "border-success/20 bg-success/10 text-success"
+    : "border-warning/20 bg-warning/10 text-warning";
+};
+
 const handleInputKeydown = async (event: KeyboardEvent) => {
   if (event.key === "Escape") {
     closeAllSearchSurfaces();
@@ -681,17 +699,9 @@ defineExpose({
                           </p>
                           <span
                             class="inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold"
-                            :class="
-                              suggestion.in_stock
-                                ? 'border-success/20 bg-success/10 text-success'
-                                : 'border-warning/20 bg-warning/10 text-warning'
-                            "
+                            :class="suggestionStatusClass(suggestion)"
                           >
-                            {{
-                              suggestion.in_stock
-                                ? "მარაგშია"
-                                : "არ არის მარაგში"
-                            }}
+                            {{ suggestionStatusLabel(suggestion) }}
                           </span>
                         </div>
                         <p class="mt-1 text-xs text-text-muted">
@@ -701,7 +711,7 @@ defineExpose({
 
                       <div class="shrink-0 text-right">
                         <p class="text-sm font-bold text-accent-primary">
-                          {{ suggestion.price }} GEL
+                          {{ suggestionPriceLabel(suggestion) }} GEL
                         </p>
                         <p
                           class="mt-1 text-xs text-text-muted transition-colors duration-200 group-hover:text-accent-primary"
@@ -1051,19 +1061,15 @@ defineExpose({
                     {{ suggestion.category.name }}
                   </p>
                   <p class="mt-2 text-sm font-bold text-accent-primary">
-                    {{ suggestion.price }} GEL
+                    {{ suggestionPriceLabel(suggestion) }} GEL
                   </p>
                 </div>
 
                 <span
                   class="inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold"
-                  :class="
-                    suggestion.in_stock
-                      ? 'border-success/20 bg-success/10 text-success'
-                      : 'border-warning/20 bg-warning/10 text-warning'
-                  "
+                  :class="suggestionStatusClass(suggestion)"
                 >
-                  {{ suggestion.in_stock ? "მარაგშია" : "არ არის" }}
+                  {{ suggestionStatusLabel(suggestion) }}
                 </span>
               </button>
 

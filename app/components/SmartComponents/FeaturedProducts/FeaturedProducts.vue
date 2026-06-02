@@ -42,6 +42,8 @@ const featuredProducts = computed<CatalogProductCardData[]>(() => {
     subtitle: item.short_description,
     category: item.category?.name,
     price: Number(item.price),
+    priceAvailable: item.price_available,
+    purchasable: item.purchasable,
     oldPrice: item.old_price ? Number(item.old_price) : null,
     image: item.primary_image,
     isNew: item.is_new,
