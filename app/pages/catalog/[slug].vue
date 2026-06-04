@@ -866,17 +866,10 @@ const handleBuyNow = async () => {
                   შეგიძლია მაქსიმუმ {{ remainingAddableQuantity }} ცალი.
                 </p>
 
-                <p
-                  v-if="product.in_stock && priceAvailable"
-                  class="text-sm text-text-secondary"
-                >
-                  სწრაფი ყიდვა იყენებს მიმდინარე მარაგს და შეგიძლია შეიძინო
-                  მაქსიმუმ {{ maxSelectableQuantity }} ცალი.
-                </p>
-                <p v-else-if="!priceAvailable" class="text-sm text-warning">
+                <p v-if="!priceAvailable" class="text-sm text-warning">
                   ფასი დასაზუსტებელია, ამიტომ ყიდვა დროებით გამორთულია.
                 </p>
-                <p v-else class="text-sm text-warning">
+                <p v-else-if="!product.in_stock" class="text-sm text-warning">
                   პროდუქტი ამჟამად მარაგში არ არის.
                 </p>
               </div>

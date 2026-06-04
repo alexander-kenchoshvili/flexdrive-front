@@ -705,7 +705,7 @@ defineExpose({
                           </span>
                         </div>
                         <p class="mt-1 text-xs text-text-muted">
-                          {{ suggestion.category.name }}
+                          {{ suggestion.fitment_summary }}
                         </p>
                       </div>
 
@@ -1058,7 +1058,7 @@ defineExpose({
                     {{ suggestion.name }}
                   </p>
                   <p class="mt-1 text-xs text-text-muted">
-                    {{ suggestion.category.name }}
+                    {{ suggestion.fitment_summary }}
                   </p>
                   <p class="mt-2 text-sm font-bold text-accent-primary">
                     {{ suggestionPriceLabel(suggestion) }} GEL

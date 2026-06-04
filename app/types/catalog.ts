@@ -244,4 +244,5 @@ export interface CatalogProductSuggestion {
   brand: CatalogBrandRef | null;
   category: CatalogCategoryRef;
   primary_image: CatalogImageAsset;
+  fitment_summary: string;
 }
