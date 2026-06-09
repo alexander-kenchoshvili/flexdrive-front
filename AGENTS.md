@@ -72,6 +72,7 @@ Avoid keeping old styling just because it is already present. If a component is 
 - Do not run Playwright or other browser automation unless the user explicitly asks for it. For routine visual/UI edits, rely on code inspection and normal build/type/test checks unless requested otherwise.
 - When running `npm run build`, use a long timeout from the first attempt, preferably at least 600000ms, because Nuxt production builds in this project often exceed two minutes on Windows. Do not report a short timeout as an intermediate user-facing issue; report only the final build result or a real actionable failure.
 - The paired backend at `C:\Users\kench\Desktop\flexdriveback` uses its local virtual environment. Run Django/backend commands with `C:\Users\kench\Desktop\flexdriveback\venv\Scripts\python.exe` from the backend repository instead of system `python`.
+- Local tooling note: if ordinary sandboxed PowerShell reads/searches fail with `windows sandbox: spawn setup refresh`, do not keep retrying the same sandbox path or send noisy intermediate explanations. For read-only project inspection, go directly to the approved/escalated read-only command path with a concise reason, then continue the task.
 
 ## Context7 Usage Rules
 
@@ -687,3 +688,23 @@ This file exists so the project context does not need to be re-explained in ever
 - Verify GA4 Realtime and Traffic acquisition after production deploy; verify Meta Events Manager diagnostics after purchase tests. Meta reporting can lag.
 - Before real marketing/ads launch, verify consent/cookie controls in GTM Preview so analytics and marketing tags respect user choices.
 - Production/privacy readiness still needs: privacy policy confirmation, Meta domain verification for `flexdrive.ge`, GTM consent verification on production, and final ads-account checks before paid campaigns.
+
+## Current CrossMotors Image Source Audit - 2026-06-09
+
+- CrossMotors website image-enrichment audit is documented in `docs/crossmotors-image-source-audit-2026-06-09.md`.
+- CrossMotors Wix product sitemap currently exposes 1006 product-page entries, all with image URLs.
+- FlexDrive public catalog snapshot checked during the audit had 1762 products and 0 products with `primary_image`.
+- Safe first-pass automatic matching/fill estimate is about 160-180 products using product name plus vehicle/model page context.
+- More aggressive name-based matching could reach about 480 products, but many matches are ambiguous and should require manual review.
+- Realistic staged target: about 170 automatic image imports first, then potentially 400-500 total products with images after review.
+- Supplier API stock/price cron must not touch product images. Image enrichment should remain a separate workflow that downloads accepted source images to FlexDrive media storage/Cloudinary and attaches those local/Cloudinary images to products.
+
+## Current Suo Lun Image Source Feasibility - 2026-06-09
+
+- Suo Lun-specific image source feasibility report is documented in `docs/suo-lun-image-source-feasibility-2026-06-09.md`.
+- Public catalog snapshot: 914 Suo Lun products, 0 with `primary_image`, 853 with `manufacturer_part_number`, 61 without.
+- Suo Lun products split by vehicle make: Subaru 648 (608 with part number) and Volkswagen 266 (245 with part number).
+- No strong public official Suo Lun catalog was found in the first research pass. Treat Suo Lun image enrichment as an OEM-number/source aggregation problem, not as a single-manufacturer-catalog scrape.
+- CrossMotors `SL - China` likely corresponds to Suo Lun. Current visible CrossMotors page-grid data gives 206 unique `SL - China` products and about 65 strong Suo Lun matches; use `browser-trace` + `browser-to-api` next to inspect Wix load-more/API data for better coverage.
+- OEM/dealer/catalog/marketplace sources can find many candidates by part number, but usage rights are unclear. Signeda/TecDoc-style pages look technically strong but include anti-copy/TecDoc permission warnings, so do not scrape/import them without permission or licensing.
+- Best next step: build a Suo Lun dry-run matcher/report first, with source URL, candidate image URL, match reason, confidence, ambiguity count, image-quality result, and usage mode (`import_allowed`, `needs_permission`, `reference_only`), before any Cloudinary import is implemented.
