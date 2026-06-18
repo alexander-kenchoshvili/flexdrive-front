@@ -70,6 +70,18 @@ const selectedImageIndex = ref(0);
 const isLightboxOpen = ref(false);
 const thumbnailStripRef = ref<HTMLDivElement | null>(null);
 const thumbnailButtonRefs = ref<HTMLButtonElement[]>([]);
+const isDesktopZoomAvailable = ref(false);
+const isProductZoomActive = ref(false);
+const productZoomLensLeft = ref(0);
+const productZoomLensTop = ref(0);
+
+const PRODUCT_ZOOM_SCALE = 2.5;
+const PRODUCT_ZOOM_LENS_SIZE = 100 / PRODUCT_ZOOM_SCALE;
+const PRODUCT_ZOOM_MAX_OFFSET = 100 - PRODUCT_ZOOM_LENS_SIZE;
+const PRODUCT_THUMBNAIL_HOVER_DELAY = 100;
+
+let desktopZoomMediaQuery: MediaQueryList | null = null;
+let thumbnailHoverTimer: ReturnType<typeof setTimeout> | null = null;
 
 const slug = computed(() => String(route.params.slug || ""));
 
@@ -293,16 +305,51 @@ const scrollThumbnailIntoView = async (
   });
 };
 
-const handleThumbnailSelect = (index: number) => {
+const clearThumbnailHoverTimer = () => {
+  if (thumbnailHoverTimer === null) return;
+
+  clearTimeout(thumbnailHoverTimer);
+  thumbnailHoverTimer = null;
+};
+
+const selectThumbnailImage = (index: number) => {
+  isProductZoomActive.value = false;
   selectedImageIndex.value = index;
+};
+
+const handleThumbnailSelect = (index: number) => {
+  clearThumbnailHoverTimer();
+  selectThumbnailImage(index);
+};
+
+const handleThumbnailHoverStart = (event: PointerEvent, index: number) => {
+  if (
+    !isDesktopZoomAvailable.value ||
+    event.pointerType !== "mouse" ||
+    index === selectedImageIndex.value
+  ) {
+    return;
+  }
+
+  clearThumbnailHoverTimer();
+  thumbnailHoverTimer = setTimeout(() => {
+    selectThumbnailImage(index);
+    thumbnailHoverTimer = null;
+  }, PRODUCT_THUMBNAIL_HOVER_DELAY);
+};
+
+const handleThumbnailHoverEnd = () => {
+  clearThumbnailHoverTimer();
 };
 
 watch(
   galleryImages,
   () => {
+    clearThumbnailHoverTimer();
     thumbnailButtonRefs.value = [];
     selectedImageIndex.value = 0;
     isLightboxOpen.value = false;
+    isProductZoomActive.value = false;
   },
   { immediate: true },
 );
@@ -326,9 +373,78 @@ const activeImage = computed(
   () => galleryImages.value[selectedImageIndex.value] || null,
 );
 
+const productZoomLensStyle = computed(() => ({
+  width: `${PRODUCT_ZOOM_LENS_SIZE}%`,
+  height: `${PRODUCT_ZOOM_LENS_SIZE}%`,
+  transform: `translate3d(${
+    (productZoomLensLeft.value / PRODUCT_ZOOM_LENS_SIZE) * 100
+  }%, ${
+    (productZoomLensTop.value / PRODUCT_ZOOM_LENS_SIZE) * 100
+  }%, 0)`,
+}));
+
+const productZoomImageStyle = computed(() => ({
+  width: `${PRODUCT_ZOOM_SCALE * 100}%`,
+  height: `${PRODUCT_ZOOM_SCALE * 100}%`,
+  transform: `translate3d(-${productZoomLensLeft.value}%, -${productZoomLensTop.value}%, 0)`,
+}));
+
+const clampZoomOffset = (value: number) =>
+  Math.min(Math.max(value, 0), PRODUCT_ZOOM_MAX_OFFSET);
+
+const updateProductZoomPosition = (event: PointerEvent) => {
+  const target = event.currentTarget;
+
+  if (!(target instanceof HTMLElement)) return;
+
+  const bounds = target.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+
+  const pointerX = ((event.clientX - bounds.left) / bounds.width) * 100;
+  const pointerY = ((event.clientY - bounds.top) / bounds.height) * 100;
+  const lensCenterOffset = PRODUCT_ZOOM_LENS_SIZE / 2;
+
+  productZoomLensLeft.value = clampZoomOffset(
+    pointerX - lensCenterOffset,
+  );
+  productZoomLensTop.value = clampZoomOffset(pointerY - lensCenterOffset);
+};
+
+const handleProductZoomEnter = (event: PointerEvent) => {
+  if (
+    !isDesktopZoomAvailable.value ||
+    event.pointerType !== "mouse" ||
+    !activeImage.value
+  ) {
+    return;
+  }
+
+  updateProductZoomPosition(event);
+  isProductZoomActive.value = true;
+};
+
+const handleProductZoomMove = (event: PointerEvent) => {
+  if (!isProductZoomActive.value || event.pointerType !== "mouse") return;
+  updateProductZoomPosition(event);
+};
+
+const closeProductZoom = () => {
+  isProductZoomActive.value = false;
+};
+
+const syncDesktopZoomAvailability = (event?: MediaQueryListEvent) => {
+  isDesktopZoomAvailable.value =
+    event?.matches ?? desktopZoomMediaQuery?.matches ?? false;
+
+  if (!isDesktopZoomAvailable.value) {
+    closeProductZoom();
+  }
+};
+
 const openLightbox = (index = selectedImageIndex.value) => {
   if (!galleryImages.value.length) return;
 
+  closeProductZoom();
   selectedImageIndex.value = index;
   isLightboxOpen.value = true;
 };
@@ -336,6 +452,26 @@ const openLightbox = (index = selectedImageIndex.value) => {
 const closeLightbox = () => {
   isLightboxOpen.value = false;
 };
+
+onMounted(() => {
+  desktopZoomMediaQuery = window.matchMedia(
+    "(min-width: 1100px) and (hover: hover) and (pointer: fine)",
+  );
+  syncDesktopZoomAvailability();
+  desktopZoomMediaQuery.addEventListener(
+    "change",
+    syncDesktopZoomAvailability,
+  );
+});
+
+onBeforeUnmount(() => {
+  clearThumbnailHoverTimer();
+  desktopZoomMediaQuery?.removeEventListener(
+    "change",
+    syncDesktopZoomAvailability,
+  );
+  desktopZoomMediaQuery = null;
+});
 
 watch(
   selectedImageIndex,
@@ -632,7 +768,7 @@ const handleBuyNow = async () => {
           class="grid !mt-2 gap-4 sm:!mt-4 sm:gap-8 min-[1100px]:grid-cols-2 min-[1100px]:gap-10"
         >
           <div
-            class="min-w-0 min-[1100px]:sticky min-[1100px]:top-36 min-[1100px]:self-start"
+            class="relative min-w-0 min-[1100px]:z-20 min-[1100px]:sticky min-[1100px]:top-36 min-[1100px]:self-start"
           >
             <div
               class="min-w-0 overflow-hidden rounded-[24px] border border-border-default bg-surface shadow-[0_24px_60px_-38px_var(--shadow-color)]"
@@ -646,6 +782,10 @@ const handleBuyNow = async () => {
                   class="product-gallery-main-trigger group relative block h-full w-full cursor-zoom-in overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-inset"
                   aria-label="სურათის დიდად ნახვა"
                   @click="openLightbox()"
+                  @pointerenter="handleProductZoomEnter"
+                  @pointermove="handleProductZoomMove"
+                  @pointerleave="closeProductZoom"
+                  @pointercancel="closeProductZoom"
                 >
                   <BasePicture
                     :data="activeImage.image"
@@ -656,7 +796,19 @@ const handleBuyNow = async () => {
                   />
 
                   <span
-                    class="absolute bottom-4 right-4 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 bg-slate-950/85 px-3 text-xs font-bold text-white shadow-[0_14px_32px_-24px_rgba(2,6,23,0.8)] backdrop-blur-sm transition-colors duration-200 group-hover:border-accent-primary group-hover:bg-slate-950"
+                    v-if="isProductZoomActive"
+                    class="product-gallery-zoom-lens pointer-events-none absolute left-0 top-0 z-10 hidden min-[1100px]:block"
+                    :style="productZoomLensStyle"
+                    aria-hidden="true"
+                  />
+
+                  <span
+                    :class="[
+                      'absolute bottom-4 right-4 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 bg-slate-950/85 px-3 text-xs font-bold text-white shadow-[0_14px_32px_-24px_rgba(2,6,23,0.8)] backdrop-blur-sm transition-opacity duration-150 group-hover:border-accent-primary group-hover:bg-slate-950',
+                      isProductZoomActive
+                        ? 'opacity-0'
+                        : 'opacity-100',
+                    ]"
                   >
                     <MagnifyingGlassPlusIcon
                       class="h-4 w-4"
@@ -699,12 +851,16 @@ const handleBuyNow = async () => {
                   type="button"
                   :ref="(element) => setThumbnailButtonRef(element, index)"
                   :class="[
-                    'w-[72px] shrink-0 snap-start overflow-hidden rounded-[16px] border bg-white transition-colors duration-200 sm:w-20',
+                    'w-[72px] shrink-0 snap-start cursor-pointer overflow-hidden rounded-[16px] border bg-white transition-colors duration-200 sm:w-20',
                     index === selectedImageIndex
                       ? 'border-accent-primary'
                       : 'border-border-default hover:border-accent-primary/50',
                   ]"
+                  :aria-pressed="index === selectedImageIndex"
                   @click="handleThumbnailSelect(index)"
+                  @pointerenter="handleThumbnailHoverStart($event, index)"
+                  @pointerleave="handleThumbnailHoverEnd"
+                  @pointercancel="handleThumbnailHoverEnd"
                 >
                   <div class="aspect-square">
                     <BasePicture
@@ -717,6 +873,30 @@ const handleBuyNow = async () => {
                     />
                   </div>
                 </button>
+              </div>
+            </div>
+
+            <div
+              v-if="
+                isDesktopZoomAvailable &&
+                isProductZoomActive &&
+                activeImage
+              "
+              class="product-gallery-zoom-pane pointer-events-none absolute left-[calc(100%+2.5rem)] top-0 hidden aspect-square w-full overflow-hidden bg-white min-[1100px]:block"
+              aria-hidden="true"
+            >
+              <div
+                class="product-gallery-zoom-image absolute left-0 top-0"
+                :style="productZoomImageStyle"
+              >
+                <BasePicture
+                  :data="activeImage.image"
+                  alt=""
+                  preset="detail"
+                  :widths="{ desktop: 2000 }"
+                  fit="contain"
+                  class="h-full w-full"
+                />
               </div>
             </div>
           </div>
@@ -1220,6 +1400,24 @@ const handleBuyNow = async () => {
 
 .product-gallery-thumbnail-strip::-webkit-scrollbar {
   display: none;
+}
+
+.product-gallery-zoom-lens {
+  border: 1px solid rgba(15, 23, 42, 0.32);
+  background: rgba(147, 197, 253, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+  will-change: transform;
+}
+
+.product-gallery-zoom-pane {
+  z-index: 40;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.2);
+}
+
+.product-gallery-zoom-image {
+  will-change: transform;
 }
 
 .related-products-swiper :deep(.swiper-slide) {
