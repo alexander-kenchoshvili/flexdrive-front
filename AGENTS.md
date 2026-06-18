@@ -705,6 +705,166 @@ This file exists so the project context does not need to be re-explained in ever
 - Public catalog snapshot: 914 Suo Lun products, 0 with `primary_image`, 853 with `manufacturer_part_number`, 61 without.
 - Suo Lun products split by vehicle make: Subaru 648 (608 with part number) and Volkswagen 266 (245 with part number).
 - No strong public official Suo Lun catalog was found in the first research pass. Treat Suo Lun image enrichment as an OEM-number/source aggregation problem, not as a single-manufacturer-catalog scrape.
-- CrossMotors `SL - China` likely corresponds to Suo Lun. Current visible CrossMotors page-grid data gives 206 unique `SL - China` products and about 65 strong Suo Lun matches; use `browser-trace` + `browser-to-api` next to inspect Wix load-more/API data for better coverage.
+- CrossMotors `SL - China` likely corresponds to Suo Lun. Initial visible CrossMotors page-grid data gave 206 unique `SL - China` products and about 65 strong Suo Lun matches. Later browser/API inspection found the Wix Stores load-more endpoint, which increased parsed `SL - China` candidates to 719.
 - OEM/dealer/catalog/marketplace sources can find many candidates by part number, but usage rights are unclear. Signeda/TecDoc-style pages look technically strong but include anti-copy/TecDoc permission warnings, so do not scrape/import them without permission or licensing.
-- Best next step: build a Suo Lun dry-run matcher/report first, with source URL, candidate image URL, match reason, confidence, ambiguity count, image-quality result, and usage mode (`import_allowed`, `needs_permission`, `reference_only`), before any Cloudinary import is implemented.
+- The CrossMotors dry-run/import path now exists. Remaining scale-up should focus on reviewing the 242 medium-confidence matches and evaluating licensed/OEM-number sources, not broad marketplace scraping.
+
+## Current Suo Lun Image Import State - 2026-06-09
+
+- A first CrossMotors-backed Suo Lun image importer is implemented in the paired backend repo:
+  - `catalog/suo_lun_image_import.py`
+  - `catalog/management/commands/import_suo_lun_images.py`
+  - `catalog/test_suo_lun_image_import.py`
+- The command imports only high-confidence `auto_import` matches from CrossMotors `SL - China`, skips products that already have images by default, creates normal `ProductImage` rows, and relies on the existing backend image pipeline to generate desktop/tablet/mobile WebP variants.
+- Dry-run before import checked 914 published Suo Lun products and parsed 276 CrossMotors `SL - China` candidates:
+  - 62 `auto_import`
+  - 115 `review`
+  - 737 skipped/no candidate
+  - 0 existing-image skips
+- Browser/API inspection found CrossMotors Wix Stores load-more data:
+  - listing pages embed `catalog.category.id` as the Wix Stores `mainCollectionId`;
+  - product batches are available from `POST https://www.crossmotors.ge/_api/wix-ecommerce-storefront-web/api`, operation `getFilteredProducts`, with `offset`/`limit`;
+  - the command retrieves the short-lived public Wix Stores token from `GET https://www.crossmotors.ge/_api/v1/access-tokens` at runtime and does not store or report it.
+- Storefront API-expanded dry-run checked 914 published Suo Lun products and parsed 719 CrossMotors `SL - China` candidates:
+  - 90 additional `auto_import` after the first 62 images already existed;
+  - 242 `review`;
+  - 582 skipped/no candidate;
+  - 62 existing-image skips.
+- Local development database import was run on 2026-06-09:
+  - first batch imported 5 images with 0 errors;
+  - full local import then imported 57 additional images with 0 errors;
+  - Storefront API-expanded import then imported 90 additional images with 0 errors;
+  - local Suo Lun image count after import: 152 products with images and 152 `ProductImage` rows;
+  - post-import dry-run now shows 0 remaining `auto_import`, 242 `review`, 672 skipped/no candidate, and 152 existing-image skips.
+- Local API verification passed for sample SKU `CM-000045` and latest-batch sample SKU `CM-002991`: product detail and catalog list responses both returned `primary_image.desktop`.
+- Focused backend tests passed: `catalog.test_suo_lun_image_import` and `catalog.test_crossmotors_import` ran 20 tests OK after Storefront API expansion. The only warning was the existing `django-ckeditor` CKEditor 4 support warning.
+- JSON reports are stored in frontend docs:
+  - `docs/suo-lun-image-dry-run-2026-06-09.json`
+  - `docs/suo-lun-image-import-small-batch-2026-06-09.json`
+  - `docs/suo-lun-image-import-local-2026-06-09.json`
+  - `docs/suo-lun-image-dry-run-storefront-2026-06-09.json`
+  - `docs/suo-lun-image-import-local-storefront-2026-06-09.json`
+  - `docs/suo-lun-image-post-import-dry-run-storefront-2026-06-09.json`
+- A visual manual review page exists for the 242 medium-confidence Suo Lun/CrossMotors matches:
+  - project copy: `docs/suo-lun-image-review.html`
+  - project data: `docs/suo-lun-image-review-data-2026-06-09.js`
+  - desktop copy: `C:\Users\kench\Desktop\suo-lun-image-review.html`
+  - desktop data: `C:\Users\kench\Desktop\suo-lun-image-review-data-2026-06-09.js`
+- Decision checkpoint: leave those 242 review matches untouched until the user provides an approved SKU/CSV export after manual review. Continue only with Suo Lun, and do not move to other manufacturers yet.
+- External source pass was run for the remaining Suo Lun no-candidate products:
+  - remaining no-candidate list: `docs/suo-lun-remaining-no-candidate-2026-06-09.json`
+  - SubaruPartsDeal exact OEM-photo discovery: `docs/suo-lun-external-subarupartsdeal-discovery-2026-06-09.json`
+  - TopsMade/VW discovery: `docs/suo-lun-external-topsmade-listpage-discovery-2026-06-09.json`
+  - unified external candidates: `docs/suo-lun-external-image-candidates-2026-06-09.json`
+- Backend external importer was added in `catalog/management/commands/import_suo_lun_external_images.py`. It imports only `auto_import` external candidates, skips products with existing images, and can attach multiple gallery images per product without overwriting.
+- Local development external import was run on 2026-06-09:
+  - 106 external auto candidates were imported across a 5-product small batch and then a 101-product full batch;
+  - errors: 0;
+  - post-import external dry-run shows 0 remaining external `auto_import`, 11 external `review`, and 106 existing-image skips;
+  - local Suo Lun products with images after CrossMotors + external import: 258;
+  - local Suo Lun `ProductImage` rows: 449.
+- External import reports:
+  - `docs/suo-lun-external-image-dry-run-2026-06-09.json`
+  - `docs/suo-lun-external-image-import-small-batch-2026-06-09.json`
+  - `docs/suo-lun-external-image-import-local-2026-06-09.json`
+  - `docs/suo-lun-external-image-post-import-dry-run-2026-06-09.json`
+- Focused backend tests after external importer passed: `catalog.test_suo_lun_image_import` and `catalog.test_crossmotors_import` ran 23 tests OK. Local detail API verification for external sample `CM-000010` returned `primary_image.desktop` and 4 gallery images.
+- Additional used-marketplace source pass was run for the 403 Suo Lun products that still had no candidate after the external import:
+  - BE FORWARD exact genuine-part-number endpoint checked 357 products with part numbers, found 21 products / 58 candidate rows.
+  - RRR/Ovoko AJAX exact-code search checked the same 357 products, found 129 products / 553 exact-code rows, and excluded 27 variant-risk rows.
+  - Combined used-marketplace queue is review-only because the photos are used-marketplace images and sample checks showed variable quality, dirt, and marker writing.
+  - Combined review files:
+    - `docs/suo-lun-external-used-marketplace-image-candidates-2026-06-09.json`
+    - `docs/suo-lun-external-used-marketplace-image-candidates-2026-06-09.csv`
+    - `docs/suo-lun-used-marketplace-image-review.html`
+    - `docs/suo-lun-used-marketplace-review-data-2026-06-09.js`
+  - Combined dry-run report: `docs/suo-lun-external-used-marketplace-dry-run-2026-06-09.json`; result was 407 review rows, 0 auto imports, 0 missing SKUs, 0 ignored rows, and no DB changes.
+  - Current source coverage after this pass: 914 published Suo Lun products = 258 local products with images + 385 products pending review + 271 still without any candidate source. Coverage report: `docs/suo-lun-current-source-coverage-after-used-marketplaces-2026-06-09.json`.
+- RockAuto cross-reference source pass was started for those remaining 271 products:
+  - checked 120 of 225 products that had manufacturer part numbers before RockAuto stopped responding with connect timeouts; 46 products had no part number and were skipped for this source.
+  - found 17 products / 28 clean catalog-image candidate rows, but kept them review-only because RockAuto part-search results are aftermarket/cross-reference matches and can have side/variant ambiguity.
+  - no images were imported from RockAuto and no existing product images were touched.
+  - Review files: `docs/suo-lun-rockauto-image-review.html`, `docs/suo-lun-rockauto-review-data-2026-06-09.js`, and Desktop copies `C:\Users\kench\Desktop\suo-lun-rockauto-image-review.html`, `C:\Users\kench\Desktop\suo-lun-rockauto-review-data-2026-06-09.js`.
+  - Current coverage after RockAuto: 914 published Suo Lun products = 258 local products with images + 402 products pending review + 254 still without any candidate source. Coverage report: `docs/suo-lun-current-source-coverage-after-rockauto-2026-06-09.json`.
+- Alibaba source pass superseded the RockAuto queue for active work after the user asked to ignore RockAuto and focus only on Alibaba for the remaining 271 products:
+  - user manually cleared Alibaba captcha in the browser session, then the collector fetched Alibaba search pages with that same session.
+  - target list: `docs/suo-lun-alibaba-target-271-2026-06-10.json`.
+  - raw output: `docs/suo-lun-alibaba-browser-raw-results-2026-06-10.json`.
+  - found 98 products / 179 Alibaba candidate rows; 173 of the 271 still had no Alibaba candidate.
+  - no images were imported from Alibaba and no existing product images were touched.
+  - Review files: `docs/suo-lun-alibaba-image-review.html`, `docs/suo-lun-alibaba-review-data-2026-06-10.js`, and Desktop copies `C:\Users\kench\Desktop\suo-lun-alibaba-image-review.html`, `C:\Users\kench\Desktop\suo-lun-alibaba-review-data-2026-06-10.js`.
+  - Current active coverage after Alibaba, ignoring RockAuto per user instruction: 914 published Suo Lun products = 258 local products with images + 483 products pending review + 173 still without any candidate source. Coverage report: `docs/suo-lun-current-source-coverage-after-alibaba-2026-06-10.json`.
+- Final broad-web DuckDuckGo Images pass was run for those remaining 173 products after `slautoparts.com` produced no useful matches and Google Images started showing a challenge:
+  - found 158 products / 572 candidate rows, review-only; 15 products still have no candidate source.
+  - no images were imported and no existing product images were touched.
+  - Review files: `docs/suo-lun-final-173-duckduckgo-image-review.html`, `docs/suo-lun-final-173-duckduckgo-image-review-data-2026-06-10.js`, and Desktop copies `C:\Users\kench\Desktop\suo-lun-final-173-duckduckgo-image-review.html`, `C:\Users\kench\Desktop\suo-lun-final-173-duckduckgo-image-review-data-2026-06-10.js`.
+  - Final current coverage, still ignoring RockAuto: 914 published Suo Lun products = 258 local products with images + 641 products pending review + 15 still without any candidate source. Coverage report: `docs/suo-lun-current-source-coverage-final-after-duckduckgo-2026-06-10.json`.
+- CrossMotors manual-review approved import was run locally on 2026-06-13 after the user exported `C:\Users\kench\Desktop\suo-lun-image-review-decisions.json`:
+  - decision export: 242 total, 217 approved, 22 rejected, 2 skipped, 1 still pending (`CM-000486`, part number `84001FL00B`);
+  - dry-run was clean: 217 approved rows, 217 planned, 0 missing products, 0 missing image URLs, 0 existing-image skips, 0 errors;
+  - commit imported 217 of 217 approved CrossMotors images with 0 errors;
+  - local products with images after import: 475;
+  - local `ProductImage` rows after import: 666;
+  - this local import was first done with a temporary frontend helper that has since been removed from the repo cleanup;
+  - the backend now has the official staging-safe command `python manage.py import_suo_lun_review_images --decisions-path <decisions.json> --review-data-path <review-data.js> [--commit]` for that same 217 approved set.
+  - this was local backend media storage, not Cloudinary, because the local backend `.env` did not enable `USE_CLOUDINARY_MEDIA`; staging remains untouched.
+- Current local Suo Lun missing-image checkpoint after that approved import:
+  - total published Suo Lun products: 914;
+  - products with images locally: 475;
+  - products still without images locally: 439;
+  - review-pending products are intentionally counted as without images in this checkpoint.
+- Staging is not updated by the local runs. To reproduce the current 475-product local coverage on staging after backend deploy, run the backend image import commands in this order:
+  - `python manage.py import_suo_lun_images --commit` for CrossMotors automatic matches;
+  - `python manage.py import_suo_lun_external_images --candidate-path <external-candidates.json> --commit` for the external automatic candidates;
+  - `python manage.py import_suo_lun_review_images --decisions-path <decisions.json> --review-data-path <review-data.js> --commit` for the 217 manually approved CrossMotors review images.
+- The supplier API stock/price cron should remain separate and must not touch `ProductImage`.
+
+## OEM Image Search Workflow
+
+When the user asks to search auto-part images by OEM code, use this workflow by default and do not ask the user to repeat it:
+
+- Use Playwright MCP directly when the user asks for it. Playwright is available as MCP tooling; do not waste time looking for it in `node_modules`, local package folders, or unrelated tooling paths.
+- Do not report noisy discovery failures such as "Playwright is not in node_modules" or "I cannot find it here/there". Start the Playwright MCP browser immediately.
+- The user will specify how many OEM codes to process. Take exactly that batch size unless the user changes the scope.
+- For each OEM code, open Google in Playwright and search the OEM code.
+- Review Google's result links and prefer trustworthy product-detail sources: official Subaru/brand parts sites, OEM parts stores, reputable parts dealers, Amazon product pages, Alibaba product-detail pages, and other clear product pages that show the same OEM.
+- If the first result does not contain the matching auto part or does not clearly confirm the OEM, go back to Google results and try another trustworthy result. Do not mark the OEM as not found after checking only one weak source.
+- When a matching product-detail page is found, open the product gallery/images on that page and download the clean, good-quality product images. Prefer real part photos over diagrams, thumbnails, logos, placeholders, or generic site images. Use diagrams only when that is the only useful source and the page clearly confirms the OEM.
+- Match the found page against the OEM first. If the image or product looks suspicious, also compare the product name/part type with the local product name; translate Georgian/Latin-transliterated names mentally as needed. Do not rely on year ranges as the decisive match because source-site years can differ from the local database.
+- Add the downloaded images to the Desktop review HTML/JSON workflow, currently `C:\Users\kench\Desktop\suo-lun-amazon-gallery-review-test.html` and `C:\Users\kench\Desktop\suo-lun-amazon-gallery-review-test.json`, saving image assets under `C:\Users\kench\Desktop\suo-lun-amazon-gallery-review-assets`.
+- If a site shows CAPTCHA, Cloudflare, robot verification, or security verification, stop on that page and tell the user to solve it. Do not skip ahead through the batch while the user is expected to click the challenge. Resume only after the user says it is solved.
+- Keep progress updates short and only report key events: CAPTCHA needed, batch finished, counts, and any products that were intentionally left without images because no reliable matching image was found.
+- Do not use side routes, broad scraping alternatives, or unrelated search methods when the user specifically provides product-detail links. In that case, open those exact links with Playwright MCP, extract/download the product images from those pages, and attach them to the matching OEM entries in the review file.
+
+## Current OEM Image Review Checkpoint - 2026-06-19
+
+- The broad OEM-based image discovery pass is complete for the current backend product data across all brands.
+- Every product that currently has an OEM/manufacturer part number has been added to the shared Desktop review workflow. No OEM-bearing backend products remain outside the review.
+- Current shared review files:
+  - HTML: `C:\Users\kench\Desktop\suo-lun-amazon-gallery-review-test.html`
+  - JSON: `C:\Users\kench\Desktop\suo-lun-amazon-gallery-review-test.json`
+  - downloaded assets: `C:\Users\kench\Desktop\suo-lun-amazon-gallery-review-assets`
+- Current review checkpoint after the broad search pass:
+  - total review entries: 1684;
+  - entries with downloaded images: 1155;
+  - entries still without images or requiring a better source: 529.
+- Products without OEM/manufacturer part numbers are maintained separately in:
+  - `C:\Users\kench\Desktop\suo-lun-no-oem-review.html`
+  - despite the historical file name, this file now contains no-OEM products from all brands, not only Suo Lun.
+  - current no-OEM count: 105.
+- This discovery stage is complete, but the overall product-image project is not finished. Do not treat all current matches as approved or final.
+- The next active stage is manual review by the user:
+  - inspect every review entry and verify that the image shows the correct part, side, placement, and product type;
+  - identify incorrect, weak, diagram-only, irrelevant, or missing images;
+  - manually locate better product-detail sources for entries where the automatic pass failed or selected a questionable image;
+  - provide those exact product-detail links back to Codex.
+- When the user supplies correction/source links, resume the established Playwright MCP workflow:
+  - open the exact links;
+  - verify the OEM and product type;
+  - download the clean product images;
+  - replace or add images on the matching review entry;
+  - preserve the same shared HTML/JSON/assets files instead of creating new review files.
+- Local reusable helpers for future OEM batches exist under `tools/` but are excluded through `.git/info/exclude`, so they remain available locally and are not committed:
+  - `tools/oem_image_search_playwright.js`
+  - `tools/merge_oem_image_review.py`
+  - `tools/oem_image_batch.example.json`

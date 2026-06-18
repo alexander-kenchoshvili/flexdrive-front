@@ -123,19 +123,31 @@ export const useCommerceApi = () => {
     });
   };
 
-  const checkoutOrder = async (payload: CheckoutPayload) => {
+  const checkoutOrder = async (
+    payload: CheckoutPayload,
+    idempotencyKey: string,
+  ) => {
     return apiFetchRaw<CommerceOrderSummary>("/commerce/orders/checkout/", {
       method: "POST",
       body: payload,
-      headers: resolveMarketingConsentHeaders(),
+      headers: {
+        ...resolveMarketingConsentHeaders(),
+        "Idempotency-Key": idempotencyKey,
+      },
     });
   };
 
-  const checkoutBuyNow = async (payload: CheckoutPayload) => {
+  const checkoutBuyNow = async (
+    payload: CheckoutPayload,
+    idempotencyKey: string,
+  ) => {
     return apiFetchRaw<CommerceOrderSummary>("/commerce/buy-now/checkout/", {
       method: "POST",
       body: payload,
-      headers: resolveMarketingConsentHeaders(),
+      headers: {
+        ...resolveMarketingConsentHeaders(),
+        "Idempotency-Key": idempotencyKey,
+      },
     });
   };
 

@@ -328,3 +328,41 @@ Run a focused source-discovery pass in this order:
 4. Only after dry-run review, implement Cloudinary import for approved sources.
 
 Do not start broad marketplace scraping until source usage rights and review rules are settled.
+
+## Current Working Checkpoint - 2026-06-13
+
+Scope: only Suo Lun / SL China published products.
+
+- Total Suo Lun products: 914
+- Products with images attached in local backend: 475
+- Products still without attached images in local backend: 439
+- Review-pending products are counted as still without images until approved and imported.
+- Local `ProductImage` rows after the latest approved CrossMotors import: 666
+- Staging remains untouched by the local imports.
+
+What has been imported locally:
+
+- Initial CrossMotors automatic import: 152 products.
+- External automatic import: 106 additional products.
+- CrossMotors manual-review approved import on 2026-06-13: 217 additional products.
+- Total current local coverage: 475 products with images.
+
+Remaining source state:
+
+- The remaining 439 products include review candidates from external/manual queues plus 15 products with no useful candidate found yet.
+- If all remaining review candidates are approved and imported, expected Suo Lun coverage can reach about 899 of 914 products.
+- The final unresolved set would then be about 15 products.
+
+Storage note:
+
+- Local imports used local backend media storage because local `USE_CLOUDINARY_MEDIA` is disabled.
+- Running the same import workflow in staging, where Cloudinary is enabled, should upload accepted images to Cloudinary and attach them to staging products.
+- The supplier API stock/price cron must remain separate and must not modify `ProductImage`.
+
+Staging command path after backend deploy:
+
+1. `python manage.py import_suo_lun_images --commit`
+2. `python manage.py import_suo_lun_external_images --candidate-path <external-candidates.json> --commit`
+3. `python manage.py import_suo_lun_review_images --decisions-path <decisions.json> --review-data-path <review-data.js> --commit`
+
+The third command is the official backend replacement for the temporary local helper that imported the 217 manually approved CrossMotors review images.

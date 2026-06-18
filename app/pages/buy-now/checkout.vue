@@ -13,6 +13,7 @@ import {
   normalizeApiErrorMessage,
 } from "~/composables/commerce/errorUtils";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
+import { useCheckoutIdempotency } from "~/composables/commerce/useCheckoutIdempotency";
 import { useBuyNowStore } from "~/stores/useBuyNowStore";
 import type {
   CheckoutPaymentMethod,
@@ -34,6 +35,7 @@ const route = useRoute();
 const globalStore = useGlobalStore();
 const buyNowStore = useBuyNowStore();
 const { checkoutBuyNow } = useCommerceApi();
+const { getOrCreateKey, clearKey } = useCheckoutIdempotency("buy-now");
 const { executeRecaptcha } = useRecaptcha();
 const { trackAddPaymentInfo, trackBeginCheckout } = useEcommerceAnalytics();
 
@@ -329,31 +331,35 @@ const submitForm = validateSubmit(
 
     try {
       const recaptchaToken = await executeRecaptcha("checkout");
-      const order = await checkoutBuyNow({
-        buyer_type: submittedValues.buyer_type,
-        company_name:
-          submittedValues.buyer_type === "legal_entity"
-            ? submittedValues.company_name.trim()
-            : "",
-        company_identification_code:
-          submittedValues.buyer_type === "legal_entity"
-            ? submittedValues.company_identification_code.trim()
-            : "",
-        first_name: submittedValues.first_name.trim(),
-        last_name: submittedValues.last_name.trim(),
-        email: submittedValues.email.trim(),
-        phone: submittedValues.phone.trim(),
-        city: submittedValues.city.trim(),
-        address_line: submittedValues.address_line.trim(),
-        note: submittedValues.note?.trim() || "",
-        terms_accepted: submittedValues.terms_accepted,
-        payment_method: submittedValues.payment_method,
-        recaptcha_token: recaptchaToken,
-      });
+      const order = await checkoutBuyNow(
+        {
+          buyer_type: submittedValues.buyer_type,
+          company_name:
+            submittedValues.buyer_type === "legal_entity"
+              ? submittedValues.company_name.trim()
+              : "",
+          company_identification_code:
+            submittedValues.buyer_type === "legal_entity"
+              ? submittedValues.company_identification_code.trim()
+              : "",
+          first_name: submittedValues.first_name.trim(),
+          last_name: submittedValues.last_name.trim(),
+          email: submittedValues.email.trim(),
+          phone: submittedValues.phone.trim(),
+          city: submittedValues.city.trim(),
+          address_line: submittedValues.address_line.trim(),
+          note: submittedValues.note?.trim() || "",
+          terms_accepted: submittedValues.terms_accepted,
+          payment_method: submittedValues.payment_method,
+          recaptcha_token: recaptchaToken,
+        },
+        getOrCreateKey(),
+      );
 
       await syncProfileBackfill(submittedValues);
 
       checkoutCompleted.value = true;
+      clearKey();
       buyNowStore.clear();
       await navigateTo(`/checkout/success/${order.public_token}`);
     } catch (submitError) {

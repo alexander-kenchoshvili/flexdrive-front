@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
 import {
+  MagnifyingGlassPlusIcon,
   MinusIcon,
   PlusIcon,
   ShoppingCartIcon,
@@ -11,6 +12,7 @@ import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import BaseButton from "~/components/common/BaseButton.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
 import ProductDetailSkeleton from "~/components/catalog/ProductDetailSkeleton.vue";
+import ProductImageLightbox from "~/components/catalog/ProductImageLightbox.vue";
 import WishlistToggleButton from "~/components/commerce/WishlistToggleButton.vue";
 import ProductCard from "~/components/SmartComponents/ProductCatalog/parts/ProductCard.vue";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
@@ -65,6 +67,7 @@ const buyNowFeedbackTone = ref<"warning" | "error" | null>(null);
 const selectedQuantity = ref(1);
 const activeTab = ref<"description" | "specs">("description");
 const selectedImageIndex = ref(0);
+const isLightboxOpen = ref(false);
 const thumbnailStripRef = ref<HTMLDivElement | null>(null);
 const thumbnailButtonRefs = ref<HTMLButtonElement[]>([]);
 
@@ -299,6 +302,7 @@ watch(
   () => {
     thumbnailButtonRefs.value = [];
     selectedImageIndex.value = 0;
+    isLightboxOpen.value = false;
   },
   { immediate: true },
 );
@@ -321,6 +325,17 @@ watch(
 const activeImage = computed(
   () => galleryImages.value[selectedImageIndex.value] || null,
 );
+
+const openLightbox = (index = selectedImageIndex.value) => {
+  if (!galleryImages.value.length) return;
+
+  selectedImageIndex.value = index;
+  isLightboxOpen.value = true;
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+};
 
 watch(
   selectedImageIndex,
@@ -625,14 +640,31 @@ const handleBuyNow = async () => {
               <div
                 class="relative h-[260px] w-full overflow-hidden bg-white sm:h-[300px] md:h-[340px] min-[1024px]:h-[420px] min-[1100px]:aspect-square min-[1100px]:h-auto"
               >
-                <BasePicture
+                <button
                   v-if="activeImage"
-                  :data="activeImage.image"
-                  :alt="activeImage.alt_text || productTitle"
-                  preset="detail"
-                  fit="contain"
-                  class="h-full w-full"
-                />
+                  type="button"
+                  class="product-gallery-main-trigger group relative block h-full w-full cursor-zoom-in overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-inset"
+                  aria-label="სურათის დიდად ნახვა"
+                  @click="openLightbox()"
+                >
+                  <BasePicture
+                    :data="activeImage.image"
+                    :alt="activeImage.alt_text || productTitle"
+                    preset="detail"
+                    fit="contain"
+                    class="h-full w-full"
+                  />
+
+                  <span
+                    class="absolute bottom-4 right-4 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 bg-slate-950/85 px-3 text-xs font-bold text-white shadow-[0_14px_32px_-24px_rgba(2,6,23,0.8)] backdrop-blur-sm transition-colors duration-200 group-hover:border-accent-primary group-hover:bg-slate-950"
+                  >
+                    <MagnifyingGlassPlusIcon
+                      class="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                    <span class="hidden sm:inline">გადიდება</span>
+                  </span>
+                </button>
 
                 <div
                   v-else
@@ -1094,6 +1126,14 @@ const handleBuyNow = async () => {
             </SwiperSlide>
           </Swiper>
         </section>
+
+        <ProductImageLightbox
+          v-model:active-index="selectedImageIndex"
+          :show="isLightboxOpen"
+          :images="galleryImages"
+          :title="productTitle"
+          @close="closeLightbox"
+        />
       </div>
     </div>
 
