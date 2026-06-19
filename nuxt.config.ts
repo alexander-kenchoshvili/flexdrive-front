@@ -50,7 +50,12 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
   compatibilityDate: "2025-05-15",
-  modules: ["@vueuse/nuxt", "@pinia/nuxt", "@nuxtjs/tailwindcss"],
+  modules: [
+    "@vueuse/nuxt",
+    "@pinia/nuxt",
+    "@nuxtjs/tailwindcss",
+    "@nuxt/eslint",
+  ],
   css: ["~/assets/css/main.css", "~/assets/css/design-system.css"],
 
   imports: {

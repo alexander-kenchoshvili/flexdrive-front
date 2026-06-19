@@ -41,6 +41,7 @@ export const getLegalPageSections = (
   iconNames: LegalSectionIconName[],
 ): LegalPageSection[] => {
   const list = Array.isArray(items) ? (items as ContentItemData[]) : [];
+  const fallbackIcon: LegalSectionIconName = "document";
 
   return list
     .map((item, index) => {
@@ -52,7 +53,7 @@ export const getLegalPageSections = (
         title: sanitizeText(item.title),
         summary: sanitizeText(item.description),
         html: item.editor?.trim() || "",
-        iconName: iconNames[index % iconNames.length],
+        iconName: iconNames[index % iconNames.length] || fallbackIcon,
         position,
       };
     })

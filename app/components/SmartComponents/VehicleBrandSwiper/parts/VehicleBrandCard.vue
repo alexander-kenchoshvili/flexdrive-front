@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowRightIcon } from "@heroicons/vue/20/solid";
 import { sanitizeText } from "~/composables/helpers";
+import { sanitizeSvg } from "~/utils/contentSanitizer";
 
 export type VehicleBrandItem = {
   id: number;
@@ -17,7 +18,8 @@ const props = defineProps<{
 
 const title = computed(() => sanitizeText(props.brand.title));
 const description = computed(() => sanitizeText(props.brand.description));
-const hasIcon = computed(() => Boolean(sanitizeText(props.brand.iconSvg)));
+const safeIconSvg = computed(() => sanitizeSvg(props.brand.iconSvg));
+const hasIcon = computed(() => Boolean(safeIconSvg.value));
 
 const brandPath = computed(() => ({
   path: "/catalog",
@@ -40,7 +42,7 @@ const fallbackLabel = computed(() => {
       .toUpperCase();
   }
 
-  return words[0].slice(0, 3).toUpperCase();
+  return (words[0] || "FD").slice(0, 3).toUpperCase();
 });
 </script>
 
@@ -64,7 +66,7 @@ const fallbackLabel = computed(() => {
           v-if="hasIcon"
           class="vehicle-brand-logo"
           aria-hidden="true"
-          v-html="brand.iconSvg"
+          v-html="safeIconSvg"
         />
         <span
           v-else

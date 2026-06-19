@@ -40,6 +40,7 @@ export default defineNuxtPlugin({
         ((...args: unknown[]) => {
           analyticsWindow.dataLayer?.push(args);
         });
+      return analyticsWindow.dataLayer;
     };
 
     const resolveConsentValue = (isGranted: boolean): ConsentValue =>
@@ -81,14 +82,14 @@ export default defineNuxtPlugin({
     }));
 
     const loadGtm = () => {
-      ensureDataLayer();
+      const dataLayer = ensureDataLayer();
 
       if (analyticsWindow.__flexdriveGtmId === gtmId) {
         gtmScriptEnabled.value = true;
         return;
       }
 
-      analyticsWindow.dataLayer.push({
+      dataLayer.push({
         "gtm.start": Date.now(),
         event: "gtm.js",
       });

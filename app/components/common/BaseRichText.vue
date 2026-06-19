@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { sanitizeRichText } from "~/utils/contentSanitizer";
+
 const props = defineProps<{
   html?: string | null;
   emptyText?: string | null;
 }>();
 
-const content = computed(() => props.html?.trim() || "");
+const content = computed(() => sanitizeRichText(props.html));
 const placeholderText = computed(() => props.emptyText?.trim() || "");
 </script>
 

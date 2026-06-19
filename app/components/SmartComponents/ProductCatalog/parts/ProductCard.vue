@@ -169,7 +169,7 @@ const compatibilityBadge = computed(() => {
           :alt="product.name"
           preset="card"
           fit="contain"
-          class="h-full w-full transition-transform duration-200 group-hover:scale-[1.025]"
+          class="h-full w-full"
           lazy
         />
 
