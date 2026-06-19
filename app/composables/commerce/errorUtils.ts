@@ -1,8 +1,23 @@
+const looksLikeHtmlDocument = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+
+  return (
+    normalized.startsWith("<!doctype html") ||
+    normalized.startsWith("<html") ||
+    /<\s*(html|head|body|title)\b/.test(normalized)
+  );
+};
+
+const normalizeErrorMessage = (value: string | undefined) => {
+  const message = value?.trim();
+  return message && !looksLikeHtmlDocument(message) ? message : null;
+};
+
 export const extractFirstErrorMessage = (payload: unknown): string | null => {
   if (!payload) return null;
 
   if (typeof payload === "string") {
-    return payload;
+    return normalizeErrorMessage(payload);
   }
 
   if (Array.isArray(payload)) {
@@ -54,7 +69,7 @@ export const normalizeApiErrorMessage = (error: unknown, fallback: string) => {
     extractFirstErrorMessage(normalizedError?.data) ||
     extractFirstErrorMessage(normalizedError?.response?._data) ||
     extractFirstErrorMessage(normalizedError?.response?.data) ||
-    normalizedError?.message ||
+    normalizeErrorMessage(normalizedError?.message) ||
     fallback
   );
 };
