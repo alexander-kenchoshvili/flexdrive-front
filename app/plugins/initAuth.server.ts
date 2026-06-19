@@ -30,6 +30,16 @@ const extractCookieValue = (headers: string[], cookieName: string) => {
   return null;
 };
 
+const extractRequestCookieValue = (
+  cookieHeader: string | undefined,
+  cookieName: string,
+) => {
+  const match = String(cookieHeader || "").match(
+    new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`),
+  );
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+};
+
 const upsertCookie = (
   cookieHeader: string | undefined,
   cookieName: string,
@@ -59,6 +69,8 @@ export default defineNuxtPlugin(async () => {
   const event = useRequestEvent();
   const requestHeaders = useRequestHeaders(["cookie"]);
   const cookieHeader = requestHeaders.cookie;
+  let resolvedCookieHeader = cookieHeader;
+  let csrfToken = extractRequestCookieValue(cookieHeader, "csrftoken");
 
   const resolveUser = async (resolvedCookieHeader?: string) =>
     $fetch(`${baseURL}/accounts/me/`, {
@@ -77,13 +89,35 @@ export default defineNuxtPlugin(async () => {
   let hasRefresh = false;
 
   try {
-    const sessionStatus = await $fetch<AuthSessionState>(
+    const sessionResponse = await $fetch.raw<AuthSessionState>(
       `${baseURL}/accounts/session/`,
       {
         credentials: "include",
         headers: cookieHeader ? { cookie: cookieHeader } : undefined,
       },
     );
+    const sessionSetCookieHeaders = getSetCookieHeaders(sessionResponse);
+
+    if (event && sessionSetCookieHeaders.length) {
+      for (const header of sessionSetCookieHeaders) {
+        appendResponseHeader(event, "set-cookie", header);
+      }
+    }
+
+    const seededCsrfToken = extractCookieValue(
+      sessionSetCookieHeaders,
+      "csrftoken",
+    );
+    if (seededCsrfToken) {
+      csrfToken = seededCsrfToken;
+      resolvedCookieHeader = upsertCookie(
+        resolvedCookieHeader,
+        "csrftoken",
+        seededCsrfToken,
+      );
+    }
+
+    const sessionStatus = sessionResponse._data || null;
     globalStore.authSession = sessionStatus;
     hasRefresh = Boolean(sessionStatus?.has_refresh);
   } catch {
@@ -103,7 +137,10 @@ export default defineNuxtPlugin(async () => {
       {
         method: "POST",
         credentials: "include",
-        headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+        headers: {
+          ...(resolvedCookieHeader ? { cookie: resolvedCookieHeader } : {}),
+          ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+        },
       },
     );
 
@@ -117,8 +154,8 @@ export default defineNuxtPlugin(async () => {
 
     const nextAccessToken = extractCookieValue(setCookieHeaders, "access_token");
     const nextCookieHeader = nextAccessToken
-      ? upsertCookie(cookieHeader, "access_token", nextAccessToken)
-      : cookieHeader;
+      ? upsertCookie(resolvedCookieHeader, "access_token", nextAccessToken)
+      : resolvedCookieHeader;
 
     globalStore.authSession =
       (refreshResponse as { _data?: { session?: AuthSessionState } })._data?.session || null;
