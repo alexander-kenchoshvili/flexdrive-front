@@ -36,6 +36,8 @@ const autoEditInitialized = ref(false);
 const isDeleteModalOpen = ref(false);
 const deletePending = ref(false);
 const deleteError = ref<string | null>(null);
+const currentPassword = ref("");
+const deletePassword = ref("");
 
 const mapProfileToForm = (
   profile: AccountProfile,
@@ -309,6 +311,9 @@ const submitProfileForm = handleSubmit(async (submittedValues) => {
       phone: submittedValues.phone.trim(),
       city: submittedValues.city.trim(),
       address_line: submittedValues.address_line.trim(),
+      ...(submittedValues.email.trim() !== profile.value?.email
+        ? { current_password: currentPassword.value }
+        : {}),
     });
 
     profileData.value = updatedProfile;
@@ -321,6 +326,7 @@ const submitProfileForm = handleSubmit(async (submittedValues) => {
     }
 
     syncFormWithProfile(updatedProfile);
+    currentPassword.value = "";
     isEditing.value = false;
   } catch (submitError) {
     const nextFieldErrors = extractFieldErrors(submitError);
@@ -344,9 +350,10 @@ const deleteAccount = async () => {
   deletePending.value = true;
 
   try {
-    await deleteProfile();
+    await deleteProfile(deletePassword.value);
     resetState();
     isDeleteModalOpen.value = false;
+    deletePassword.value = "";
     await navigateTo("/");
   } catch (deleteAccountError) {
     deleteError.value = normalizeApiErrorMessage(
@@ -396,6 +403,13 @@ useNoindexPage({
     </section>
 
     <template v-else>
+      <p
+        v-if="profile?.pending_email"
+        class="mb-4 rounded-[18px] border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-text-secondary"
+      >
+        ელფოსტის ცვლილება ელოდება დადასტურებას: {{ profile.pending_email }}
+      </p>
+
       <ProfileInfoSection v-if="!isEditing" :profile="resolvedProfile">
         <template #action>
           <BaseButton
@@ -465,6 +479,17 @@ useNoindexPage({
               autocomplete="given-name"
               placeholder="შეიყვანე სახელი"
               :error="errors.first_name"
+              :disabled="savePending"
+            />
+
+            <BaseInput
+              v-if="email.trim() !== profile?.email"
+              v-model="currentPassword"
+              label="მიმდინარე პაროლი"
+              type="password"
+              autocomplete="current-password"
+              placeholder="დაადასტურე ელფოსტის ცვლილება"
+              :error="errors.current_password"
               :disabled="savePending"
             />
 
@@ -629,6 +654,15 @@ useNoindexPage({
       >
         {{ deleteError }}
       </p>
+
+      <BaseInput
+        v-model="deletePassword"
+        label="მიმდინარე პაროლი"
+        type="password"
+        autocomplete="current-password"
+        placeholder="შეიყვანე პაროლი"
+        :disabled="deletePending"
+      />
     </div>
 
     <template #footer>

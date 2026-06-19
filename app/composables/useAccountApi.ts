@@ -34,10 +34,21 @@ export const useAccountApi = () => {
     });
   };
 
-  const deleteProfile = async (options?: AccountRequestOptions) => {
+  const deleteProfile = async (
+    currentPassword: string,
+    options?: AccountRequestOptions,
+  ) => {
     return apiFetchRaw<void>("/accounts/profile/", {
       method: "DELETE",
+      body: { current_password: currentPassword },
       headers: resolveHeaders(options),
+    });
+  };
+
+  const confirmEmailChange = async (token: string) => {
+    return apiFetchRaw<{ message: string }>("/accounts/email/confirm/", {
+      method: "POST",
+      body: { token },
     });
   };
 
@@ -45,5 +56,6 @@ export const useAccountApi = () => {
     getProfile,
     updateProfile,
     deleteProfile,
+    confirmEmailChange,
   };
 };
