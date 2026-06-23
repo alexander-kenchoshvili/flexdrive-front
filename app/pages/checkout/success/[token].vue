@@ -44,6 +44,12 @@ const purchaseAnalyticsItems = computed(() =>
 
 const trackLoadedPurchase = () => {
   if (!order.value) return;
+  if (
+    order.value.payment_method === "card" &&
+    order.value.payment_status !== "paid"
+  ) {
+    return;
+  }
 
   trackPurchase({
     transactionId: order.value.order_number || order.value.public_token,

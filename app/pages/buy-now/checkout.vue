@@ -6,6 +6,7 @@ import CheckoutPageSkeleton from "~/components/commerce/CheckoutPageSkeleton.vue
 import CheckoutSummaryCard from "~/components/commerce/CheckoutSummaryCard.vue";
 import {
   type CheckoutFieldErrors,
+  type CheckoutFormValues,
   useCheckoutForm,
 } from "~/composables/commerce/useCheckoutForm";
 import {
@@ -14,9 +15,11 @@ import {
 } from "~/composables/commerce/errorUtils";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useCheckoutIdempotency } from "~/composables/commerce/useCheckoutIdempotency";
+import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import { useBuyNowStore } from "~/stores/useBuyNowStore";
 import type {
   CheckoutPaymentMethod,
+  CheckoutPayload,
   CommerceBuyNowErrorCode,
   CommerceBuyNowIssue,
   CommerceCheckoutSummaryItem,
@@ -34,8 +37,15 @@ definePageMeta({
 const route = useRoute();
 const globalStore = useGlobalStore();
 const buyNowStore = useBuyNowStore();
-const { checkoutBuyNow } = useCommerceApi();
+const { checkoutBuyNow, startBuyNowCardPayment } = useCommerceApi();
 const { getOrCreateKey, clearKey } = useCheckoutIdempotency("buy-now");
+const {
+  cardPaymentEnabled,
+  availabilityPending: cardPaymentAvailabilityPending,
+  extractPaymentError,
+  redirectToProvider,
+  storeReturnContext,
+} = useCardPaymentFlow();
 const { executeRecaptcha } = useRecaptcha();
 const { trackAddPaymentInfo, trackBeginCheckout } = useEcommerceAnalytics();
 
@@ -92,6 +102,11 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 
 const lineItemLabel = computed(() => `${buyNowStore.itemCount} პროდუქტი`);
 const returnToQuery = computed(() => sanitizeReturnTo(route.query.return_to));
+const submitLabel = computed(() =>
+  paymentMethod.value === "card"
+    ? "ბანკის გვერდზე გადასვლა"
+    : "შეკვეთის დადასტურება",
+);
 
 const toBuyNowCheckoutAnalyticsItem = (
   item: CommerceCheckoutSummaryItem,
@@ -306,9 +321,37 @@ const confirmUpdates = async () => {
 };
 
 const selectPaymentMethod = (method: CheckoutPaymentMethod) => {
+  if (paymentMethod.value !== method) {
+    clearKey();
+  }
   setFieldValue("payment_method", method);
   clearFormError();
 };
+
+const buildCheckoutPayload = (
+  submittedValues: CheckoutFormValues,
+  recaptchaToken: string,
+): CheckoutPayload => ({
+  buyer_type: submittedValues.buyer_type,
+  company_name:
+    submittedValues.buyer_type === "legal_entity"
+      ? submittedValues.company_name.trim()
+      : "",
+  company_identification_code:
+    submittedValues.buyer_type === "legal_entity"
+      ? submittedValues.company_identification_code.trim()
+      : "",
+  first_name: submittedValues.first_name.trim(),
+  last_name: submittedValues.last_name.trim(),
+  email: submittedValues.email.trim(),
+  phone: submittedValues.phone.trim(),
+  city: submittedValues.city.trim(),
+  address_line: submittedValues.address_line.trim(),
+  note: submittedValues.note?.trim() || "",
+  terms_accepted: submittedValues.terms_accepted,
+  payment_method: submittedValues.payment_method,
+  recaptcha_token: recaptchaToken,
+});
 
 const submitForm = validateSubmit(
   async (submittedValues) => {
@@ -331,30 +374,38 @@ const submitForm = validateSubmit(
 
     try {
       const recaptchaToken = await executeRecaptcha("checkout");
-      const order = await checkoutBuyNow(
-        {
-          buyer_type: submittedValues.buyer_type,
-          company_name:
-            submittedValues.buyer_type === "legal_entity"
-              ? submittedValues.company_name.trim()
-              : "",
-          company_identification_code:
-            submittedValues.buyer_type === "legal_entity"
-              ? submittedValues.company_identification_code.trim()
-              : "",
-          first_name: submittedValues.first_name.trim(),
-          last_name: submittedValues.last_name.trim(),
-          email: submittedValues.email.trim(),
-          phone: submittedValues.phone.trim(),
-          city: submittedValues.city.trim(),
-          address_line: submittedValues.address_line.trim(),
-          note: submittedValues.note?.trim() || "",
-          terms_accepted: submittedValues.terms_accepted,
-          payment_method: submittedValues.payment_method,
-          recaptcha_token: recaptchaToken,
-        },
-        getOrCreateKey(),
+      const checkoutPayload = buildCheckoutPayload(
+        submittedValues,
+        recaptchaToken,
       );
+
+      if (submittedValues.payment_method === "card") {
+        const payment = await startBuyNowCardPayment(
+          checkoutPayload,
+          getOrCreateKey(),
+        );
+
+        await syncProfileBackfill(submittedValues);
+        storeReturnContext(payment.payment_token, {
+          source: "buy_now",
+          returnTo: route.fullPath,
+        });
+
+        if (payment.result === "paid" && payment.order_public_token) {
+          checkoutCompleted.value = true;
+          clearKey();
+          buyNowStore.clear();
+          await navigateTo(
+            `/checkout/success/${payment.order_public_token}`,
+          );
+          return;
+        }
+
+        redirectToProvider(payment);
+        return;
+      }
+
+      const order = await checkoutBuyNow(checkoutPayload, getOrCreateKey());
 
       await syncProfileBackfill(submittedValues);
 
@@ -364,6 +415,49 @@ const submitForm = validateSubmit(
       await navigateTo(`/checkout/success/${order.public_token}`);
     } catch (submitError) {
       const code = extractBuyNowErrorCode(submitError);
+      const paymentError =
+        submittedValues.payment_method === "card"
+          ? extractPaymentError(submitError)
+          : null;
+      const failedPayment = paymentError?.payment;
+      const isCardProviderError = Boolean(
+        failedPayment || paymentError?.code?.startsWith("card_payment"),
+      );
+
+      if (
+        submittedValues.payment_method === "card" &&
+        isCardProviderError
+      ) {
+        if (failedPayment) {
+          storeReturnContext(failedPayment.payment_token, {
+            source: "buy_now",
+            returnTo: route.fullPath,
+          });
+
+          if (failedPayment.redirect_url) {
+            redirectToProvider(failedPayment);
+            return;
+          }
+
+          if (paymentError?.code === "card_payment_already_active") {
+            await navigateTo({
+              path: "/checkout/payment/success",
+              query: { payment_token: failedPayment.payment_token },
+            });
+            return;
+          }
+        }
+
+        if (!paymentError?.retryable) {
+          clearKey();
+        }
+
+        formError.value =
+          paymentError?.detail ||
+          "ბარათით გადახდის დაწყება ვერ მოხერხდა. თანხა არ ჩამოჭრილა.";
+        await scrollToSubmitFeedback();
+        return;
+      }
 
       if (
         code === "buy_now_price_changed" ||
@@ -433,6 +527,17 @@ const submitForm = validateSubmit(
 watch(returnToQuery, (nextValue) => {
   buyNowStore.setReturnToProduct(nextValue);
 });
+
+watch(
+  cardPaymentEnabled,
+  (enabled) => {
+    if (!enabled && paymentMethod.value === "card") {
+      setFieldValue("payment_method", "cash_on_delivery");
+      clearKey();
+    }
+  },
+  { immediate: true },
+);
 
 watch(
   () => [
@@ -631,6 +736,8 @@ useNoindexPage({
                 :city-attrs="cityAttrs"
                 :address-line-attrs="addressLineAttrs"
                 :note-attrs="noteAttrs"
+                :card-payment-enabled="cardPaymentEnabled"
+                :card-payment-loading="cardPaymentAvailabilityPending"
                 @select-payment-method="selectPaymentMethod"
               />
             </div>
@@ -649,6 +756,7 @@ useNoindexPage({
                 :requires-confirmation="buyNowStore.requiresConfirmation"
                 :submitting="submitPending"
                 :disabled="submitPending || buyNowStore.mutating"
+                :submit-label="submitLabel"
                 :allow-submit="buyNowStore.isCheckoutAvailable"
                 secondary-action-label="პროდუქტის გვერდზე დაბრუნება"
                 :secondary-action-to="buyNowStore.resolvedReturnToProduct"
@@ -710,7 +818,7 @@ useNoindexPage({
                 :disabled="submitPending || buyNowStore.mutating"
                 class="w-full px-4 py-2.5 text-[12px] upper sm:w-auto sm:whitespace-nowrap md:px-5 md:py-3 md:text-sm"
               >
-                შეკვეთის დადასტურება
+                {{ submitLabel }}
               </BaseButton>
 
               <BaseButton

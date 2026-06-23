@@ -144,6 +144,42 @@ export interface WishlistResponse {
 }
 
 export type CheckoutPaymentMethod = "cash_on_delivery" | "card";
+export type CommerceCardPaymentResult =
+  | CommercePaymentStatus
+  | "verification_pending";
+
+export interface CommerceCardPaymentAvailability {
+  enabled: boolean;
+  payment_method: "card";
+  provider: "bog";
+  currency: "GEL";
+  capture: "automatic";
+  redirect_checkout: boolean;
+}
+
+export interface CommerceCardPayment {
+  payment_token: string;
+  status: CommercePaymentStatus;
+  result: CommerceCardPaymentResult;
+  amount: string;
+  currency: "GEL";
+  redirect_url: string | null;
+  expires_at: string | null;
+  can_retry_start: boolean;
+  is_terminal: boolean;
+  order_public_token: string | null;
+  status_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommerceCardPaymentErrorPayload {
+  detail?: string;
+  code?: string;
+  retryable?: boolean;
+  payment?: CommerceCardPayment;
+}
+
 export type CheckoutBuyerType = "individual" | "legal_entity";
 export type CommercePaymentStatus =
   | "pending"

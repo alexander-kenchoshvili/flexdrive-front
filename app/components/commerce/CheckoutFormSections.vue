@@ -8,6 +8,8 @@ import type { CheckoutBuyerType, CheckoutPaymentMethod } from "~/types/commerce"
 
 defineProps<{
   disabled?: boolean;
+  cardPaymentEnabled?: boolean;
+  cardPaymentLoading?: boolean;
   errors: CheckoutFieldErrors;
   companyNameAttrs?: Record<string, unknown>;
   companyIdentificationCodeAttrs?: Record<string, unknown>;
@@ -296,8 +298,8 @@ const lastNameLabel = computed(() =>
   >
     <CheckoutSectionHeader :step="4" title="გადახდის მეთოდი" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      ამ ეტაპზე სრულად ხელმისაწვდომია ნაღდი ანგარიშსწორება. ბარათით გადახდა მალე
-      დაემატება.
+      აირჩიე შენთვის მოსახერხებელი მეთოდი. ბარათით გადახდისას უსაფრთხო
+      საბანკო გვერდზე გადახვალ და შეკვეთა ბანკის პასუხის შემდეგ დადასტურდება.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
@@ -306,16 +308,32 @@ const lastNameLabel = computed(() =>
         title="ნაღდი ანგარიშსწორება"
         description="გადახდა მოხდება შეკვეთის მიღების დროს, მიტანისას."
         :selected="paymentMethod === 'cash_on_delivery'"
+        :disabled="disabled"
         @select="emit('selectPaymentMethod', $event)"
       />
 
       <CheckoutPaymentMethodCard
         method="card"
         title="ბარათით გადახდა"
-        description="ონლაინ გადახდის ინტეგრაცია მზადდება და მალე გახდება ხელმისაწვდომი."
+        :description="
+          cardPaymentEnabled
+            ? 'გადახდა სრულდება Bank of Georgia-ის დაცულ გვერდზე.'
+            : 'ონლაინ გადახდა ამ მომენტში დროებით მიუწვდომელია.'
+        "
         :selected="paymentMethod === 'card'"
-        badge="მალე"
-        disabled
+        :badge="
+          cardPaymentLoading
+            ? 'მოწმდება'
+            : cardPaymentEnabled
+              ? 'ონლაინ'
+              : 'მიუწვდომელია'
+        "
+        :supporting-text="
+          cardPaymentEnabled
+            ? 'FlexDrive არ იღებს და არ ინახავს ბარათის ნომერს, CVV-ს ან ვადის სრულ მონაცემებს.'
+            : ''
+        "
+        :disabled="disabled || cardPaymentLoading || !cardPaymentEnabled"
         @select="emit('selectPaymentMethod', $event)"
       />
     </div>

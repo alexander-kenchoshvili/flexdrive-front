@@ -6,6 +6,7 @@ import CheckoutPageSkeleton from "~/components/commerce/CheckoutPageSkeleton.vue
 import CheckoutSummaryCard from "~/components/commerce/CheckoutSummaryCard.vue";
 import {
   type CheckoutFieldErrors,
+  type CheckoutFormValues,
   useCheckoutForm,
 } from "~/composables/commerce/useCheckoutForm";
 import {
@@ -14,8 +15,10 @@ import {
 } from "~/composables/commerce/errorUtils";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useCheckoutIdempotency } from "~/composables/commerce/useCheckoutIdempotency";
+import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import type {
   CommerceCartItem,
+  CheckoutPayload,
   CheckoutPaymentMethod,
   CommerceCheckoutCartIssue,
 } from "~/types/commerce";
@@ -32,8 +35,15 @@ definePageMeta({
 
 const globalStore = useGlobalStore();
 const cartStore = useCartStore();
-const { checkoutOrder } = useCommerceApi();
+const { checkoutOrder, startCartCardPayment } = useCommerceApi();
 const { getOrCreateKey, clearKey } = useCheckoutIdempotency("cart");
+const {
+  cardPaymentEnabled,
+  availabilityPending: cardPaymentAvailabilityPending,
+  extractPaymentError,
+  redirectToProvider,
+  storeReturnContext,
+} = useCardPaymentFlow();
 const { executeRecaptcha } = useRecaptcha();
 const { trackAddPaymentInfo, trackBeginCheckout } = useEcommerceAnalytics();
 
@@ -87,6 +97,11 @@ const cartPriceConfirmationLabel = computed(() =>
   cartStore.priceChangeCount === 1
     ? "განახლებული ფასის დადასტურება"
     : "განახლებული ფასების დადასტურება",
+);
+const submitLabel = computed(() =>
+  paymentMethod.value === "card"
+    ? "ბანკის გვერდზე გადასვლა"
+    : "შეკვეთის დადასტურება",
 );
 
 const toCheckoutAnalyticsItem = (item: CommerceCartItem) => ({
@@ -262,9 +277,37 @@ const confirmPriceChanges = async () => {
 };
 
 const selectPaymentMethod = (method: CheckoutPaymentMethod) => {
+  if (paymentMethod.value !== method) {
+    clearKey();
+  }
   setFieldValue("payment_method", method);
   clearFormError();
 };
+
+const buildCheckoutPayload = (
+  submittedValues: CheckoutFormValues,
+  recaptchaToken: string,
+): CheckoutPayload => ({
+  buyer_type: submittedValues.buyer_type,
+  company_name:
+    submittedValues.buyer_type === "legal_entity"
+      ? submittedValues.company_name.trim()
+      : "",
+  company_identification_code:
+    submittedValues.buyer_type === "legal_entity"
+      ? submittedValues.company_identification_code.trim()
+      : "",
+  first_name: submittedValues.first_name.trim(),
+  last_name: submittedValues.last_name.trim(),
+  email: submittedValues.email.trim(),
+  phone: submittedValues.phone.trim(),
+  city: submittedValues.city.trim(),
+  address_line: submittedValues.address_line.trim(),
+  note: submittedValues.note?.trim() || "",
+  terms_accepted: submittedValues.terms_accepted,
+  payment_method: submittedValues.payment_method,
+  recaptcha_token: recaptchaToken,
+});
 
 const submitForm = validateSubmit(
   async (submittedValues) => {
@@ -284,30 +327,37 @@ const submitForm = validateSubmit(
 
     try {
       const recaptchaToken = await executeRecaptcha("checkout");
-      const order = await checkoutOrder(
-        {
-          buyer_type: submittedValues.buyer_type,
-          company_name:
-            submittedValues.buyer_type === "legal_entity"
-              ? submittedValues.company_name.trim()
-              : "",
-          company_identification_code:
-            submittedValues.buyer_type === "legal_entity"
-              ? submittedValues.company_identification_code.trim()
-              : "",
-          first_name: submittedValues.first_name.trim(),
-          last_name: submittedValues.last_name.trim(),
-          email: submittedValues.email.trim(),
-          phone: submittedValues.phone.trim(),
-          city: submittedValues.city.trim(),
-          address_line: submittedValues.address_line.trim(),
-          note: submittedValues.note?.trim() || "",
-          terms_accepted: submittedValues.terms_accepted,
-          payment_method: submittedValues.payment_method,
-          recaptcha_token: recaptchaToken,
-        },
-        getOrCreateKey(),
+      const checkoutPayload = buildCheckoutPayload(
+        submittedValues,
+        recaptchaToken,
       );
+
+      if (submittedValues.payment_method === "card") {
+        const payment = await startCartCardPayment(
+          checkoutPayload,
+          getOrCreateKey(),
+        );
+
+        await syncProfileBackfill(submittedValues);
+        storeReturnContext(payment.payment_token, {
+          source: "cart",
+          returnTo: "/checkout",
+        });
+
+        if (payment.result === "paid" && payment.order_public_token) {
+          checkoutCompleted.value = true;
+          clearKey();
+          await navigateTo(
+            `/checkout/success/${payment.order_public_token}`,
+          );
+          return;
+        }
+
+        redirectToProvider(payment);
+        return;
+      }
+
+      const order = await checkoutOrder(checkoutPayload, getOrCreateKey());
 
       await syncProfileBackfill(submittedValues);
 
@@ -317,6 +367,51 @@ const submitForm = validateSubmit(
       await cartStore.refreshCart();
       await navigateTo(`/checkout/success/${order.public_token}`);
     } catch (submitError) {
+      const paymentError =
+        submittedValues.payment_method === "card"
+          ? extractPaymentError(submitError)
+          : null;
+      const failedPayment = paymentError?.payment;
+      const isCardProviderError = Boolean(
+        failedPayment || paymentError?.code?.startsWith("card_payment"),
+      );
+
+      if (
+        submittedValues.payment_method === "card" &&
+        isCardProviderError
+      ) {
+
+        if (failedPayment) {
+          storeReturnContext(failedPayment.payment_token, {
+            source: "cart",
+            returnTo: "/checkout",
+          });
+
+          if (failedPayment.redirect_url) {
+            redirectToProvider(failedPayment);
+            return;
+          }
+
+          if (paymentError?.code === "card_payment_already_active") {
+            await navigateTo({
+              path: "/checkout/payment/success",
+              query: { payment_token: failedPayment.payment_token },
+            });
+            return;
+          }
+        }
+
+        if (!paymentError?.retryable) {
+          clearKey();
+        }
+
+        formError.value =
+          paymentError?.detail ||
+          "ბარათით გადახდის დაწყება ვერ მოხერხდა. თანხა არ ჩამოჭრილა.";
+        await scrollToSubmitFeedback();
+        return;
+      }
+
       if (isCartPriceChangeError(submitError)) {
         formError.value = null;
 
@@ -392,6 +487,17 @@ watch(
   () => {
     clearFormError();
   },
+);
+
+watch(
+  cardPaymentEnabled,
+  (enabled) => {
+    if (!enabled && paymentMethod.value === "card") {
+      setFieldValue("payment_method", "cash_on_delivery");
+      clearKey();
+    }
+  },
+  { immediate: true },
 );
 
 watch(
@@ -562,6 +668,8 @@ useNoindexPage({
                 :city-attrs="cityAttrs"
                 :address-line-attrs="addressLineAttrs"
                 :note-attrs="noteAttrs"
+                :card-payment-enabled="cardPaymentEnabled"
+                :card-payment-loading="cardPaymentAvailabilityPending"
                 @select-payment-method="selectPaymentMethod"
               />
             </div>
@@ -578,6 +686,7 @@ useNoindexPage({
                 :requires-confirmation="cartStore.hasPriceChanges"
                 :submitting="submitPending"
                 :disabled="submitPending || cartStore.mutating"
+                :submit-label="submitLabel"
                 @confirm="void confirmPriceChanges()"
               />
             </div>
@@ -626,7 +735,7 @@ useNoindexPage({
                 {{
                   cartStore.hasPriceChanges
                     ? cartPriceConfirmationLabel
-                    : "შეკვეთის დადასტურება"
+                    : submitLabel
                 }}
               </BaseButton>
             </div>

@@ -10,11 +10,13 @@ const props = withDefaults(
     selected?: boolean;
     disabled?: boolean;
     badge?: string;
+    supportingText?: string;
   }>(),
   {
     selected: false,
     disabled: false,
     badge: "",
+    supportingText: "",
   },
 );
 
@@ -63,6 +65,7 @@ const handleSelect = () => {
     type="button"
     :class="rootClasses"
     :disabled="disabled"
+    :aria-pressed="selected"
     @click="handleSelect"
   >
     <span
@@ -86,6 +89,13 @@ const handleSelect = () => {
 
       <span class="mt-1.5 block text-sm leading-5 text-text-secondary sm:mt-2 sm:leading-6">
         {{ description }}
+      </span>
+
+      <span
+        v-if="supportingText"
+        class="mt-3 block border-t border-border-default/80 pt-3 text-xs font-medium leading-5 text-text-muted"
+      >
+        {{ supportingText }}
       </span>
     </span>
 

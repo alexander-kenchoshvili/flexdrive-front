@@ -2,6 +2,8 @@ import { apiFetchRaw } from "~/composables/apiFetch";
 import type {
   CheckoutPayload,
   CommerceBuyNowSession,
+  CommerceCardPayment,
+  CommerceCardPaymentAvailability,
   CommerceCart,
   CommerceOrderLookupPayload,
   CommerceOrderLookupSummary,
@@ -137,6 +139,57 @@ export const useCommerceApi = () => {
     });
   };
 
+  const getCardPaymentAvailability = async (
+    options?: CommerceRequestOptions,
+  ) => {
+    return apiFetchRaw<CommerceCardPaymentAvailability>(
+      "/commerce/payments/card/availability/",
+      {
+        headers: resolveHeaders(options),
+      },
+    );
+  };
+
+  const startCartCardPayment = async (
+    payload: CheckoutPayload,
+    idempotencyKey: string,
+  ) => {
+    return apiFetchRaw<CommerceCardPayment>(
+      "/commerce/payments/card/cart/start/",
+      {
+        method: "POST",
+        body: payload,
+        headers: {
+          ...resolveMarketingConsentHeaders(),
+          "Idempotency-Key": idempotencyKey,
+        },
+      },
+    );
+  };
+
+  const startBuyNowCardPayment = async (
+    payload: CheckoutPayload,
+    idempotencyKey: string,
+  ) => {
+    return apiFetchRaw<CommerceCardPayment>(
+      "/commerce/payments/card/buy-now/start/",
+      {
+        method: "POST",
+        body: payload,
+        headers: {
+          ...resolveMarketingConsentHeaders(),
+          "Idempotency-Key": idempotencyKey,
+        },
+      },
+    );
+  };
+
+  const getCardPaymentStatus = async (paymentToken: string) => {
+    return apiFetchRaw<CommerceCardPayment>(
+      `/commerce/payments/card/${paymentToken}/`,
+    );
+  };
+
   const checkoutBuyNow = async (
     payload: CheckoutPayload,
     idempotencyKey: string,
@@ -197,6 +250,10 @@ export const useCommerceApi = () => {
     deleteWishlistItem,
     checkoutOrder,
     checkoutBuyNow,
+    getCardPaymentAvailability,
+    startCartCardPayment,
+    startBuyNowCardPayment,
+    getCardPaymentStatus,
     getOrderSummary,
     lookupOrder,
     getOwnedOrders,
