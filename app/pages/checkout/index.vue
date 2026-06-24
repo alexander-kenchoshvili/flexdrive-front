@@ -489,7 +489,6 @@ watch(
   cardPaymentEnabled,
   (enabled) => {
     if (!enabled && paymentMethod.value === "card") {
-      setFieldValue("payment_method", "cash_on_delivery");
       clearKey();
     }
   },

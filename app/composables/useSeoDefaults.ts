@@ -29,7 +29,7 @@ export const useSeoDefaults = () => {
   );
   const fallbackDefaultDescription = String(
     config.public.defaultSeoDescription ||
-      "შეიძინე ხარისხიანი ტაივანური ანალოგი ავტონაწილები FlexDrive-ზე. მოძებნე საჭირო ნაწილი და შეუკვეთე ნაღდი ან ბარათით გადახდით.",
+      "შეიძინე ხარისხიანი ტაივანური ანალოგი ავტონაწილები FlexDrive-ზე. მოძებნე საჭირო ნაწილი და შეუკვეთე ბარათით გადახდით.",
   );
   const fallbackDefaultImage = String(
     config.public.defaultSeoImage || "/favicon.ico",

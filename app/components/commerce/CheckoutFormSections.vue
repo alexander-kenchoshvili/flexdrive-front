@@ -3,7 +3,10 @@ import BaseInput from "~/components/common/BaseInput.vue";
 import BaseTextarea from "~/components/common/BaseTextarea.vue";
 import CheckoutPaymentMethodCard from "~/components/commerce/CheckoutPaymentMethodCard.vue";
 import CheckoutSectionHeader from "~/components/commerce/CheckoutSectionHeader.vue";
-import type { CheckoutFieldErrors } from "~/composables/commerce/useCheckoutForm";
+import {
+  CHECKOUT_CASH_ON_DELIVERY_ENABLED,
+  type CheckoutFieldErrors,
+} from "~/composables/commerce/useCheckoutForm";
 import type { CheckoutBuyerType, CheckoutPaymentMethod } from "~/types/commerce";
 
 defineProps<{
@@ -296,13 +299,14 @@ const lastNameLabel = computed(() =>
     data-checkout-field="payment_method"
     class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
-    <CheckoutSectionHeader :step="4" title="გადახდის მეთოდი" />
+    <CheckoutSectionHeader :step="4" title="გადახდა" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      აირჩიე გადახდის მეთოდი შეკვეთის დასადასტურებლად.
+      შეკვეთის დადასტურებისას გადახდა შესრულდება ბარათით.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
       <CheckoutPaymentMethodCard
+        v-if="CHECKOUT_CASH_ON_DELIVERY_ENABLED"
         method="cash_on_delivery"
         title="ნაღდი ანგარიშსწორება"
         description="გადახდა მოხდება შეკვეთის მიღების დროს, მიტანისას."
