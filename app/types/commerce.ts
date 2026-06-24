@@ -168,6 +168,7 @@ export interface CommerceCardPayment {
   can_retry_start: boolean;
   is_terminal: boolean;
   order_public_token: string | null;
+  order_number: string | null;
   status_url: string;
   created_at: string;
   updated_at: string;

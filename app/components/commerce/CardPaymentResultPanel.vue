@@ -102,9 +102,10 @@ const stateContent = computed(() => {
     },
     paid: {
       eyebrow: "გადახდა დადასტურებულია",
-      title: "ყველაფერი მზად არის",
-      description:
-        "თანხა წარმატებით გადაიხადე. შეკვეთის დეტალების გვერდზე ავტომატურად გადაგიყვანთ.",
+      title: "გადახდა წარმატებულია",
+      description: props.payment?.order_number
+        ? `თანხა მიღებულია და შეკვეთა FlexDrive-ში შეიქმნა. შეკვეთის ნომერია ${props.payment.order_number}. ამ ნომრით შეგიძლია მოგვიანებით გადაამოწმო სტატუსი.`
+        : "თანხა მიღებულია და შეკვეთა FlexDrive-ში შეიქმნა. შეკვეთის ნომრით შეგიძლია მოგვიანებით გადაამოწმო სტატუსი.",
       icon: CheckCircleIcon,
       tone: "success",
     },
@@ -207,10 +208,11 @@ const canContinuePayment = computed(
 const canRecover = computed(() =>
   ["failed", "cancelled", "error"].includes(visualState.value),
 );
-const canOpenOrder = computed(
-  () =>
-    ["paid", "refund_pending", "refunded"].includes(visualState.value) &&
-    Boolean(props.payment?.order_public_token),
+const hasFinalOrder = computed(() =>
+  ["paid", "refund_pending", "refunded"].includes(visualState.value),
+);
+const canCheckOrderStatus = computed(
+  () => hasFinalOrder.value && Boolean(props.payment?.order_number),
 );
 
 const formattedAmount = computed(() =>
@@ -219,17 +221,51 @@ const formattedAmount = computed(() =>
     : "—",
 );
 
-const shortReference = computed(() => {
-  const token = String(props.payment?.payment_token || "");
-  return token ? token.slice(-8).toUpperCase() : "—";
-});
+const shouldShowOrderNumber = computed(() =>
+  ["paid", "paid_review", "refund_pending", "refunded"].includes(
+    visualState.value,
+  ),
+);
 
-const confirmationStepLabel = computed(() => {
-  if (visualState.value === "paid") return "დადასტურებულია";
-  if (visualState.value === "paid_review") return "შემოწმებაშია";
-  if (["failed", "cancelled"].includes(visualState.value)) return "არ შესრულდა";
-  if (visualState.value === "refunded") return "დაბრუნებულია";
-  return "მოლოდინშია";
+const orderNumberLabel = computed(() =>
+  props.payment?.order_number ? props.payment.order_number : "მუშავდება",
+);
+
+const sideContent = computed(() => {
+  if (visualState.value === "paid") {
+    return {
+      title: "შეკვეთა მიღებულია",
+      description: "გადახდა დადასტურებულია და შეკვეთა შენახულია FlexDrive-ში.",
+    };
+  }
+  if (visualState.value === "paid_review") {
+    return {
+      title: "შეკვეთა მოწმდება",
+      description: "გადახდა მიღებულია, მაგრამ შეკვეთას დამატებით ვამოწმებთ.",
+    };
+  }
+  if (visualState.value === "refund_pending") {
+    return {
+      title: "დაბრუნება მუშავდება",
+      description: "თანხის დაბრუნების საბოლოო სტატუსს ბანკისგან ველოდებით.",
+    };
+  }
+  if (visualState.value === "refunded") {
+    return {
+      title: "თანხა დაბრუნებულია",
+      description: "ბანკმა თანხის დაბრუნება დაადასტურა.",
+    };
+  }
+  if (["failed", "cancelled"].includes(visualState.value)) {
+    return {
+      title: "გადახდა ვერ შესრულდა",
+      description: "თანხა არ ჩამოჭრილა და შეკვეთა არ შექმნილა.",
+    };
+  }
+  return {
+    title: "უსაფრთხო შემოწმება",
+    description: "FlexDrive გადახდის საბოლოო სტატუსს ამოწმებს.",
+  };
 });
 </script>
 
@@ -289,54 +325,7 @@ const confirmationStepLabel = computed(() => {
             </div>
           </div>
 
-          <div class="mt-7 border-t border-border-default pt-6 sm:mt-9 sm:pt-7">
-            <p class="text-xs font-bold upper tracking-[0.1em] text-text-muted">
-              ოპერაციის გზა
-            </p>
-
-            <ol class="mt-4 grid gap-3 sm:grid-cols-3">
-              <li
-                class="min-w-0 rounded-[18px] border border-success/25 bg-success/10 p-3.5"
-              >
-                <span class="text-[11px] font-bold text-success">01</span>
-                <p class="mt-2 text-sm font-bold text-text-primary">
-                  შეკვეთის მომზადება
-                </p>
-                <p class="mt-1 text-xs leading-5 text-text-secondary">
-                  მონაცემები და მარაგი გადამოწმებულია.
-                </p>
-              </li>
-
-              <li
-                class="min-w-0 rounded-[18px] border border-success/25 bg-success/10 p-3.5"
-              >
-                <span class="text-[11px] font-bold text-success">02</span>
-                <p class="mt-2 text-sm font-bold text-text-primary">
-                  დაცული საბანკო გვერდი
-                </p>
-                <p class="mt-1 text-xs leading-5 text-text-secondary">
-                  ბარათის მონაცემები FlexDrive-ში არ ინახება.
-                </p>
-              </li>
-
-              <li
-                :class="[
-                  'min-w-0 rounded-[18px] border p-3.5',
-                  toneClasses.icon,
-                ]"
-              >
-                <span class="text-[11px] font-bold">03</span>
-                <p class="mt-2 text-sm font-bold text-text-primary">
-                  საბოლოო დადასტურება
-                </p>
-                <p class="mt-1 text-xs font-semibold leading-5">
-                  {{ confirmationStepLabel }}
-                </p>
-              </li>
-            </ol>
-          </div>
-
-          <div class="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+          <div class="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
             <BaseButton
               v-if="canContinuePayment"
               type="button"
@@ -367,16 +356,6 @@ const confirmationStepLabel = computed(() => {
             </BaseButton>
 
             <BaseButton
-              v-if="canOpenOrder"
-              as="nuxt-link"
-              :to="`/checkout/success/${payment?.order_public_token}`"
-              variant="primary"
-              class="min-h-11"
-            >
-              შეკვეთის დეტალები
-            </BaseButton>
-
-            <BaseButton
               v-if="canRecover"
               type="button"
               variant="primary"
@@ -389,10 +368,20 @@ const confirmationStepLabel = computed(() => {
             <BaseButton
               as="nuxt-link"
               to="/catalog"
-              variant="ghost"
+              :variant="hasFinalOrder ? 'primary' : 'ghost'"
               class="min-h-11"
             >
               კატალოგში დაბრუნება
+            </BaseButton>
+
+            <BaseButton
+              v-if="canCheckOrderStatus"
+              as="nuxt-link"
+              to="/order-status"
+              variant="secondary"
+              class="min-h-11"
+            >
+              შეკვეთის სტატუსის შემოწმება
             </BaseButton>
           </div>
         </div>
@@ -408,10 +397,10 @@ const confirmationStepLabel = computed(() => {
             </span>
             <div class="min-w-0">
               <p class="text-sm font-bold text-text-primary">
-                უსაფრთხო შემოწმება
+                {{ sideContent.title }}
               </p>
               <p class="mt-0.5 text-xs leading-5 text-text-secondary">
-                სტატუსი იკითხება FlexDrive-დან, არა redirect ტექსტიდან.
+                {{ sideContent.description }}
               </p>
             </div>
           </div>
@@ -430,12 +419,17 @@ const confirmationStepLabel = computed(() => {
                 ბარათი
               </dd>
             </div>
-            <div class="flex items-center justify-between gap-4 py-3">
+            <div
+              v-if="shouldShowOrderNumber"
+              class="flex items-center justify-between gap-4 py-3"
+            >
               <dt class="text-xs font-semibold text-text-muted">
-                ოპერაციის კოდი
+                შეკვეთის ნომერი
               </dt>
-              <dd class="font-mono text-sm font-bold text-text-primary">
-                {{ shortReference }}
+              <dd
+                class="break-all text-right font-mono text-sm font-bold text-text-primary"
+              >
+                {{ orderNumberLabel }}
               </dd>
             </div>
             <div class="flex items-center justify-between gap-4 py-3 last:pb-0">
