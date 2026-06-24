@@ -6,16 +6,19 @@ const props = withDefaults(
   defineProps<{
     method: CheckoutPaymentMethod;
     title: string;
-    description: string;
+    description?: string;
     selected?: boolean;
     disabled?: boolean;
     badge?: string;
+    brands?: string[];
     supportingText?: string;
   }>(),
   {
+    description: "",
     selected: false,
     disabled: false,
     badge: "",
+    brands: () => [],
     supportingText: "",
   },
 );
@@ -87,8 +90,24 @@ const handleSelect = () => {
         </span>
       </span>
 
-      <span class="mt-1.5 block text-sm leading-5 text-text-secondary sm:mt-2 sm:leading-6">
+      <span
+        v-if="description"
+        class="mt-1.5 block text-sm leading-5 text-text-secondary sm:mt-2 sm:leading-6"
+      >
         {{ description }}
+      </span>
+
+      <span
+        v-if="brands.length"
+        class="mt-2 flex flex-wrap gap-1.5 sm:mt-2.5"
+      >
+        <span
+          v-for="brand in brands"
+          :key="brand"
+          class="inline-flex rounded-full border border-border-default bg-surface px-2.5 py-1 text-[11px] font-bold leading-none text-text-secondary"
+        >
+          {{ brand }}
+        </span>
       </span>
 
       <span

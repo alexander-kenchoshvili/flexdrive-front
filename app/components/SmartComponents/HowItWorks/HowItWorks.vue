@@ -140,7 +140,7 @@ const activeTabLabel = computed(
               v-for="(segment, segmentIndex) in titleParts.brandSegments"
               :key="`title-segment-${segmentIndex}`"
             >
-              <span :class="segment.accent ? 'text-accent-primary' : ''">
+              <span class="upper" :class="segment.accent ? 'text-accent-primary' : ''">
                 {{ segment.text }}
               </span>
             </template>

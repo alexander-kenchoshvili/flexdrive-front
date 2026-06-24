@@ -98,11 +98,7 @@ const cartPriceConfirmationLabel = computed(() =>
     ? "განახლებული ფასის დადასტურება"
     : "განახლებული ფასების დადასტურება",
 );
-const submitLabel = computed(() =>
-  paymentMethod.value === "card"
-    ? "ბანკის გვერდზე გადასვლა"
-    : "შეკვეთის დადასტურება",
-);
+const submitLabel = computed(() => "შეკვეთის დადასტურება");
 
 const toCheckoutAnalyticsItem = (item: CommerceCartItem) => ({
   id: item.product_id,

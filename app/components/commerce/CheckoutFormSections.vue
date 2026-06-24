@@ -298,8 +298,7 @@ const lastNameLabel = computed(() =>
   >
     <CheckoutSectionHeader :step="4" title="გადახდის მეთოდი" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      აირჩიე შენთვის მოსახერხებელი მეთოდი. ბარათით გადახდისას უსაფრთხო
-      საბანკო გვერდზე გადახვალ და შეკვეთა ბანკის პასუხის შემდეგ დადასტურდება.
+      აირჩიე გადახდის მეთოდი შეკვეთის დასადასტურებლად.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
@@ -316,23 +315,21 @@ const lastNameLabel = computed(() =>
         method="card"
         title="ბარათით გადახდა"
         :description="
-          cardPaymentEnabled
-            ? 'გადახდა სრულდება Bank of Georgia-ის დაცულ გვერდზე.'
-            : 'ონლაინ გადახდა ამ მომენტში დროებით მიუწვდომელია.'
+          cardPaymentLoading
+            ? 'ხელმისაწვდომობა მოწმდება.'
+            : cardPaymentEnabled
+              ? ''
+              : 'ბარათით გადახდა ამ მომენტში მიუწვდომელია.'
         "
         :selected="paymentMethod === 'card'"
         :badge="
           cardPaymentLoading
             ? 'მოწმდება'
             : cardPaymentEnabled
-              ? 'ონლაინ'
+              ? ''
               : 'მიუწვდომელია'
         "
-        :supporting-text="
-          cardPaymentEnabled
-            ? 'FlexDrive არ იღებს და არ ინახავს ბარათის ნომერს, CVV-ს ან ვადის სრულ მონაცემებს.'
-            : ''
-        "
+        :brands="cardPaymentEnabled ? ['Visa', 'Mastercard', 'American Express'] : []"
         :disabled="disabled || cardPaymentLoading || !cardPaymentEnabled"
         @select="emit('selectPaymentMethod', $event)"
       />

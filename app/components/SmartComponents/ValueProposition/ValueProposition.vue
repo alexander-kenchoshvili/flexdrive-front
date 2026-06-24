@@ -108,7 +108,7 @@ const cards = computed<ValuePropositionCardItem[]>(() =>
             v-for="(segment, index) in titleParts.brandSegments"
             :key="`value-proposition-title-${index}`"
           >
-            <span :class="segment.accent ? 'text-accent-primary' : ''">
+            <span class="upper" :class="segment.accent ? 'text-accent-primary' : ''">
               {{ segment.text }}
             </span>
           </template>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   CreditCardIcon,
-  ReceiptPercentIcon,
   TruckIcon,
 } from "@heroicons/vue/24/outline";
 import { sanitizeText } from "~/composables/helpers";
@@ -28,20 +27,12 @@ const heroImageAlt = computed(() => heroTitle.value || "FlexDrive hero image");
 
 const trustItems = [
   {
-    label: "0% ნაწილ-ნაწილ გადახდა",
-    icon: ReceiptPercentIcon,
-  },
-  {
-    label: "ონლაინ განვადება",
+    label: "უსაფრთხო გადახდა",
     icon: CreditCardIcon,
   },
   {
     label: "სწრაფი მიტანა",
     icon: TruckIcon,
-  },
-  {
-    label: "უსაფრთხო გადახდა",
-    icon: CreditCardIcon,
   },
 ];
 </script>

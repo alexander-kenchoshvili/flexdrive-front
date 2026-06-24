@@ -102,11 +102,7 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 
 const lineItemLabel = computed(() => `${buyNowStore.itemCount} პროდუქტი`);
 const returnToQuery = computed(() => sanitizeReturnTo(route.query.return_to));
-const submitLabel = computed(() =>
-  paymentMethod.value === "card"
-    ? "ბანკის გვერდზე გადასვლა"
-    : "შეკვეთის დადასტურება",
-);
+const submitLabel = computed(() => "შეკვეთის დადასტურება");
 
 const toBuyNowCheckoutAnalyticsItem = (
   item: CommerceCheckoutSummaryItem,

@@ -31,6 +31,38 @@ const navigationMenuItems = computed(() =>
   ),
 );
 
+const normalizeNavigationPath = (value: string | null | undefined) => {
+  const rawValue = String(value || "").trim();
+  if (!rawValue) return "/";
+
+  if (/^[a-z][a-z\d+\-.]*:/i.test(rawValue)) {
+    return rawValue;
+  }
+
+  const [pathWithoutQuery] = rawValue.split(/[?#]/);
+  const path = pathWithoutQuery || "/";
+  const pathWithLeadingSlash = path.startsWith("/") ? path : `/${path}`;
+  const normalizedPath = pathWithLeadingSlash.replace(/\/+$/, "");
+
+  return normalizedPath || "/";
+};
+
+const currentNavigationPath = computed(() =>
+  normalizeNavigationPath(route.path),
+);
+
+const isNavigationItemActive = (item: { final_url?: string | null }) => {
+  const targetPath = normalizeNavigationPath(item.final_url);
+
+  if (!targetPath.startsWith("/")) return false;
+  if (targetPath === "/") return currentNavigationPath.value === "/";
+
+  return (
+    currentNavigationPath.value === targetPath ||
+    currentNavigationPath.value.startsWith(`${targetPath}/`)
+  );
+};
+
 const isAuthResolved = computed(() => globalStore.authResolved);
 const isAuthenticated = computed(() => Boolean(globalStore.currentUser));
 const showAuthenticatedAuthUi = computed(
@@ -334,7 +366,13 @@ onBeforeUnmount(() => {
           <li v-for="item in navigationMenuItems" :key="item.id" class="shrink-0">
             <NuxtLink
               :to="item.final_url"
-              class="inline-flex min-h-10 items-center rounded-[8px] px-3 text-[14px] font-semibold text-text-secondary transition-colors duration-200 hover:bg-header-hover hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary upper"
+              class="inline-flex min-h-10 items-center rounded-[8px] border px-3 text-[14px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary upper"
+              :class="
+                isNavigationItemActive(item)
+                  ? 'border-accent-primary bg-accent-primary text-text-invert shadow-[0_12px_24px_-16px_var(--accent-primary)]'
+                  : 'border-transparent text-text-secondary hover:border-accent-primary/40 hover:bg-header-hover hover:text-accent-primary'
+              "
+              :aria-current="isNavigationItemActive(item) ? 'page' : undefined"
             >
               {{ item.name }}
             </NuxtLink>
@@ -435,7 +473,13 @@ onBeforeUnmount(() => {
             <li v-for="item in navigationMenuItems" :key="item.id">
               <NuxtLink
                 :to="item.final_url"
-                class="block rounded-[12px] border border-header-border px-3 py-3 text-[15px] font-semibold text-text-primary transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary upper"
+                class="block rounded-[12px] border px-3 py-3 text-[15px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary upper"
+                :class="
+                  isNavigationItemActive(item)
+                    ? 'border-accent-primary bg-accent-primary text-text-invert shadow-[0_12px_24px_-16px_var(--accent-primary)]'
+                    : 'border-header-border text-text-primary hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary'
+                "
+                :aria-current="isNavigationItemActive(item) ? 'page' : undefined"
                 @click="closeMobileMenu"
               >
                 {{ item.name }}

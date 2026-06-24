@@ -73,7 +73,7 @@ const cards = computed<OrderConfidenceCardData[]>(() =>
             v-for="(segment, segmentIndex) in titleParts.brandSegments"
             :key="`order-confidence-title-${segmentIndex}`"
           >
-            <span :class="segment.accent ? 'text-accent-primary' : ''">
+            <span class="upper" :class="segment.accent ? 'text-accent-primary' : ''">
               {{ segment.text }}
             </span>
           </template>
