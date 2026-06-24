@@ -33,7 +33,6 @@ const emit = defineEmits<{
     :disabled="props.disabled"
     :loading="props.loading"
     :redirect-to="props.redirectTo"
-    :requires-secure-browser="true"
     :return-path="props.returnPath"
     @error="emit('error', $event)"
   />
