@@ -110,7 +110,7 @@ const isIOSMessengerInAppBrowser = () => {
   const isMessengerUserAgent =
     /MessengerForiOS|FBAN\/Messenger|FB_IAB\/Messenger/i.test(userAgent);
 
-  return isIOS && (isMessengerUserAgent || (isMetaInAppBrowser && hasMessengerEntry()));
+  return isIOS && (isMetaInAppBrowser || isMessengerUserAgent);
 };
 
 rememberMessengerEntry();
