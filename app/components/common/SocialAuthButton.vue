@@ -57,15 +57,16 @@ const buildStartUrl = () => {
   return url.toString();
 };
 
-const isSocialInAppBrowser = () => {
+const isIOSMessengerInAppBrowser = () => {
   if (import.meta.server) {
     return false;
   }
 
   const userAgent = navigator.userAgent || "";
-  return /FBAN|FBAV|FB_IAB|FBIOS|FB4A|MessengerForiOS|Instagram|Line|TikTok|BytedanceWebview/i.test(
-    userAgent,
-  );
+  const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+  const isMessenger = /MessengerForiOS|FBAN\/Messenger|FB_IAB\/Messenger/i.test(userAgent);
+
+  return isIOS && isMessenger;
 };
 
 const closeSecureBrowserModal = () => {
@@ -79,7 +80,7 @@ const handleClick = () => {
 
   renderError.value = "";
 
-  if (props.requiresSecureBrowser && isSocialInAppBrowser()) {
+  if (props.requiresSecureBrowser && isIOSMessengerInAppBrowser()) {
     showSecureBrowserModal.value = true;
     return;
   }
@@ -139,24 +140,15 @@ const handleClick = () => {
           </span>
 
           <h2 class="upper text-base font-bold leading-6 text-text-primary sm:text-lg">
-            Google-ით შესვლა ბრაუზერში გააგრძელე
+            Google-ით შესვლა ამ ბრაუზერში ვერ ხერხდება
           </h2>
         </div>
       </template>
 
-      <div class="space-y-4">
-        <p class="text-sm leading-6 text-text-secondary">
-          Messenger-ის შიდა ფანჯრიდან Google ზოგჯერ ბლოკავს ავტორიზაციას.
-          გახსენი საიტი Chrome-ში ან Safari-ში და შემდეგ სცადე შესვლა.
-        </p>
-
-        <div
-          class="rounded-lg border border-border-default bg-surface-2 px-4 py-3 text-sm leading-6 text-text-primary"
-        >
-          მენიუდან აირჩიე <span class="font-semibold">Open in browser</span>
-          ან გახსენი ბმული ჩვეულებრივ ბრაუზერში.
-        </div>
-      </div>
+      <p class="text-sm leading-6 text-text-secondary">
+        iPhone-ზე Messenger-ის ბრაუზერი Google ავტორიზაციას ბლოკავს. გახსენი
+        FlexDrive Safari-ში ან Chrome-ში და სცადე თავიდან.
+      </p>
 
       <template #footer>
         <BaseButton

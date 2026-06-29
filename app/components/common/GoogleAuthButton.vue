@@ -30,6 +30,7 @@ const emit = defineEmits<{
     opening-label="Google იხსნება..."
     start-path="/auth/google/start"
     error-message="Google შესვლის დაწყება ვერ მოხერხდა. სცადეთ თავიდან."
+    :requires-secure-browser="true"
     :disabled="props.disabled"
     :loading="props.loading"
     :redirect-to="props.redirectTo"

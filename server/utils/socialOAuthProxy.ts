@@ -69,10 +69,195 @@ const renderRedirectBridge = (location: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="0;url=${escapedLocation}">
     <title>ავტორიზაცია გრძელდება</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg-primary: #f8faf4;
+        --bg-secondary: #eef3e8;
+        --surface: #ffffff;
+        --surface-2: #f3f6ee;
+        --text-primary: #111827;
+        --text-secondary: #3f4a3a;
+        --text-muted: #596256;
+        --border-default: #d7e0cd;
+        --accent-primary: #4f6f1f;
+        --accent-soft: #e8f1d6;
+        --focus-ring: #5b7f24;
+        --shadow-color: rgba(17, 24, 39, 0.12);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-primary: #0e160b;
+          --bg-secondary: #121d0f;
+          --surface: #121a10;
+          --surface-2: #182316;
+          --text-primary: #f7faf2;
+          --text-secondary: #d7e2cc;
+          --text-muted: #aebda1;
+          --border-default: #34452a;
+          --accent-primary: #b7dd66;
+          --accent-soft: #263a1c;
+          --focus-ring: #b7dd66;
+          --shadow-color: rgba(0, 0, 0, 0.58);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top left, var(--accent-soft), transparent 34%),
+          linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+        color: var(--text-primary);
+        font-family:
+          "Noto Sans Georgian",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(100%, 420px);
+        padding: 28px;
+        border: 1px solid var(--border-default);
+        border-radius: 18px;
+        background: var(--surface);
+        box-shadow: 0 22px 70px var(--shadow-color);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        font-size: 17px;
+        line-height: 1;
+      }
+
+      .status {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .spinner {
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+        border: 3px solid var(--accent-soft);
+        border-top-color: var(--accent-primary);
+        border-radius: 999px;
+        animation: spin 0.8s linear infinite;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      p {
+        margin: 8px 0 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .fallback {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 22px;
+        padding: 0 16px;
+        border: 1px solid var(--border-default);
+        border-radius: 12px;
+        background: var(--surface-2);
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .fallback:focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 2px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 420px) {
+        body {
+          padding: 16px;
+        }
+
+        main {
+          padding: 22px;
+          border-radius: 16px;
+        }
+
+        h1 {
+          font-size: 18px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <p>ავტორიზაცია გრძელდება...</p>
-    <p><a href="${escapedLocation}" rel="nofollow">გაგრძელება</a></p>
+    <main aria-live="polite">
+      <div class="brand" aria-label="FlexDrive">
+        <span class="brand-mark" aria-hidden="true">FD</span>
+        <span>FlexDrive</span>
+      </div>
+
+      <div class="status">
+        <span class="spinner" aria-hidden="true"></span>
+        <div>
+          <h1>ავტორიზაცია გრძელდება</h1>
+          <p>რამდენიმე წამში უსაფრთხოდ გადაგიყვანთ შემდეგ ეტაპზე.</p>
+        </div>
+      </div>
+
+      <a class="fallback" href="${escapedLocation}" rel="nofollow">გაგრძელება</a>
+    </main>
     <script>
       window.location.replace(${serializedLocation});
     </script>
