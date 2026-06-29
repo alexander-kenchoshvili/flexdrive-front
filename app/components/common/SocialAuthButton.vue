@@ -35,6 +35,7 @@ const route = useRoute();
 const renderError = ref("");
 const requestInFlight = ref(false);
 const showSecureBrowserModal = ref(false);
+const MESSENGER_ENTRY_SESSION_KEY = "flexdrive:messenger-entry";
 
 const isBusy = computed(() => props.loading || requestInFlight.value);
 
@@ -57,6 +58,47 @@ const buildStartUrl = () => {
   return url.toString();
 };
 
+const isMessengerReferrer = () => {
+  if (import.meta.server || !document.referrer) {
+    return false;
+  }
+
+  try {
+    const host = new URL(document.referrer).hostname.toLowerCase();
+    return host === "m.me" || host.endsWith(".m.me") || host.endsWith("messenger.com");
+  } catch {
+    return /messenger\.com|m\.me/i.test(document.referrer);
+  }
+};
+
+const rememberMessengerEntry = () => {
+  if (import.meta.server || !isMessengerReferrer()) {
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(MESSENGER_ENTRY_SESSION_KEY, "1");
+  } catch {
+    // Ignore storage failures in restricted in-app browsers.
+  }
+};
+
+const hasMessengerEntry = () => {
+  if (import.meta.server) {
+    return false;
+  }
+
+  if (isMessengerReferrer()) {
+    return true;
+  }
+
+  try {
+    return sessionStorage.getItem(MESSENGER_ENTRY_SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
 const isIOSMessengerInAppBrowser = () => {
   if (import.meta.server) {
     return false;
@@ -64,10 +106,14 @@ const isIOSMessengerInAppBrowser = () => {
 
   const userAgent = navigator.userAgent || "";
   const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-  const isMessenger = /MessengerForiOS|FBAN\/Messenger|FB_IAB\/Messenger/i.test(userAgent);
+  const isMetaInAppBrowser = /FBAN|FBAV|FB_IAB|FBIOS/i.test(userAgent);
+  const isMessengerUserAgent =
+    /MessengerForiOS|FBAN\/Messenger|FB_IAB\/Messenger/i.test(userAgent);
 
-  return isIOS && isMessenger;
+  return isIOS && (isMessengerUserAgent || (isMetaInAppBrowser && hasMessengerEntry()));
 };
+
+rememberMessengerEntry();
 
 const closeSecureBrowserModal = () => {
   showSecureBrowserModal.value = false;
