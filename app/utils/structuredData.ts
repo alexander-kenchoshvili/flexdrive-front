@@ -31,6 +31,7 @@ type ProductStructuredDataInput = {
   currency?: string | null;
   inStock?: boolean | null;
   brandName?: string | null;
+  sellerName?: string | null;
   category?: string | null;
 };
 
@@ -156,6 +157,7 @@ export const buildProductStructuredData = ({
   currency,
   inStock,
   brandName,
+  sellerName,
   category,
 }: ProductStructuredDataInput) => {
   const product: Record<string, unknown> = {
@@ -199,6 +201,14 @@ export const buildProductStructuredData = ({
         inStock === false
           ? "https://schema.org/OutOfStock"
           : "https://schema.org/InStock",
+      ...(sellerName
+        ? {
+            seller: {
+              "@type": "Organization",
+              name: sellerName,
+            },
+          }
+        : {}),
     };
   }
 

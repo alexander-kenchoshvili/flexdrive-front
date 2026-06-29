@@ -605,7 +605,8 @@ const productSchema = computed(() => {
     price: priceAvailable.value ? priceValue.value : null,
     currency: "GEL",
     inStock: Boolean(product.value.in_stock),
-    brandName: siteName.value,
+    brandName: productBrand.value || undefined,
+    sellerName: siteName.value,
     category: productCategory.value,
   });
 });
