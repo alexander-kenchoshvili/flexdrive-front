@@ -147,7 +147,7 @@ const compatibilityBadge = computed(() => {
 
 <template>
   <article
-    class="group relative flex h-full flex-col overflow-hidden rounded-lg border border-border-default bg-surface shadow-[0_18px_44px_-38px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200 hover:border-accent-primary/70 hover:shadow-[0_22px_54px_-36px_var(--shadow-color)] focus-within:border-accent-primary/70"
+    class="product-card-shell group relative flex h-full flex-col overflow-hidden rounded-lg border border-border-default bg-surface shadow-[0_18px_44px_-38px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200"
   >
     <div class="absolute right-2.5 top-2.5 z-[3]">
       <WishlistToggleButton
@@ -286,6 +286,33 @@ const compatibilityBadge = computed(() => {
 </template>
 
 <style scoped>
+.product-card-shell {
+  --product-card-hover-border: color-mix(
+    in srgb,
+    var(--accent-primary) 72%,
+    transparent
+  );
+  --product-card-hover-glow: rgba(79, 111, 31, 0.18);
+}
+
+:global(html.dark) .product-card-shell {
+  --product-card-hover-border: color-mix(
+    in srgb,
+    var(--accent-primary) 78%,
+    transparent
+  );
+  --product-card-hover-glow: rgba(183, 221, 102, 0.2);
+}
+
+.product-card-shell:hover,
+.product-card-shell:focus-within {
+  border-color: var(--product-card-hover-border);
+  box-shadow:
+    0 0 0 1px var(--product-card-hover-border),
+    0 22px 54px -36px var(--shadow-color),
+    0 14px 34px -28px var(--product-card-hover-glow);
+}
+
 .product-card-title,
 .product-card-subtitle {
   display: -webkit-box;

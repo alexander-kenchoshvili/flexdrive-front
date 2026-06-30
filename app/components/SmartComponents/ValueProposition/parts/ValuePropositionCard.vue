@@ -48,7 +48,7 @@ const hasImage = computed(() =>
     />
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(183,221,102,0.16),transparent_28%)]" />
 
-    <div class="relative z-[1] flex min-h-full w-full flex-col justify-between p-5 sm:p-6">
+    <div class="relative z-[1] flex min-h-full w-full flex-col p-5 sm:p-6">
       <span
         class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#b7dd66]/45 bg-[#b7dd66]/10 text-[#b7dd66] shadow-[0_0_0_8px_rgba(183,221,102,0.07)] transition-colors duration-200 group-hover:border-[#b7dd66]/75 group-hover:bg-[#b7dd66]/15"
       >
@@ -68,9 +68,9 @@ const hasImage = computed(() =>
         >
           {{ description }}
         </span>
-
-        <span class="mt-5 block h-1 w-10 rounded-full bg-[#b7dd66]" />
       </span>
+
+      <span class="mt-auto block h-1 w-10 rounded-full bg-[#b7dd66]" />
     </div>
   </article>
 </template>
