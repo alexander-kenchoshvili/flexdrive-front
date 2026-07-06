@@ -16,6 +16,7 @@ const BOOL_PARAM_KEYS: Array<keyof CatalogListParams> = [
   "is_featured",
   "in_stock",
   "on_sale",
+  "has_image",
 ];
 
 const NUMBER_PARAM_KEYS: Array<keyof CatalogListParams> = [

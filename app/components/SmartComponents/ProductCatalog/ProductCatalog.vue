@@ -46,7 +46,8 @@ type CatalogActiveFilterKey =
   | "side"
   | "price"
   | "in_stock"
-  | "on_sale";
+  | "on_sale"
+  | "has_image";
 type CatalogActiveFilter = {
   key: CatalogActiveFilterKey;
   label: string;
@@ -132,6 +133,7 @@ const selectedPlacement = ref("");
 const selectedSide = ref("");
 const selectedInStock = ref(false);
 const selectedOnSale = ref(false);
+const selectedHasImage = ref(false);
 const selectedVehicleMake = ref("");
 const selectedVehicleModel = ref("");
 const selectedVehicleYear = ref("");
@@ -401,6 +403,7 @@ const hasActiveFilterSelection = computed(
     Boolean(selectedSide.value) ||
     selectedInStock.value ||
     selectedOnSale.value ||
+    selectedHasImage.value ||
     Boolean(minPrice.value.trim()) ||
     Boolean(maxPrice.value.trim()),
 );
@@ -548,6 +551,10 @@ const activeFilterChips = computed<CatalogActiveFilter[]>(() => {
 
   if (selectedOnSale.value) {
     chips.push({ key: "on_sale", label: "ფასდაკლება" });
+  }
+
+  if (selectedHasImage.value) {
+    chips.push({ key: "has_image", label: "სურათით" });
   }
 
   return chips;
@@ -740,6 +747,7 @@ const syncControlsFromRoute = (
   selectedSide.value = toCleanQueryString(firstQueryValue(query.side));
   selectedInStock.value = toBooleanFromQuery(firstQueryValue(query.in_stock));
   selectedOnSale.value = toBooleanFromQuery(firstQueryValue(query.on_sale));
+  selectedHasImage.value = toBooleanFromQuery(firstQueryValue(query.has_image));
 
   const routeVehicle = readVehicleSelectionFromQuery(query);
   selectedVehicleMake.value = routeVehicle.make;
@@ -821,6 +829,10 @@ const buildParamsFromControls = (): CatalogListParams => {
     params.on_sale = true;
   }
 
+  if (selectedHasImage.value) {
+    params.has_image = true;
+  }
+
   const min = toOptionalNumber(minPrice.value);
   const max = toOptionalNumber(maxPrice.value);
 
@@ -883,6 +895,10 @@ const buildRouteQueryFromControls = (page: number): Record<string, string> => {
 
   if (selectedOnSale.value) {
     query.on_sale = "true";
+  }
+
+  if (selectedHasImage.value) {
+    query.has_image = "true";
   }
 
   if (page > 1) {
@@ -1198,6 +1214,7 @@ const handleMobileFilterApply = async (value: {
   selectedSide: string;
   inStock: boolean;
   onSale: boolean;
+  hasImage: boolean;
   vehicle: CatalogVehicleSelection;
 }) => {
   if (!isVehicleSelectionValid(value.vehicle)) return;
@@ -1211,6 +1228,7 @@ const handleMobileFilterApply = async (value: {
   selectedSide.value = value.selectedSide;
   selectedInStock.value = value.inStock;
   selectedOnSale.value = value.onSale;
+  selectedHasImage.value = value.hasImage;
   applyVehicleSelection(value.vehicle);
   closeMobileFilterSheet();
   await pushQueryAndScrollToResults({ resetPage: true });
@@ -1223,6 +1241,7 @@ const handleResetFilters = async () => {
   selectedSide.value = "";
   selectedInStock.value = false;
   selectedOnSale.value = false;
+  selectedHasImage.value = false;
   clearDraftVehicleFilter();
   clearAppliedVehicleFilter();
   minPrice.value = "";
@@ -1240,6 +1259,7 @@ const handleClearCatalogState = async () => {
   selectedSide.value = "";
   selectedInStock.value = false;
   selectedOnSale.value = false;
+  selectedHasImage.value = false;
   clearDraftVehicleFilter();
   clearAppliedVehicleFilter();
   minPrice.value = "";
@@ -1269,6 +1289,8 @@ const handleRemoveActiveFilter = async (key: CatalogActiveFilterKey) => {
     selectedInStock.value = false;
   } else if (key === "on_sale") {
     selectedOnSale.value = false;
+  } else if (key === "has_image") {
+    selectedHasImage.value = false;
   }
 
   await pushQueryAndScrollToResults({ resetPage: true });
@@ -1450,6 +1472,7 @@ useSeoMeta({
             :selected-side="selectedSide"
             :in-stock="selectedInStock"
             :on-sale="selectedOnSale"
+            :has-image="selectedHasImage"
             :min-price="minPrice"
             :max-price="maxPrice"
             :disabled="productsPending"
@@ -1463,6 +1486,7 @@ useSeoMeta({
             @update:selected-side="selectedSide = $event"
             @update:in-stock="selectedInStock = $event"
             @update:on-sale="selectedOnSale = $event"
+            @update:has-image="selectedHasImage = $event"
             @update:min-price="minPrice = $event"
             @update:max-price="maxPrice = $event"
             @reset-vehicle="handleResetVehicleFilter"
@@ -1569,6 +1593,7 @@ useSeoMeta({
         :selected-side="selectedSide"
         :in-stock="selectedInStock"
         :on-sale="selectedOnSale"
+        :has-image="selectedHasImage"
         :min-price="minPrice"
         :max-price="maxPrice"
         :sort="selectedSort"

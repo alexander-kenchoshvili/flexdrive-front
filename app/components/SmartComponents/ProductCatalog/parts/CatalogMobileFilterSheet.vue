@@ -53,6 +53,7 @@ const props = withDefaults(
     selectedSide?: string;
     inStock?: boolean;
     onSale?: boolean;
+    hasImage?: boolean;
     minPrice?: string;
     maxPrice?: string;
     sort?: CatalogSort;
@@ -85,6 +86,7 @@ const props = withDefaults(
     selectedSide: "",
     inStock: false,
     onSale: false,
+    hasImage: false,
     minPrice: "",
     maxPrice: "",
     sort: "recommended",
@@ -117,6 +119,7 @@ const emit = defineEmits<{
       selectedSide: string;
       inStock: boolean;
       onSale: boolean;
+      hasImage: boolean;
       vehicle: CatalogVehicleSelection;
     },
   ): void;
@@ -132,6 +135,7 @@ const draftSelectedPlacement = ref(props.selectedPlacement);
 const draftSelectedSide = ref(props.selectedSide);
 const draftInStock = ref(props.inStock);
 const draftOnSale = ref(props.onSale);
+const draftHasImage = ref(props.hasImage);
 
 let previousBodyOverflow = "";
 
@@ -252,6 +256,7 @@ const hasDraftControls = computed(
     Boolean(draftSelectedSide.value) ||
     draftInStock.value ||
     draftOnSale.value ||
+    draftHasImage.value ||
     Boolean(
       props.vehicleMake ||
         props.vehicleModel ||
@@ -292,6 +297,7 @@ const applyFilters = () => {
     selectedSide: draftSelectedSide.value,
     inStock: draftInStock.value,
     onSale: draftOnSale.value,
+    hasImage: draftHasImage.value,
     vehicle: {
       make: props.vehicleMake,
       model: props.vehicleModel,
@@ -311,6 +317,7 @@ const clearDraftFilters = () => {
   draftSelectedSide.value = "";
   draftInStock.value = false;
   draftOnSale.value = false;
+  draftHasImage.value = false;
   emit("resetVehicleDraft");
 };
 
@@ -349,6 +356,7 @@ const syncDraftFromProps = () => {
   draftSelectedSide.value = props.selectedSide;
   draftInStock.value = props.inStock;
   draftOnSale.value = props.onSale;
+  draftHasImage.value = props.hasImage;
 };
 
 watch(
@@ -580,6 +588,17 @@ onBeforeUnmount(() => {
                   class="h-4 w-4 accent-[var(--accent-primary)]"
                 />
                 ფასდაკლება
+              </label>
+              <label
+                class="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-border-default bg-surface px-3 py-2 text-sm font-semibold text-text-secondary"
+              >
+                <input
+                  v-model="draftHasImage"
+                  type="checkbox"
+                  :disabled="disabled"
+                  class="h-4 w-4 accent-[var(--accent-primary)]"
+                />
+                სურათით
               </label>
             </div>
           </section>

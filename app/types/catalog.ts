@@ -27,6 +27,7 @@ export interface CatalogListParams {
   is_featured?: boolean;
   in_stock?: boolean;
   on_sale?: boolean;
+  has_image?: boolean;
   ordering?: CatalogSort;
 }
 

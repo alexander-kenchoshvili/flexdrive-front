@@ -46,6 +46,7 @@ const props = withDefaults(
     selectedSide?: string;
     inStock?: boolean;
     onSale?: boolean;
+    hasImage?: boolean;
     minPrice?: string;
     maxPrice?: string;
     disabled?: boolean;
@@ -76,6 +77,7 @@ const props = withDefaults(
     selectedSide: "",
     inStock: false,
     onSale: false,
+    hasImage: false,
     minPrice: "",
     maxPrice: "",
     disabled: false,
@@ -93,6 +95,7 @@ const emit = defineEmits<{
   (e: "update:selectedSide", value: string): void;
   (e: "update:inStock", value: boolean): void;
   (e: "update:onSale", value: boolean): void;
+  (e: "update:hasImage", value: boolean): void;
   (e: "update:minPrice", value: string): void;
   (e: "update:maxPrice", value: string): void;
   (e: "resetVehicle"): void;
@@ -247,11 +250,13 @@ const toggleCategory = (id: number) => {
   emit("apply");
 };
 
-const updateQuickFilter = (key: "inStock" | "onSale", value: boolean) => {
+const updateQuickFilter = (key: "inStock" | "onSale" | "hasImage", value: boolean) => {
   if (key === "inStock") {
     emit("update:inStock", value);
-  } else {
+  } else if (key === "onSale") {
     emit("update:onSale", value);
+  } else {
+    emit("update:hasImage", value);
   }
   emit("apply");
 };
@@ -465,6 +470,18 @@ watch([minPriceModel, maxPriceModel], () => {
             :disabled="disabled"
             class="h-4 w-4 accent-[var(--accent-primary)]"
             @change="updateQuickFilter('onSale', getCheckedValue($event))"
+          />
+        </label>
+        <label
+          class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border-default bg-surface px-3 py-2 text-sm font-semibold text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
+        >
+          <span>სურათით</span>
+          <input
+            type="checkbox"
+            :checked="hasImage"
+            :disabled="disabled"
+            class="h-4 w-4 accent-[var(--accent-primary)]"
+            @change="updateQuickFilter('hasImage', getCheckedValue($event))"
           />
         </label>
       </div>
