@@ -1,24 +1,24 @@
 import type { RouterConfig } from "@nuxt/schema";
+import { waitForPageReady } from "~/utils/pageScrollCoordinator";
 
-const ROUTE_SCROLL_DELAY_MS = 320;
 const CATALOG_ROOT_PATH = "/catalog";
 
 const isCatalogListingPath = (path: string) =>
   path === CATALOG_ROOT_PATH || /^\/catalog\/category\/[^/]+$/.test(path);
 
-const delayScroll = <T>(position: T) =>
-  new Promise<T>((resolve) => {
-    setTimeout(() => resolve(position), ROUTE_SCROLL_DELAY_MS);
-  });
+const resolveWhenPageIsReady = async <T>(path: string, position: T) => {
+  await waitForPageReady(path);
+  return position;
+};
 
 export default {
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
-      return delayScroll(savedPosition);
+      return resolveWhenPageIsReady(to.fullPath, savedPosition);
     }
 
     if (to.hash) {
-      return delayScroll({
+      return resolveWhenPageIsReady(to.fullPath, {
         el: to.hash,
         top: 96,
         behavior: "smooth",
@@ -33,7 +33,7 @@ export default {
       return false;
     }
 
-    return delayScroll({
+    return resolveWhenPageIsReady(to.fullPath, {
       left: 0,
       top: 0,
       behavior: "auto",

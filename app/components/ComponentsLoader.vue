@@ -18,15 +18,19 @@ type RenderedComponent = {
   props: SmartComponentRenderData;
 };
 
+const CONTENT_READY_FALLBACK_MS = 10_000;
+
 const globalStore = useGlobalStore();
 const { components, isComponentsLoad } = storeToRefs(globalStore);
+const pageLoadingIndicator = useLoadingIndicator();
 
 const renderedComponents = shallowRef<RenderedComponent[]>([]);
 const renderVersion = ref(0);
 const loaderRef = ref<HTMLElement | null>(null);
 const contentRef = ref<HTMLElement | null>(null);
 const lockedMinHeight = ref<string | null>(null);
-let releaseHeightTimer: ReturnType<typeof setTimeout> | null = null;
+let contentReadyObserver: ResizeObserver | null = null;
+let contentReadyFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
 const getAsyncComponent = (name: string) => {
   return defineAsyncComponent(() =>
@@ -68,14 +72,6 @@ const initComponents = () => {
   renderVersion.value += 1;
 };
 
-const clearReleaseHeightTimer = () => {
-  if (!releaseHeightTimer) {
-    return;
-  }
-  clearTimeout(releaseHeightTimer);
-  releaseHeightTimer = null;
-};
-
 const setLockedHeight = (element?: HTMLElement | null) => {
   const measuredHeight = Math.ceil(
     element?.offsetHeight || loaderRef.value?.offsetHeight || 0,
@@ -83,6 +79,62 @@ const setLockedHeight = (element?: HTMLElement | null) => {
   if (measuredHeight > 0) {
     lockedMinHeight.value = `${measuredHeight}px`;
   }
+};
+
+const clearContentReadyWait = () => {
+  contentReadyObserver?.disconnect();
+  contentReadyObserver = null;
+
+  if (contentReadyFallbackTimer) {
+    clearTimeout(contentReadyFallbackTimer);
+    contentReadyFallbackTimer = null;
+  }
+};
+
+const releaseLockedHeight = () => {
+  clearContentReadyWait();
+  lockedMinHeight.value = null;
+  pageLoadingIndicator.finish();
+};
+
+const releaseHeightWhenContentIsReady = async () => {
+  pageLoadingIndicator.start();
+  await nextTick();
+  clearContentReadyWait();
+
+  const element = contentRef.value;
+  if (!element) {
+    releaseLockedHeight();
+    return;
+  }
+
+  const releaseIfReady = () => {
+    if (element.offsetHeight <= 0) {
+      return false;
+    }
+
+    releaseLockedHeight();
+    return true;
+  };
+
+  if (releaseIfReady()) {
+    return;
+  }
+
+  if (!import.meta.client || typeof ResizeObserver === "undefined") {
+    releaseLockedHeight();
+    return;
+  }
+
+  contentReadyObserver = new ResizeObserver(() => {
+    releaseIfReady();
+  });
+  contentReadyObserver.observe(element);
+
+  contentReadyFallbackTimer = setTimeout(
+    releaseLockedHeight,
+    CONTENT_READY_FALLBACK_MS,
+  );
 };
 
 watch(
@@ -107,29 +159,22 @@ watch(
     }
 
     if (!isLoaded) {
+      clearContentReadyWait();
       await nextTick();
       setLockedHeight(loaderRef.value);
-      clearReleaseHeightTimer();
       return;
     }
 
     if (wasLoaded === undefined) {
       return;
     }
-
-    await nextTick();
-    setLockedHeight(contentRef.value || loaderRef.value);
-    clearReleaseHeightTimer();
-    releaseHeightTimer = setTimeout(() => {
-      lockedMinHeight.value = null;
-      releaseHeightTimer = null;
-    }, 1200);
   },
   { immediate: true },
 );
 
 onBeforeUnmount(() => {
-  clearReleaseHeightTimer();
+  clearContentReadyWait();
+  pageLoadingIndicator.finish();
 });
 </script>
 
@@ -142,7 +187,11 @@ onBeforeUnmount(() => {
     :aria-busy="!isComponentsLoad"
     :style="{ minHeight: lockedMinHeight || undefined }"
   >
-    <Transition name="components-fade" mode="out-in">
+    <Transition
+      name="components-fade"
+      mode="out-in"
+      @enter="releaseHeightWhenContentIsReady"
+    >
       <div
         :key="renderVersion"
         ref="contentRef"
@@ -162,7 +211,7 @@ onBeforeUnmount(() => {
 <style>
 .components-loader {
   position: relative;
-  transition: min-height 220ms ease;
+  transition: min-height 180ms ease-out;
 }
 
 .components-loader--pending {
@@ -173,9 +222,12 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
-.components-fade-enter-active,
 .components-fade-leave-active {
-  transition: opacity 300ms ease;
+  transition: opacity 120ms ease-out;
+}
+
+.components-fade-enter-active {
+  transition: opacity 180ms ease-out;
 }
 
 .components-fade-enter-from,

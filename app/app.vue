@@ -68,6 +68,12 @@ useHead(() => ({
 </script>
 
 <template>
+  <NuxtLoadingIndicator
+    color="var(--accent-primary)"
+    :height="3"
+    :throttle="120"
+  />
+
   <BaseModal
     :show="globalStore.isRateLimited"
     title="შეცდომა: ძალიან ბევრი მოთხოვნა"

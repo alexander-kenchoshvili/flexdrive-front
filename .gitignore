@@ -13,6 +13,13 @@ node_modules
 logs
 *.log
 
+# Browser test artifacts
+.playwright-mcp/
+playwright-report/
+blob-report/
+test-results/
+browser-trace/
+
 # Misc
 .DS_Store
 .fleet
