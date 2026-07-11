@@ -220,6 +220,12 @@ const canIncreaseQuantity = computed(
     priceAvailable.value &&
     selectedQuantity.value < maxSelectableQuantity.value,
 );
+const isAtSelectableStockLimit = computed(
+  () =>
+    Boolean(product.value?.in_stock) &&
+    priceAvailable.value &&
+    selectedQuantity.value >= maxSelectableQuantity.value,
+);
 const productPurchaseLabel = computed(() => {
   if (!priceAvailable.value) return "ფასი დასაზუსტებელია";
   if (!product.value?.in_stock) return "მარაგში არ არის";
@@ -1065,7 +1071,15 @@ const handleBuyNow = async () => {
                 </div>
 
                 <p
-                  v-if="priceAvailable && remainingAddableQuantity < 1"
+                  v-if="isAtSelectableStockLimit && remainingAddableQuantity > 0"
+                  class="w-fit rounded-lg border border-warning/25 bg-warning/10 px-3 py-2 text-xs font-semibold text-warning"
+                  role="status"
+                >
+                  ხელმისაწვდომია მაქსიმუმ {{ maxSelectableQuantity }} ერთეული
+                </p>
+
+                <p
+                  v-else-if="priceAvailable && remainingAddableQuantity < 1"
                   class="text-sm text-warning"
                 >
                   ამ პროდუქტის მთელი ხელმისაწვდომი რაოდენობა უკვე გაქვს კალათაში.
@@ -1342,6 +1356,13 @@ const handleBuyNow = async () => {
           <p class="product-mobile-purchase-quantity mt-0.5 text-xs font-medium text-text-secondary">
             რაოდენობა: {{ selectedQuantity }} ც.
           </p>
+          <p
+            v-if="isAtSelectableStockLimit && remainingAddableQuantity > 0"
+            class="product-mobile-stock-limit mt-1 w-fit rounded-md border border-warning/25 bg-warning/10 px-2 py-1 text-[11px] font-semibold leading-tight text-warning"
+            role="status"
+          >
+            მაქსიმუმ {{ maxSelectableQuantity }} ერთეულია ხელმისაწვდომი
+          </p>
         </div>
 
         <div class="product-mobile-purchase-actions grid grid-cols-2 gap-2">
@@ -1466,7 +1487,8 @@ const handleBuyNow = async () => {
     line-height: 1.05;
   }
 
-  .product-mobile-purchase-quantity {
+  .product-mobile-purchase-quantity,
+  .product-mobile-stock-limit {
     display: none;
   }
 
