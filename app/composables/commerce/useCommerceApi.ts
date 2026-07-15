@@ -5,6 +5,9 @@ import type {
   CommerceCardPayment,
   CommerceCardPaymentAvailability,
   CommerceCart,
+  CommerceDeliveryCityList,
+  CommerceDeliveryQuote,
+  CommerceDeliveryRegionList,
   CommerceOrderLookupPayload,
   CommerceOrderLookupSummary,
   OwnedOrderDetail,
@@ -58,6 +61,34 @@ export const useCommerceApi = () => {
   const getWishlist = async (options?: CommerceRequestOptions) => {
     return apiFetchRaw<WishlistResponse>("/commerce/wishlist/", {
       headers: resolveHeaders(options),
+    });
+  };
+
+  const getDeliveryRegions = async (options?: CommerceRequestOptions) => {
+    return apiFetchRaw<CommerceDeliveryRegionList>(
+      "/commerce/delivery/regions/",
+      { headers: resolveHeaders(options) },
+    );
+  };
+
+  const getDeliveryCities = async (
+    regionId: number,
+    options?: CommerceRequestOptions,
+  ) => {
+    return apiFetchRaw<CommerceDeliveryCityList>(
+      `/commerce/delivery/regions/${regionId}/cities/`,
+      { headers: resolveHeaders(options) },
+    );
+  };
+
+  const getDeliveryQuote = async (payload: {
+    source: "cart" | "buy_now";
+    delivery_region_id: number;
+    delivery_city_id: number;
+  }) => {
+    return apiFetchRaw<CommerceDeliveryQuote>("/commerce/delivery/quote/", {
+      method: "POST",
+      body: payload,
     });
   };
 
@@ -238,6 +269,9 @@ export const useCommerceApi = () => {
   return {
     getCart,
     getWishlist,
+    getDeliveryRegions,
+    getDeliveryCities,
+    getDeliveryQuote,
     addCartItem,
     createBuyNowSession,
     getBuyNowSession,

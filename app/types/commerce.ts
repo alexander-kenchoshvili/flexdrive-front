@@ -143,6 +143,49 @@ export interface WishlistResponse {
   results: WishlistItem[];
 }
 
+export interface CommerceDeliveryRegion {
+  id: number;
+  name: string;
+  is_internal_delivery: boolean;
+}
+
+export interface CommerceDeliveryCity {
+  id: number;
+  name: string;
+}
+
+export interface CommerceDeliveryRegionList {
+  results: CommerceDeliveryRegion[];
+}
+
+export interface CommerceDeliveryCityList {
+  region: CommerceDeliveryRegion;
+  results: CommerceDeliveryCity[];
+}
+
+export type CommerceDeliveryProvider = "internal" | "easyway";
+
+export interface CommerceDeliveryQuote {
+  version: number;
+  source: "cart" | "buy_now";
+  provider: CommerceDeliveryProvider;
+  region_id: number;
+  region_name: string;
+  city_id: number;
+  city_name: string;
+  carrier_delivery_cost: string;
+  delivery_margin: string;
+  customer_delivery_price: string;
+  package_id: number;
+  measurements: {
+    length: string;
+    width: string;
+    height: string;
+    weight: string;
+  };
+  quote_token: string;
+}
+
 export type CheckoutPaymentMethod = "cash_on_delivery" | "card";
 export type CommerceCardPaymentResult =
   | CommercePaymentStatus
@@ -207,6 +250,9 @@ export interface CheckoutPayload {
   last_name: string;
   email: string;
   phone: string;
+  delivery_region_id: number;
+  delivery_city_id: number;
+  delivery_quote_token: string;
   city: string;
   address_line: string;
   note?: string;
@@ -251,12 +297,18 @@ export interface CommerceOrderSummary {
   payment_status: CommercePaymentStatus;
   status: CommerceOrderStatus;
   subtotal: string;
+  delivery_price: string;
   total: string;
   first_name: string;
   last_name: string;
   email: string;
   phone: string;
   city: string;
+  delivery_provider: CommerceDeliveryProvider;
+  delivery_region_id: number | null;
+  delivery_region_name: string;
+  delivery_city_id: number | null;
+  delivery_city_name: string;
   address_line: string;
   note: string;
   items: CommerceOrderItem[];

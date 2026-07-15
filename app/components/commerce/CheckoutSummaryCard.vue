@@ -10,7 +10,11 @@ const props = withDefaults(
   defineProps<{
     items: CommerceCheckoutSummaryItem[];
     itemCount: number;
+    subtotal: string;
     total: string;
+    deliveryPrice?: string | null;
+    deliveryPending?: boolean;
+    deliveryError?: string | null;
     errorMessage?: string | null;
     priceChangeMessage?: string | null;
     confirmationLabel?: string;
@@ -28,6 +32,9 @@ const props = withDefaults(
   }>(),
   {
     errorMessage: null,
+    deliveryPrice: null,
+    deliveryPending: false,
+    deliveryError: null,
     priceChangeMessage: null,
     confirmationLabel: "განახლებული მონაცემების დადასტურება",
     submitLabel: "შეკვეთის დადასტურება",
@@ -146,13 +153,35 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
     <div class="mt-4 space-y-2.5 rounded-[20px] border border-border-default bg-surface-2 p-3 sm:mt-6 sm:space-y-3 sm:p-4">
       <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
         <span>პროდუქტები</span>
-        <span class="shrink-0">{{ itemCount }} ცალი</span>
+        <span class="shrink-0">{{ formatMoney(subtotal) }}</span>
       </div>
 
       <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
         <span>მიწოდება</span>
-        <span class="shrink-0 font-semibold text-success">უფასო</span>
+        <span
+          class="shrink-0 font-semibold"
+          :class="deliveryError ? 'text-error' : 'text-success'"
+        >
+          {{
+            deliveryPending
+              ? "ითვლება..."
+              : deliveryError
+                ? "ვერ დაითვალა"
+                : deliveryPrice === null
+                  ? "აირჩიე მისამართი"
+                  : Number(deliveryPrice) === 0
+                    ? "უფასო"
+                    : formatMoney(deliveryPrice)
+          }}
+        </span>
       </div>
+
+      <p
+        v-if="deliveryError"
+        class="break-words text-xs leading-5 text-error"
+      >
+        {{ deliveryError }}
+      </p>
 
       <div class="flex min-w-0 items-center justify-between gap-3 border-t border-border-default pt-3">
         <span class="shrink-0 text-base font-semibold text-text-primary">სულ</span>

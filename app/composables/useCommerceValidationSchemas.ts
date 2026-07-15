@@ -4,6 +4,11 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const requiredText = (message: string) => z.string().trim().min(1, message);
 
+const requiredSelectionId = (message: string) =>
+  z.number().int().positive().nullable().refine((value) => value !== null, {
+    message,
+  });
+
 const checkoutSchema = z
   .object({
     buyer_type: z.enum(["individual", "legal_entity"]),
@@ -15,6 +20,8 @@ const checkoutSchema = z
       message: "ელფოსტის ფორმატი არასწორია.",
     }),
     phone: requiredText("შეიყვანე ტელეფონის ნომერი."),
+    delivery_region_id: requiredSelectionId("აირჩიე რეგიონი."),
+    delivery_city_id: requiredSelectionId("აირჩიე ქალაქი ან დასახლება."),
     city: requiredText("შეიყვანე ქალაქი."),
     address_line: requiredText("შეიყვანე მისამართი."),
     note: z.string(),

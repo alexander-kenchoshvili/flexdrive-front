@@ -73,8 +73,19 @@ const {
   emailAttrs,
   phone,
   phoneAttrs,
-  city,
-  cityAttrs,
+  deliveryRegionId,
+  deliveryCityId,
+  deliveryRegionOptions,
+  deliveryCityOptions,
+  selectedDeliveryRegion,
+  deliveryRegionsPending,
+  deliveryCitiesPending,
+  deliveryLocationsError,
+  retryDeliveryLocations,
+  deliveryQuote,
+  deliveryQuotePending,
+  deliveryQuoteError,
+  retryDeliveryQuote,
   addressLine,
   addressLineAttrs,
   note,
@@ -84,7 +95,7 @@ const {
   extractFieldErrors,
   scrollToFirstInvalidField,
   syncProfileBackfill,
-} = useCheckoutForm({ profileKey: "checkout-profile" });
+} = useCheckoutForm({ profileKey: "checkout-profile", source: "cart" });
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
   { label: "მთავარი", to: "/" },
@@ -99,6 +110,17 @@ const cartPriceConfirmationLabel = computed(() =>
     : "განახლებული ფასების დადასტურება",
 );
 const submitLabel = computed(() => "შეკვეთის დადასტურება");
+const deliveryPrice = computed(
+  () => deliveryQuote.value?.customer_delivery_price ?? null,
+);
+const checkoutTotal = computed(() =>
+  (
+    Number(cartStore.total || 0) + Number(deliveryPrice.value || 0)
+  ).toFixed(2),
+);
+const deliveryQuoteReady = computed(
+  () => Boolean(deliveryQuote.value) && !deliveryQuotePending.value,
+);
 
 const toCheckoutAnalyticsItem = (item: CommerceCartItem) => ({
   id: item.product_id,
@@ -253,6 +275,7 @@ const bootstrapCart = async () => {
 const retryLoad = async () => {
   try {
     await cartStore.refreshCart();
+    await retryDeliveryQuote();
   } catch {
     // Store error is already normalized for UI rendering.
   }
@@ -267,6 +290,7 @@ const confirmPriceChanges = async () => {
 
   try {
     await cartStore.confirmPrices();
+    await retryDeliveryQuote();
   } catch {
     // Store error is already normalized for UI rendering.
   }
@@ -297,6 +321,9 @@ const buildCheckoutPayload = (
   last_name: submittedValues.last_name.trim(),
   email: submittedValues.email.trim(),
   phone: submittedValues.phone.trim(),
+  delivery_region_id: submittedValues.delivery_region_id as number,
+  delivery_city_id: submittedValues.delivery_city_id as number,
+  delivery_quote_token: deliveryQuote.value?.quote_token || "",
   city: submittedValues.city.trim(),
   address_line: submittedValues.address_line.trim(),
   note: submittedValues.note?.trim() || "",
@@ -308,6 +335,12 @@ const buildCheckoutPayload = (
 const submitForm = validateSubmit(
   async (submittedValues) => {
     if (submitPending.value || !cartStore.initialized || cartStore.isEmpty) {
+      return;
+    }
+
+    if (!deliveryQuoteReady.value) {
+      formError.value =
+        deliveryQuoteError.value || "ჯერ გამოთვალეთ მიწოდების ფასი.";
       return;
     }
 
@@ -474,7 +507,8 @@ watch(
     lastName.value,
     email.value,
     phone.value,
-    city.value,
+    deliveryRegionId.value,
+    deliveryCityId.value,
     addressLine.value,
     note.value,
     termsAccepted.value,
@@ -647,7 +681,8 @@ useNoindexPage({
                 v-model:last-name="lastName"
                 v-model:email="email"
                 v-model:phone="phone"
-                v-model:city="city"
+                v-model:delivery-region-id="deliveryRegionId"
+                v-model:delivery-city-id="deliveryCityId"
                 v-model:address-line="addressLine"
                 v-model:note="note"
                 v-model:terms-accepted="termsAccepted"
@@ -660,12 +695,18 @@ useNoindexPage({
                 :last-name-attrs="lastNameAttrs"
                 :email-attrs="emailAttrs"
                 :phone-attrs="phoneAttrs"
-                :city-attrs="cityAttrs"
+                :delivery-region-options="deliveryRegionOptions"
+                :delivery-city-options="deliveryCityOptions"
+                :selected-delivery-region="selectedDeliveryRegion"
+                :delivery-regions-pending="deliveryRegionsPending"
+                :delivery-cities-pending="deliveryCitiesPending"
+                :delivery-locations-error="deliveryLocationsError"
                 :address-line-attrs="addressLineAttrs"
                 :note-attrs="noteAttrs"
                 :card-payment-enabled="cardPaymentEnabled"
                 :card-payment-loading="cardPaymentAvailabilityPending"
                 @select-payment-method="selectPaymentMethod"
+                @retry-delivery-locations="void retryDeliveryLocations()"
               />
             </div>
 
@@ -673,14 +714,22 @@ useNoindexPage({
               <CheckoutSummaryCard
                 :items="cartStore.items"
                 :item-count="cartStore.itemCount"
-                :total="cartStore.total"
+                :subtotal="cartStore.subtotal"
+                :delivery-price="deliveryPrice"
+                :delivery-pending="deliveryQuotePending"
+                :delivery-error="deliveryQuoteError"
+                :total="checkoutTotal"
                 :error-message="formError"
                 :price-change-message="cartStore.priceChangeMessage"
                 :confirmation-label="cartPriceConfirmationLabel"
                 :confirming="cartStore.mutating"
                 :requires-confirmation="cartStore.hasPriceChanges"
                 :submitting="submitPending"
-                :disabled="submitPending || cartStore.mutating"
+                :disabled="
+                  submitPending ||
+                  cartStore.mutating ||
+                  !deliveryQuoteReady
+                "
                 :submit-label="submitLabel"
                 @confirm="void confirmPriceChanges()"
               />
@@ -715,7 +764,7 @@ useNoindexPage({
                 <p
                   class="mt-1 text-[22px] font-extrabold leading-none text-accent-primary md:text-2xl"
                 >
-                  {{ Number(cartStore.total || 0).toFixed(2) }} GEL
+                  {{ checkoutTotal }} GEL
                 </p>
               </div>
 
@@ -723,7 +772,11 @@ useNoindexPage({
                 :type="cartStore.hasPriceChanges ? 'button' : 'submit'"
                 variant="primary"
                 :loading="cartStore.hasPriceChanges ? cartStore.mutating : submitPending"
-                :disabled="submitPending || cartStore.mutating"
+                :disabled="
+                  submitPending ||
+                  cartStore.mutating ||
+                  (!cartStore.hasPriceChanges && !deliveryQuoteReady)
+                "
                 class="w-full px-4 py-2.5 text-[12px] upper sm:w-auto sm:whitespace-nowrap md:px-5 md:py-3 md:text-sm"
                 @click="cartStore.hasPriceChanges ? void confirmPriceChanges() : undefined"
               >

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import BaseInput from "~/components/common/BaseInput.vue";
+import BaseSelect, {
+  type BaseSelectOption,
+} from "~/components/common/BaseSelect.vue";
 import BaseTextarea from "~/components/common/BaseTextarea.vue";
 import CheckoutPaymentMethodCard from "~/components/commerce/CheckoutPaymentMethodCard.vue";
 import CheckoutSectionHeader from "~/components/commerce/CheckoutSectionHeader.vue";
@@ -7,9 +10,13 @@ import {
   CHECKOUT_CASH_ON_DELIVERY_ENABLED,
   type CheckoutFieldErrors,
 } from "~/composables/commerce/useCheckoutForm";
-import type { CheckoutBuyerType, CheckoutPaymentMethod } from "~/types/commerce";
+import type {
+  CheckoutBuyerType,
+  CheckoutPaymentMethod,
+  CommerceDeliveryRegion,
+} from "~/types/commerce";
 
-defineProps<{
+const props = defineProps<{
   disabled?: boolean;
   cardPaymentEnabled?: boolean;
   cardPaymentLoading?: boolean;
@@ -20,9 +27,14 @@ defineProps<{
   lastNameAttrs?: Record<string, unknown>;
   emailAttrs?: Record<string, unknown>;
   phoneAttrs?: Record<string, unknown>;
-  cityAttrs?: Record<string, unknown>;
   addressLineAttrs?: Record<string, unknown>;
   noteAttrs?: Record<string, unknown>;
+  deliveryRegionOptions: BaseSelectOption[];
+  deliveryCityOptions: BaseSelectOption[];
+  selectedDeliveryRegion?: CommerceDeliveryRegion | null;
+  deliveryRegionsPending?: boolean;
+  deliveryCitiesPending?: boolean;
+  deliveryLocationsError?: string | null;
 }>();
 
 const buyerType = defineModel<CheckoutBuyerType>("buyerType", {
@@ -37,7 +49,12 @@ const firstName = defineModel<string>("firstName", { required: true });
 const lastName = defineModel<string>("lastName", { required: true });
 const email = defineModel<string>("email", { required: true });
 const phone = defineModel<string>("phone", { required: true });
-const city = defineModel<string>("city", { required: true });
+const deliveryRegionId = defineModel<number | null>("deliveryRegionId", {
+  required: true,
+});
+const deliveryCityId = defineModel<number | null>("deliveryCityId", {
+  required: true,
+});
 const addressLine = defineModel<string>("addressLine", { required: true });
 const note = defineModel<string>("note", { required: true });
 const termsAccepted = defineModel<boolean>("termsAccepted", { required: true });
@@ -47,6 +64,7 @@ const paymentMethod = defineModel<CheckoutPaymentMethod>("paymentMethod", {
 
 const emit = defineEmits<{
   selectPaymentMethod: [method: CheckoutPaymentMethod];
+  retryDeliveryLocations: [];
 }>();
 
 const buyerTypeOptions: Array<{
@@ -73,6 +91,26 @@ const firstNameLabel = computed(() =>
 const lastNameLabel = computed(() =>
   isLegalBuyer.value ? "საკონტაქტო პირის გვარი *" : "გვარი *",
 );
+
+const deliveryCityLabel = computed(() =>
+  props.selectedDeliveryRegion?.is_internal_delivery
+    ? "უბანი / დასახლება *"
+    : "ქალაქი / დასახლება *",
+);
+
+const deliveryHint = computed(() => {
+  if (!deliveryRegionId.value) {
+    return "ჯერ აირჩიე რეგიონი, შემდეგ ქალაქი ან დასახლება.";
+  }
+
+  if (props.deliveryCitiesPending) {
+    return "ქალაქებისა და დასახლებების ჩამონათვალი იტვირთება.";
+  }
+
+  return props.selectedDeliveryRegion?.is_internal_delivery
+    ? "თბილისში მიწოდებას FlexDrive-ის გუნდი ასრულებს."
+    : "რეგიონულ მიწოდებას პარტნიორი საკურიერო სერვისი ასრულებს.";
+});
 </script>
 
 <template>
@@ -214,23 +252,47 @@ const lastNameLabel = computed(() =>
   >
     <CheckoutSectionHeader :step="2" title="მიწოდების მისამართი" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      მიუთითე ქალაქი და ზუსტი მისამართი, რომ ოპერატორმა მიწოდება სწორად
-      დაგიზუსტოს.
+      აირჩიე მიწოდების რეგიონი და დასახლება, შემდეგ მიუთითე ზუსტი მისამართი.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
-      <BaseInput
-        v-model="city"
-        v-bind="cityAttrs"
-        name="city"
-        data-checkout-field="city"
-        label="ქალაქი *"
-        autocomplete="address-level2"
-        placeholder="მაგალითად: თბილისი"
-        :error="errors.city"
-        :disabled="disabled"
-        required
-      />
+      <div data-checkout-field="delivery_region_id">
+        <BaseSelect
+          v-model="deliveryRegionId"
+          name="delivery_region_id"
+          label="რეგიონი *"
+          :options="deliveryRegionOptions"
+          :placeholder="deliveryRegionsPending ? 'იტვირთება...' : 'აირჩიე რეგიონი'"
+          :empty-text="deliveryRegionsPending ? 'იტვირთება...' : 'რეგიონები ვერ მოიძებნა'"
+          :error="errors.delivery_region_id"
+          :disabled="disabled || deliveryRegionsPending"
+          searchable
+          search-placeholder="მოძებნე რეგიონი"
+        />
+      </div>
+
+      <div data-checkout-field="delivery_city_id">
+        <BaseSelect
+          v-model="deliveryCityId"
+          name="delivery_city_id"
+          :label="deliveryCityLabel"
+          :options="deliveryCityOptions"
+          :placeholder="
+            !deliveryRegionId
+              ? 'ჯერ აირჩიე რეგიონი'
+              : deliveryCitiesPending
+                ? 'იტვირთება...'
+                : 'აირჩიე ქალაქი ან დასახლება'
+          "
+          :empty-text="deliveryCitiesPending ? 'იტვირთება...' : 'ჩამონათვალი ცარიელია'"
+          :error="
+            deliveryRegionId ? errors.delivery_city_id || errors.city : ''
+          "
+          :disabled="disabled || !deliveryRegionId || deliveryCitiesPending"
+          searchable
+          search-placeholder="მოძებნე ქალაქი ან დასახლება"
+        />
+      </div>
 
       <BaseInput
         v-model="addressLine"
@@ -242,9 +304,30 @@ const lastNameLabel = computed(() =>
         placeholder="ქუჩა, ნომერი, ბინა"
         :error="errors.address_line"
         :disabled="disabled"
+        class="md:col-span-2"
         required
       />
     </div>
+
+    <div
+      v-if="deliveryLocationsError"
+      class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[16px] border border-error/25 bg-error/8 px-3 py-2.5 text-sm text-error"
+      role="alert"
+    >
+      <span>{{ deliveryLocationsError }}</span>
+      <button
+        type="button"
+        class="font-semibold underline decoration-current/40 underline-offset-4 transition-opacity hover:opacity-75"
+        :disabled="disabled"
+        @click="emit('retryDeliveryLocations')"
+      >
+        ხელახლა ცდა
+      </button>
+    </div>
+
+    <p v-else class="mt-3 text-xs leading-5 text-text-muted">
+      {{ deliveryHint }}
+    </p>
   </section>
 
   <section

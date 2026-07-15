@@ -6,7 +6,11 @@ import {
   ListboxOption,
   ListboxOptions,
 } from "@headlessui/vue";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/solid";
+import {
+  CheckIcon,
+  ChevronUpDownIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/vue/24/solid";
 
 defineOptions({ inheritAttrs: false });
 
@@ -28,6 +32,9 @@ type BaseSelectProps = {
   hint?: string;
   emptyText?: string;
   displayValue?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  searchEmptyText?: string;
 };
 
 const props = withDefaults(defineProps<BaseSelectProps>(), {
@@ -42,6 +49,9 @@ const props = withDefaults(defineProps<BaseSelectProps>(), {
   hint: "",
   emptyText: "არჩევანი არ არის",
   displayValue: "",
+  searchable: false,
+  searchPlaceholder: "მოძებნე...",
+  searchEmptyText: "შედეგი ვერ მოიძებნა",
 });
 
 const emit = defineEmits<{
@@ -50,6 +60,8 @@ const emit = defineEmits<{
 
 const attrs = useAttrs();
 const uid = useId();
+const searchInput = ref<HTMLInputElement | null>(null);
+const searchQuery = ref("");
 
 const selectId = computed(() => props.id || props.name || `select-${uid}`);
 
@@ -72,6 +84,17 @@ const displayLabel = computed(
     modelValueLabel.value ||
     props.placeholder,
 );
+
+const filteredOptions = computed(() => {
+  const query = searchQuery.value.trim().toLocaleLowerCase("ka-GE");
+  if (!props.searchable || !query) {
+    return props.options;
+  }
+
+  return props.options.filter((option) =>
+    option.label.toLocaleLowerCase("ka-GE").includes(query),
+  );
+});
 
 const rootClass = computed(() => (attrs.class as any) ?? undefined);
 const rootStyle = computed(() => (attrs.style as any) ?? undefined);
@@ -111,7 +134,17 @@ const optionLabelClasses = (selected: boolean) =>
   selected ? "block truncate font-semibold" : "block truncate font-normal";
 
 const updateValue = (value: string | number) => {
+  searchQuery.value = "";
   emit("update:modelValue", value);
+};
+
+const prepareSearch = () => {
+  if (!props.searchable || props.disabled) {
+    return;
+  }
+
+  searchQuery.value = "";
+  window.setTimeout(() => searchInput.value?.focus(), 100);
 };
 </script>
 
@@ -131,7 +164,15 @@ const updateValue = (value: string | number) => {
           {{ label }}
         </ListboxLabel>
 
-        <ListboxButton :id="selectId" :name="name || undefined" :class="controlClasses">
+        <ListboxButton
+          :id="selectId"
+          :name="name || undefined"
+          :class="controlClasses"
+          @click="prepareSearch"
+          @keydown.enter="prepareSearch"
+          @keydown.space="prepareSearch"
+          @keydown.down="prepareSearch"
+        >
           <span class="block truncate">{{ displayLabel }}</span>
           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <ChevronUpDownIcon class="h-5 w-5 text-text-muted" aria-hidden="true" />
@@ -148,14 +189,37 @@ const updateValue = (value: string | number) => {
         >
           <ListboxOptions :class="optionsPanelClasses">
             <li
-              v-if="!options.length"
+              v-if="searchable && options.length"
+              class="sticky top-0 z-10 border-b border-border-default bg-surface p-2"
+            >
+              <div class="relative">
+                <MagnifyingGlassIcon
+                  class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+                  aria-hidden="true"
+                />
+                <input
+                  ref="searchInput"
+                  v-model="searchQuery"
+                  type="search"
+                  :placeholder="searchPlaceholder"
+                  :aria-label="searchPlaceholder"
+                  autocomplete="off"
+                  class="h-10 w-full rounded-md border border-border-default bg-surface-2 py-2 pl-9 pr-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-accent-primary focus-visible:!outline-none"
+                  @click.stop
+                  @keydown.stop
+                />
+              </div>
+            </li>
+
+            <li
+              v-if="!filteredOptions.length"
               class="mx-1 select-none rounded-md px-3 py-2.5 text-sm text-text-muted"
             >
-              {{ emptyText }}
+              {{ searchQuery ? searchEmptyText : emptyText }}
             </li>
 
             <ListboxOption
-              v-for="option in options"
+              v-for="option in filteredOptions"
               :key="String(option.value)"
               :value="option.value"
               :disabled="option.disabled"
