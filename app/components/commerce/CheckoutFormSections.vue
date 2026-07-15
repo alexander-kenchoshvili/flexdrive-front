@@ -239,7 +239,9 @@ const deliveryHint = computed(() => {
         label="ტელეფონის ნომერი *"
         type="tel"
         autocomplete="tel"
-        placeholder="შეიყვანე ნომერი"
+        inputmode="tel"
+        placeholder="555 12 34 56"
+        hint="ფორმატი: 555 12 34 56 ან +995 555 12 34 56"
         :error="errors.phone"
         :disabled="disabled"
         required

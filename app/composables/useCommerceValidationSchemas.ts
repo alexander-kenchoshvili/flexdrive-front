@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const georgianMobilePattern = /^(?:5\d{8}|(?:\+?995)5\d{8})$/;
 
 const requiredText = (message: string) => z.string().trim().min(1, message);
 
@@ -8,6 +9,16 @@ const requiredSelectionId = (message: string) =>
   z.number().int().positive().nullable().refine((value) => value !== null, {
     message,
   });
+
+const georgianMobile = requiredText("შეიყვანე ტელეფონის ნომერი.").refine(
+  (value) => {
+    const compactValue = value.replace(/[\s()-]/g, "");
+    return georgianMobilePattern.test(compactValue);
+  },
+  {
+    message: "შეიყვანე ქართული მობილურის ნომერი, მაგალითად: 555 12 34 56.",
+  },
+);
 
 const checkoutSchema = z
   .object({
@@ -19,7 +30,7 @@ const checkoutSchema = z
     email: z.string().trim().refine((value) => !value || emailPattern.test(value), {
       message: "ელფოსტის ფორმატი არასწორია.",
     }),
-    phone: requiredText("შეიყვანე ტელეფონის ნომერი."),
+    phone: georgianMobile,
     delivery_region_id: requiredSelectionId("აირჩიე რეგიონი."),
     delivery_city_id: requiredSelectionId("აირჩიე ქალაქი ან დასახლება."),
     city: requiredText("შეიყვანე ქალაქი."),
