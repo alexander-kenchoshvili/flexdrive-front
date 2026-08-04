@@ -428,7 +428,7 @@ useNoindexPage({
         class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:rounded-[28px] sm:p-6 md:p-7"
       >
         <div
-          class="flex flex-col gap-3 border-b border-border-default pb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:pb-6"
+          class="border-b border-border-default pb-4 sm:pb-6"
         >
           <div class="max-w-2xl">
             <p
@@ -449,14 +449,6 @@ useNoindexPage({
             </p>
           </div>
 
-          <BaseButton
-            type="button"
-            variant="secondary"
-            class="px-4 py-2.5 sm:px-5 sm:py-3"
-            @click="closeEditMode"
-          >
-            გაუქმება
-          </BaseButton>
         </div>
 
         <div
@@ -555,7 +547,7 @@ useNoindexPage({
               :disabled="savePending"
               @click="closeEditMode"
             >
-              გაუქმება
+              ცვლილებების გაუქმება
             </BaseButton>
             <BaseButton
               type="submit"
