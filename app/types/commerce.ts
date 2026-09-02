@@ -200,7 +200,12 @@ export interface CommerceCardPaymentAvailability {
   redirect_checkout: boolean;
 }
 
-export interface CommerceCardPayment {
+export interface CommerceReceiptAccess {
+  receipt_url?: string | null;
+  receipt_access_token?: string | null;
+}
+
+export interface CommerceCardPayment extends CommerceReceiptAccess {
   payment_token: string;
   status: CommercePaymentStatus;
   result: CommerceCardPaymentResult;
@@ -286,7 +291,7 @@ export interface CommerceOrderLookupItem {
   primary_image: CatalogImageAsset;
 }
 
-export interface CommerceOrderSummary {
+export interface CommerceOrderSummary extends CommerceReceiptAccess {
   id: number;
   public_token: string;
   order_number: string;
@@ -315,7 +320,7 @@ export interface CommerceOrderSummary {
   created_at: string;
 }
 
-export interface CommerceOrderLookupSummary {
+export interface CommerceOrderLookupSummary extends CommerceReceiptAccess {
   order_number: string;
   status: CommerceOrderStatus;
   payment_status: CommercePaymentStatus;

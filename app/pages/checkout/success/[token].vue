@@ -4,6 +4,7 @@ import BaseButton from "~/components/common/BaseButton.vue";
 import CheckoutSuccessSkeleton from "~/components/commerce/CheckoutSuccessSkeleton.vue";
 import CheckoutSuccessSummary from "~/components/commerce/CheckoutSuccessSummary.vue";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
+import { useOrderReceipt } from "~/composables/commerce/useOrderReceipt";
 import type { CommerceOrderSummary } from "~/types/commerce";
 
 type BreadcrumbItem = {
@@ -18,13 +19,29 @@ definePageMeta({
 
 const route = useRoute();
 const { getOrderSummary } = useCommerceApi();
+const { downloadReceipt, readReceiptAccessToken } = useOrderReceipt();
 const { trackPurchase } = useEcommerceAnalytics();
+const globalStore = useGlobalStore();
 
 const order = ref<CommerceOrderSummary | null>(null);
 const pending = ref(true);
 const loadError = ref<unknown>(null);
+const receiptAccessToken = ref("");
+const receiptLoading = ref(false);
+const receiptError = ref("");
 
 const token = computed(() => String(route.params.token || ""));
+const receiptEligible = computed(
+  () =>
+    order.value?.payment_method === "cash_on_delivery" ||
+    (order.value?.payment_method === "card" &&
+      order.value.payment_status === "paid"),
+);
+const receiptAvailable = computed(
+  () =>
+    receiptEligible.value &&
+    (Boolean(receiptAccessToken.value) || Boolean(globalStore.currentUser)),
+);
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
   { label: "მთავარი", to: "/" },
@@ -87,6 +104,25 @@ const loadOrder = async () => {
   }
 };
 
+const handleReceiptDownload = async () => {
+  if (!order.value || receiptLoading.value) return;
+
+  receiptLoading.value = true;
+  receiptError.value = "";
+  try {
+    await downloadReceipt({
+      orderToken: order.value.public_token,
+      orderNumber: order.value.order_number,
+      accessToken: receiptAccessToken.value,
+    });
+  } catch {
+    receiptError.value =
+      "PDF-ის ჩამოტვირთვა ვერ მოხერხდა. სცადე ხელახლა ან გადაამოწმე შეკვეთის სტატუსი.";
+  } finally {
+    receiptLoading.value = false;
+  }
+};
+
 await loadOrder();
 
 if (!order.value && resolveStatusCode(loadError.value) === 404) {
@@ -104,6 +140,7 @@ if (!order.value && !loadError.value) {
 }
 
 onMounted(() => {
+  receiptAccessToken.value = readReceiptAccessToken(token.value);
   trackLoadedPurchase();
 });
 
@@ -146,7 +183,14 @@ useNoindexPage({
           </div>
         </section>
 
-        <CheckoutSuccessSummary v-else :order="order" />
+        <CheckoutSuccessSummary
+          v-else
+          :order="order"
+          :receipt-available="receiptAvailable"
+          :receipt-loading="receiptLoading"
+          :receipt-error="receiptError"
+          @download-receipt="void handleReceiptDownload()"
+        />
       </div>
     </div>
   </main>

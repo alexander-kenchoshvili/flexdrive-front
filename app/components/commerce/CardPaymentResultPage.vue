@@ -3,6 +3,7 @@ import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import CardPaymentResultPanel from "~/components/commerce/CardPaymentResultPanel.vue";
 import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
+import { useOrderReceipt } from "~/composables/commerce/useOrderReceipt";
 import type { CommerceCardPayment } from "~/types/commerce";
 
 const props = defineProps<{
@@ -11,6 +12,7 @@ const props = defineProps<{
 
 const route = useRoute();
 const { getCardPaymentStatus } = useCommerceApi();
+const { storeReceiptAccess } = useOrderReceipt();
 const {
   clearReturnContext,
   readReturnContext,
@@ -136,6 +138,9 @@ const loadPayment = async (
   try {
     const nextPayment = await getCardPaymentStatus(paymentToken.value);
     payment.value = nextPayment;
+    if (nextPayment.order_public_token) {
+      storeReceiptAccess(nextPayment.order_public_token, nextPayment);
+    }
     loadError.value = false;
     lastCheckedAt.value = formatCheckedTime();
     automaticChecksComplete.value = false;

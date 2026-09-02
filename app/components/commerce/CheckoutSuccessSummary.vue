@@ -2,12 +2,20 @@
 import { BanknotesIcon, CheckBadgeIcon } from "@heroicons/vue/24/outline";
 import BaseButton from "~/components/common/BaseButton.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
+import OrderReceiptDownloadCard from "~/components/commerce/OrderReceiptDownloadCard.vue";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { useCommercePresentation } from "~/composables/commerce/useCommercePresentation";
 import type { CommerceOrderItem, CommerceOrderSummary } from "~/types/commerce";
 
 const props = defineProps<{
   order: CommerceOrderSummary;
+  receiptAvailable?: boolean;
+  receiptLoading?: boolean;
+  receiptError?: string;
+}>();
+
+defineEmits<{
+  downloadReceipt: [];
 }>();
 
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
@@ -21,6 +29,21 @@ const {
 
 const formatMoney = (value: string | number | null | undefined) =>
   `${Number(value || 0).toFixed(2)} GEL`;
+
+const georgianMonths = [
+  "იანვარი",
+  "თებერვალი",
+  "მარტი",
+  "აპრილი",
+  "მაისი",
+  "ივნისი",
+  "ივლისი",
+  "აგვისტო",
+  "სექტემბერი",
+  "ოქტომბერი",
+  "ნოემბერი",
+  "დეკემბერი",
+];
 
 const resolveItemImage = (item: CommerceOrderItem) => {
   const asset = item.primary_image;
@@ -41,10 +64,20 @@ const formattedCreatedAt = computed(() => {
     return "თარიღი მიუწვდომელია";
   }
 
-  return new Intl.DateTimeFormat("ka-GE", {
-    dateStyle: "long",
-    timeStyle: "short",
-  }).format(date);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tbilisi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const valueOf = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value || "";
+  const month = georgianMonths[Number(valueOf("month")) - 1];
+
+  return `${Number(valueOf("day"))} ${month}, ${valueOf("year")}, ${valueOf("hour")}:${valueOf("minute")}`;
 });
 
 const miniItemMeta = (item: CommerceOrderItem) =>
@@ -123,6 +156,14 @@ const miniItemMeta = (item: CommerceOrderItem) =>
         </div>
       </div>
     </section>
+
+    <OrderReceiptDownloadCard
+      v-if="receiptAvailable"
+      :preview="order.payment_method === 'cash_on_delivery'"
+      :loading="receiptLoading"
+      :error="receiptError"
+      @download="$emit('downloadReceipt')"
+    />
 
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
       <div class="space-y-4">

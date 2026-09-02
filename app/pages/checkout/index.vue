@@ -4,6 +4,7 @@ import BaseButton from "~/components/common/BaseButton.vue";
 import CheckoutFormSections from "~/components/commerce/CheckoutFormSections.vue";
 import CheckoutPageSkeleton from "~/components/commerce/CheckoutPageSkeleton.vue";
 import CheckoutSummaryCard from "~/components/commerce/CheckoutSummaryCard.vue";
+import { useOrderReceipt } from "~/composables/commerce/useOrderReceipt";
 import {
   type CheckoutFieldErrors,
   type CheckoutFormValues,
@@ -36,6 +37,7 @@ definePageMeta({
 const globalStore = useGlobalStore();
 const cartStore = useCartStore();
 const { checkoutOrder, startCartCardPayment } = useCommerceApi();
+const { storeReceiptAccess } = useOrderReceipt();
 const { getOrCreateKey, clearKey } = useCheckoutIdempotency("cart");
 const {
   cardPaymentEnabled,
@@ -374,6 +376,7 @@ const submitForm = validateSubmit(
         });
 
         if (payment.result === "paid" && payment.order_public_token) {
+          storeReceiptAccess(payment.order_public_token, payment);
           checkoutCompleted.value = true;
           clearKey();
           await navigateTo(
@@ -387,6 +390,7 @@ const submitForm = validateSubmit(
       }
 
       const order = await checkoutOrder(checkoutPayload, getOrCreateKey());
+      storeReceiptAccess(order.public_token, order);
 
       await syncProfileBackfill(submittedValues);
 

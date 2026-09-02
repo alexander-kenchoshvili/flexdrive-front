@@ -386,7 +386,7 @@ const deliveryHint = computed(() => {
   >
     <CheckoutSectionHeader :step="4" title="გადახდა" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      შეკვეთის დადასტურებისას გადახდა შესრულდება ბარათით.
+      აირჩიე შენთვის მოსახერხებელი გადახდის მეთოდი.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
@@ -394,7 +394,7 @@ const deliveryHint = computed(() => {
         v-if="CHECKOUT_CASH_ON_DELIVERY_ENABLED"
         method="cash_on_delivery"
         title="ნაღდი ანგარიშსწორება"
-        description="გადახდა მოხდება შეკვეთის მიღების დროს, მიტანისას."
+        description="დროებითი სატესტო რეჟიმი — თანხა გადაიხდება შეკვეთის მიღებისას."
         :selected="paymentMethod === 'cash_on_delivery'"
         :disabled="disabled"
         @select="emit('selectPaymentMethod', $event)"

@@ -206,7 +206,6 @@ const prepareSearch = () => {
                   autocomplete="off"
                   class="h-10 w-full rounded-md border border-border-default bg-surface-2 py-2 pl-9 pr-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-accent-primary focus-visible:!outline-none"
                   @click.stop
-                  @keydown.stop
                 />
               </div>
             </li>
