@@ -40,7 +40,7 @@ export type CheckoutFieldName = keyof CheckoutFormValues;
 export type CheckoutFieldErrors = Partial<Record<CheckoutFieldName, string>>;
 
 // Temporary checkout test switch. Set back to false after receipt QA is complete.
-export const CHECKOUT_CASH_ON_DELIVERY_ENABLED = true;
+export const CHECKOUT_CASH_ON_DELIVERY_ENABLED = false;
 export const CHECKOUT_DEFAULT_PAYMENT_METHOD: CheckoutPaymentMethod = "card";
 
 export const checkoutFieldOrder: CheckoutFieldName[] = [
