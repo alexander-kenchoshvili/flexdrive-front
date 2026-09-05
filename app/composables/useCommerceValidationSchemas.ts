@@ -25,6 +25,7 @@ const checkoutSchema = z
     buyer_type: z.enum(["individual", "legal_entity"]),
     company_name: z.string().trim(),
     company_identification_code: z.string().trim(),
+    company_is_vat_registered: z.boolean().nullable(),
     first_name: requiredText("შეიყვანე სახელი."),
     last_name: requiredText("შეიყვანე გვარი."),
     email: z.string().trim().refine((value) => !value || emailPattern.test(value), {
@@ -51,6 +52,14 @@ const checkoutSchema = z
         code: z.ZodIssueCode.custom,
         path: ["company_name"],
         message: "შეიყვანე კომპანიის დასახელება.",
+      });
+    }
+
+    if (values.company_is_vat_registered === null) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["company_is_vat_registered"],
+        message: "აირჩიე, არის თუ არა კომპანია დღგ-ის გადამხდელი.",
       });
     }
 

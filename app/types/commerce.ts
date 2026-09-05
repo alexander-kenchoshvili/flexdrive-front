@@ -251,6 +251,7 @@ export interface CheckoutPayload {
   buyer_type: CheckoutBuyerType;
   company_name?: string;
   company_identification_code?: string;
+  company_is_vat_registered?: boolean | null;
   first_name: string;
   last_name: string;
   email: string;
@@ -298,6 +299,7 @@ export interface CommerceOrderSummary extends CommerceReceiptAccess {
   buyer_type: CheckoutBuyerType;
   company_name: string;
   company_identification_code: string;
+  company_is_vat_registered: boolean | null;
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
   status: CommerceOrderStatus;

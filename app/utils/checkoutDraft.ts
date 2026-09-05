@@ -12,6 +12,9 @@ export const sanitizeCheckoutDraft = (input: unknown): Partial<CheckoutFormValue
   if (!input || typeof input !== "object" || Array.isArray(input)) return {};
   const data = input as Record<string, unknown>;
   const result: Partial<CheckoutFormValues> = {};
+  if (typeof data.company_is_vat_registered === "boolean" || data.company_is_vat_registered === null) {
+    result.company_is_vat_registered = data.company_is_vat_registered;
+  }
   for (const field of textFields) {
     if (typeof data[field] === "string") result[field] = data[field];
   }

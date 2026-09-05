@@ -81,6 +81,7 @@ test("refresh restores legal/individual drafts and recalculates delivery after c
   await flush();
   current.form.setFieldValue("buyer_type", "legal_entity", false);
   current.form.setFieldValue("company_name", "ტესტი", false);
+  current.form.setFieldValue("company_is_vat_registered", false, false);
   current.form.setFieldValue("phone", "555123456", false);
   current.form.setFieldValue("address_line", "მისამართი 1", false);
   current.form.setFieldValue("delivery_region_id", 1, false);
@@ -94,6 +95,7 @@ test("refresh restores legal/individual drafts and recalculates delivery after c
   await flush();
   assert.equal(current.form.buyerType.value, "legal_entity");
   assert.equal(current.form.companyName.value, "ტესტი");
+  assert.equal(current.form.companyIsVatRegistered.value, false);
   assert.equal(current.form.phone.value, "555123456");
   assert.equal(current.form.addressLine.value, "მისამართი 1");
   assert.equal(current.form.deliveryCityId.value, 2);
@@ -144,4 +146,24 @@ test("source/owner isolation, buy-now restoration, malformed and unavailable sto
   assert.doesNotThrow(() => draft.writeCheckoutDraft("cart", "guest", {}));
   assert.doesNotThrow(() => draft.clearCheckoutDraft());
   globalThis.sessionStorage = storageApi;
+});
+
+test("company VAT choice requires an explicit answer only for legal buyers", () => {
+  const { useCommerceValidationSchemas } = loadTs("../app/composables/useCommerceValidationSchemas.ts");
+  const { checkoutSchema } = useCommerceValidationSchemas();
+  const values = {
+    buyer_type: "legal_entity", company_name: "Test LLC", company_identification_code: "123456789",
+    company_is_vat_registered: null, first_name: "Test", last_name: "Buyer", email: "",
+    phone: "555123456", delivery_region_id: 1, delivery_city_id: 2, city: "ბათუმი",
+    address_line: "Address 1", note: "", terms_accepted: true, payment_method: "card",
+  };
+  const missing = checkoutSchema.safeParse(values);
+  assert.equal(missing.success, false);
+  assert.deepEqual(missing.error.issues.map((issue) => issue.path), [["company_is_vat_registered"]]);
+  for (const answer of [true, false]) {
+    assert.equal(checkoutSchema.safeParse({ ...values, company_is_vat_registered: answer }).success, true);
+    assert.equal(draft.sanitizeCheckoutDraft({ company_is_vat_registered: answer }).company_is_vat_registered, answer);
+  }
+  assert.equal(checkoutSchema.safeParse({ ...values, buyer_type: "individual" }).success, true);
+  assert.equal(checkoutSchema.safeParse({ ...values, company_is_vat_registered: "false" }).success, false);
 });

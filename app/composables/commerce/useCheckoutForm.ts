@@ -24,6 +24,7 @@ export type CheckoutFormValues = {
   buyer_type: CheckoutBuyerType;
   company_name: string;
   company_identification_code: string;
+  company_is_vat_registered: boolean | null;
   first_name: string;
   last_name: string;
   email: string;
@@ -48,6 +49,7 @@ export const checkoutFieldOrder: CheckoutFieldName[] = [
   "buyer_type",
   "company_name",
   "company_identification_code",
+  "company_is_vat_registered",
   "first_name",
   "last_name",
   "email",
@@ -66,6 +68,7 @@ export const checkoutFieldSelectors: Record<CheckoutFieldName, string> = {
   company_name: '[data-checkout-field="company_name"]',
   company_identification_code:
     '[data-checkout-field="company_identification_code"]',
+  company_is_vat_registered: '[data-checkout-field="company_is_vat_registered"]',
   first_name: '[data-checkout-field="first_name"]',
   last_name: '[data-checkout-field="last_name"]',
   email: '[data-checkout-field="email"]',
@@ -105,6 +108,7 @@ export const useCheckoutForm = (options?: {
       buyer_type: "individual",
       company_name: "",
       company_identification_code: "",
+      company_is_vat_registered: null,
       first_name: "",
       last_name: "",
       email: "",
@@ -122,6 +126,7 @@ export const useCheckoutForm = (options?: {
   const [firstName, firstNameAttrs] = defineField("first_name");
   const [buyerType] = defineField("buyer_type");
   const [companyName, companyNameAttrs] = defineField("company_name");
+  const [companyIsVatRegistered] = defineField("company_is_vat_registered");
   const [companyIdentificationCode, companyIdentificationCodeAttrs] =
     defineField("company_identification_code");
   const [lastName, lastNameAttrs] = defineField("last_name");
@@ -550,6 +555,7 @@ export const useCheckoutForm = (options?: {
     setFieldValue,
     buyerType,
     companyName,
+    companyIsVatRegistered,
     companyNameAttrs,
     companyIdentificationCode,
     companyIdentificationCodeAttrs,

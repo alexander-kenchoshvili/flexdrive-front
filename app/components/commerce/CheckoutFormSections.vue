@@ -41,6 +41,7 @@ const buyerType = defineModel<CheckoutBuyerType>("buyerType", {
   required: true,
 });
 const companyName = defineModel<string>("companyName", { required: true });
+const companyIsVatRegistered = defineModel<boolean | null>("companyIsVatRegistered", { required: true });
 const companyIdentificationCode = defineModel<string>(
   "companyIdentificationCode",
   { required: true },
@@ -139,7 +140,7 @@ const deliveryHint = computed(() => {
           v-model="buyerType"
           type="radio"
           name="buyer_type"
-          class="mt-1 h-4 w-4 shrink-0 border-border-default bg-surface accent-accent-primary"
+          class="mt-1 h-4 w-4 shrink-0 border-border-default bg-surface text-accent-primary accent-accent-primary focus:ring-0 focus:ring-offset-0 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary"
           :value="option.value"
           :disabled="disabled"
         />
@@ -189,6 +190,43 @@ const deliveryHint = computed(() => {
         :disabled="disabled"
         required
       />
+      <fieldset
+        data-checkout-field="company_is_vat_registered"
+        class="min-w-0 md:col-span-2"
+        :disabled="disabled"
+        :aria-describedby="errors.company_is_vat_registered ? 'company-vat-error' : undefined"
+      >
+        <legend class="text-sm font-medium leading-6 text-text-primary">
+          კომპანია დღგ-ის გადამხდელია? <span aria-hidden="true">*</span>
+        </legend>
+        <div class="mt-2 flex flex-wrap gap-3">
+          <label
+            v-for="option in [{ value: true, label: 'დიახ' }, { value: false, label: 'არა' }]"
+            :key="option.label"
+            class="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border px-4 py-2 text-sm text-text-primary transition-colors"
+            :class="[
+              companyIsVatRegistered === option.value ? 'border-accent-primary bg-surface' : 'border-border-default bg-surface hover:border-accent-primary/60',
+              errors.company_is_vat_registered ? 'border-error' : '',
+              disabled ? 'cursor-not-allowed opacity-70' : '',
+            ]"
+          >
+            <input
+              v-model="companyIsVatRegistered"
+              type="radio"
+              name="company_is_vat_registered"
+              :value="option.value"
+              :aria-invalid="Boolean(errors.company_is_vat_registered)"
+              :aria-describedby="errors.company_is_vat_registered ? 'company-vat-error' : undefined"
+              class="h-4 w-4 shrink-0 border-border-default bg-surface text-accent-primary accent-accent-primary focus:ring-0 focus:ring-offset-0 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary"
+              required
+            />
+            {{ option.label }}
+          </label>
+        </div>
+        <p v-if="errors.company_is_vat_registered" id="company-vat-error" class="mt-2 text-sm text-error">
+          {{ errors.company_is_vat_registered }}
+        </p>
+      </fieldset>
     </div>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">

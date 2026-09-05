@@ -66,6 +66,7 @@ const {
   setFieldValue,
   buyerType,
   companyName,
+  companyIsVatRegistered,
   companyNameAttrs,
   companyIdentificationCode,
   companyIdentificationCodeAttrs,
@@ -360,6 +361,8 @@ const buildCheckoutPayload = (
   recaptchaToken: string,
 ): CheckoutPayload => ({
   buyer_type: submittedValues.buyer_type,
+  company_is_vat_registered: submittedValues.buyer_type === "legal_entity"
+    ? submittedValues.company_is_vat_registered : null,
   company_name:
     submittedValues.buyer_type === "legal_entity"
       ? submittedValues.company_name.trim()
@@ -583,6 +586,7 @@ watch(
     firstName.value,
     buyerType.value,
     companyName.value,
+    companyIsVatRegistered.value,
     companyIdentificationCode.value,
     lastName.value,
     email.value,
@@ -755,6 +759,7 @@ useNoindexPage({
               <CheckoutFormSections
                 v-model:buyer-type="buyerType"
                 v-model:company-name="companyName"
+                v-model:company-is-vat-registered="companyIsVatRegistered"
                 v-model:company-identification-code="companyIdentificationCode"
                 v-model:first-name="firstName"
                 v-model:last-name="lastName"
