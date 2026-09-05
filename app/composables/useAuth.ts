@@ -1,6 +1,7 @@
 import type { RouteLocationRaw } from "vue-router";
 import type { AuthSessionState } from "~/types/auth";
 import { secureFetchRaw } from "./secureFetch";
+import { clearCheckoutDraft } from "~/utils/checkoutDraft";
 
 export const useAuth = () => {
   const globalStore = useGlobalStore();
@@ -10,6 +11,7 @@ export const useAuth = () => {
   const baseURL = useApiBaseUrl();
 
   const resetState = () => {
+    clearCheckoutDraft();
     globalStore.currentUser = null;
     globalStore.authResolved = true;
     clearAuthSession();

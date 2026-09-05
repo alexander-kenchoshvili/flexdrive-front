@@ -5,6 +5,7 @@ import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useOrderReceipt } from "~/composables/commerce/useOrderReceipt";
 import type { CommerceCardPayment } from "~/types/commerce";
+import { clearCheckoutDraft } from "~/utils/checkoutDraft";
 
 const props = defineProps<{
   hint: "success" | "fail";
@@ -146,6 +147,7 @@ const loadPayment = async (
     automaticChecksComplete.value = false;
 
     if (nextPayment.result === "paid") {
+      clearCheckoutDraft(returnContext.value?.source);
       await redirectToOrder();
       return;
     }

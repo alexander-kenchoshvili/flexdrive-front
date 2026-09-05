@@ -97,7 +97,12 @@ const {
   extractFieldErrors,
   scrollToFirstInvalidField,
   syncProfileBackfill,
-} = useCheckoutForm({ profileKey: "checkout-profile", source: "cart" });
+  clearFormDraft,
+} = useCheckoutForm({
+  profileKey: "checkout-profile",
+  source: "cart",
+  deliveryReady: () => cartStore.initialized && !cartStore.isEmpty,
+});
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
   { label: "მთავარი", to: "/" },
@@ -378,6 +383,7 @@ const submitForm = validateSubmit(
         if (payment.result === "paid" && payment.order_public_token) {
           storeReceiptAccess(payment.order_public_token, payment);
           checkoutCompleted.value = true;
+          clearFormDraft();
           clearKey();
           await navigateTo(
             `/checkout/success/${payment.order_public_token}`,
@@ -395,6 +401,7 @@ const submitForm = validateSubmit(
       await syncProfileBackfill(submittedValues);
 
       checkoutCompleted.value = true;
+      clearFormDraft();
       clearKey();
       cartStore.clearAvailabilityAttention();
       await cartStore.refreshCart();
@@ -723,6 +730,7 @@ useNoindexPage({
                 :delivery-pending="deliveryQuotePending"
                 :delivery-error="deliveryQuoteError"
                 :total="checkoutTotal"
+                :show-vat="buyerType === 'legal_entity'"
                 :error-message="formError"
                 :price-change-message="cartStore.priceChangeMessage"
                 :confirmation-label="cartPriceConfirmationLabel"

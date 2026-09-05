@@ -1,5 +1,6 @@
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
+import { clearCheckoutDraft, readCheckoutDraft, writeCheckoutDraft } from "~/utils/checkoutDraft";
 import { useAccountApi } from "~/composables/useAccountApi";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useCommerceValidationSchemas } from "~/composables/useCommerceValidationSchemas";
@@ -81,6 +82,7 @@ export const checkoutFieldSelectors: Record<CheckoutFieldName, string> = {
 export const useCheckoutForm = (options?: {
   profileKey?: string;
   source?: "cart" | "buy_now";
+  deliveryReady?: () => boolean;
 }) => {
   const globalStore = useGlobalStore();
   const { getProfile, updateProfile } = useAccountApi();
@@ -95,6 +97,7 @@ export const useCheckoutForm = (options?: {
     setErrors,
     setFieldError,
     setFieldValue,
+    resetForm,
     values,
   } = useForm<CheckoutFormValues>({
     validationSchema: toTypedSchema(checkoutSchema),
@@ -130,6 +133,23 @@ export const useCheckoutForm = (options?: {
   const [note, noteAttrs] = defineField("note");
   const [termsAccepted] = defineField("terms_accepted");
   const [paymentMethod] = defineField("payment_method");
+
+  const draftSource = options?.source || "cart";
+  const draftMounted = ref(false);
+  let draftReady = false;
+  let restoringDraft = false;
+  let hasRestoredDraft = false;
+  let draftOwner = "";
+  const currentDraftOwner = () => String(globalStore.currentUser?.id ?? "guest");
+  const clearFormDraft = () => {
+    draftReady = false;
+    clearCheckoutDraft(draftSource);
+  };
+  const saveFormDraft = () => {
+    if (draftReady && !restoringDraft && draftOwner === currentDraftOwner()) {
+      writeCheckoutDraft(draftSource, draftOwner, values);
+    }
+  };
 
   const deliveryCities = ref<CommerceDeliveryCity[]>([]);
   const deliveryCitiesPending = ref(false);
@@ -270,7 +290,7 @@ export const useCheckoutForm = (options?: {
   };
 
   const applyProfilePrefill = (profile: AccountProfile | null) => {
-    if (!profile) return;
+    if (!profile || hasRestoredDraft) return;
 
     fillFieldIfBlank("first_name", profile.first_name);
     fillFieldIfBlank("last_name", profile.last_name);
@@ -440,6 +460,7 @@ export const useCheckoutForm = (options?: {
   );
 
   watch(deliveryRegionId, (nextRegionId) => {
+    if (restoringDraft) return;
     deliveryCitiesRequestId += 1;
     deliveryCities.value = [];
     deliveryCitiesPending.value = false;
@@ -458,7 +479,8 @@ export const useCheckoutForm = (options?: {
     }
   });
 
-  watch(deliveryCityId, (nextCityId) => {
+  watch([deliveryCityId, deliveryCities, () => options?.deliveryReady?.() ?? true], ([nextCityId, , ready]) => {
+    if (restoringDraft) return;
     const selectedCity = deliveryCities.value.find(
       (cityOption) => cityOption.id === nextCityId,
     );
@@ -471,7 +493,7 @@ export const useCheckoutForm = (options?: {
     if (
       typeof deliveryRegionId.value === "number" &&
       typeof nextCityId === "number" &&
-      selectedCity
+      selectedCity && ready
     ) {
       void loadDeliveryQuote(deliveryRegionId.value, nextCityId);
     }
@@ -483,6 +505,7 @@ export const useCheckoutForm = (options?: {
       if (
         typeof nextEmail === "string" &&
         nextEmail.trim() &&
+        !hasRestoredDraft &&
         !String(values.email || "").trim()
       ) {
         setFieldValue("email", nextEmail.trim());
@@ -490,6 +513,34 @@ export const useCheckoutForm = (options?: {
     },
     { immediate: true },
   );
+
+  watch(values, saveFormDraft, { deep: true, flush: "sync" });
+
+  watch(
+    [draftMounted, () => globalStore.authResolved],
+    async ([mounted, authResolved]) => {
+      if (!mounted || !authResolved || draftReady) return;
+      draftOwner = currentDraftOwner();
+      const draft = readCheckoutDraft(draftSource, draftOwner);
+      if (draft && Object.keys(draft).length) {
+        hasRestoredDraft = true;
+        restoringDraft = true;
+        resetForm({ values: { ...values, ...draft } });
+        // Let dependent field watchers flush without clearing the restored city.
+        await nextTick();
+        restoringDraft = false;
+        if (typeof deliveryRegionId.value === "number") {
+          void loadDeliveryCities(deliveryRegionId.value);
+        }
+      }
+      draftReady = true;
+      saveFormDraft();
+    },
+  );
+  watch(() => globalStore.currentUser?.id, (nextId, previousId) => {
+    if (draftReady && nextId !== previousId) clearFormDraft();
+  }, { flush: "sync" });
+  onMounted(() => { draftMounted.value = true; });
 
   return {
     errors,
@@ -536,5 +587,6 @@ export const useCheckoutForm = (options?: {
     extractFieldErrors,
     scrollToFirstInvalidField,
     syncProfileBackfill,
+    clearFormDraft,
   };
 };

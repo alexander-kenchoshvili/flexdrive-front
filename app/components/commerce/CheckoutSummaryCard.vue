@@ -3,6 +3,7 @@ import BaseButton from "~/components/common/BaseButton.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import type { CommerceCheckoutSummaryItem } from "~/types/commerce";
+import { calculateIncludedCheckoutVat } from "~/utils/checkoutVat";
 
 type SummaryActionAs = "button" | "nuxt-link";
 
@@ -12,6 +13,7 @@ const props = withDefaults(
     itemCount: number;
     subtotal: string;
     total: string;
+    showVat?: boolean;
     deliveryPrice?: string | null;
     deliveryPending?: boolean;
     deliveryError?: string | null;
@@ -32,6 +34,7 @@ const props = withDefaults(
   }>(),
   {
     errorMessage: null,
+    showVat: false,
     deliveryPrice: null,
     deliveryPending: false,
     deliveryError: null,
@@ -57,6 +60,8 @@ defineEmits<{
 }>();
 
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
+
+const includedVat = computed(() => calculateIncludedCheckoutVat(props.total));
 
 const formatMoney = (value: string | number | null | undefined) =>
   `${Number(value || 0).toFixed(2)} GEL`;
@@ -187,6 +192,15 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
         <span class="shrink-0 text-base font-semibold text-text-primary">სულ</span>
         <span class="min-w-0 break-words text-right text-[24px] font-extrabold leading-none text-accent-primary sm:text-[28px]">
           {{ formatMoney(total) }}
+        </span>
+      </div>
+      <div
+        v-if="showVat"
+        class="flex min-w-0 items-baseline justify-between gap-3 text-xs leading-5 text-text-secondary"
+      >
+        <span class="min-w-0 break-words">მათ შორის დღგ (18%)</span>
+        <span class="shrink-0 tabular-nums">
+          {{ includedVat !== null ? `${includedVat} GEL` : '—' }}
         </span>
       </div>
     </div>

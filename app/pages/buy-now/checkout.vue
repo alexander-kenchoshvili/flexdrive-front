@@ -99,7 +99,9 @@ const {
   extractFieldErrors,
   scrollToFirstInvalidField,
   syncProfileBackfill,
+  clearFormDraft,
 } = useCheckoutForm({
+  deliveryReady: () => buyNowStore.initialized && buyNowStore.hasSession,
   profileKey: "buy-now-checkout-profile",
   source: "buy_now",
 });
@@ -428,6 +430,7 @@ const submitForm = validateSubmit(
         if (payment.result === "paid" && payment.order_public_token) {
           storeReceiptAccess(payment.order_public_token, payment);
           checkoutCompleted.value = true;
+          clearFormDraft();
           clearKey();
           buyNowStore.clear();
           await navigateTo(
@@ -446,6 +449,7 @@ const submitForm = validateSubmit(
       await syncProfileBackfill(submittedValues);
 
       checkoutCompleted.value = true;
+      clearFormDraft();
       clearKey();
       buyNowStore.clear();
       await navigateTo(`/checkout/success/${order.public_token}`);
@@ -794,6 +798,7 @@ useNoindexPage({
                 :delivery-pending="deliveryQuotePending"
                 :delivery-error="deliveryQuoteError"
                 :total="checkoutTotal"
+                :show-vat="buyerType === 'legal_entity'"
                 :error-message="buyNowStore.hasBlockingIssues ? buyNowInlineMessage : null"
                 :price-change-message="
                   !buyNowStore.hasBlockingIssues ? buyNowInlineMessage : null
