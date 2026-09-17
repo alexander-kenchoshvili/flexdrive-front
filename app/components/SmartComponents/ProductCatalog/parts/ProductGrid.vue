@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import SkeletonBlock from "~/components/common/skeleton/SkeletonBlock.vue";
 import SkeletonText from "~/components/common/skeleton/SkeletonText.vue";
 import type { CatalogProductCardData } from "~/types/catalog";
@@ -11,7 +11,7 @@ type VehicleFilterLabel = {
   engine?: string;
 };
 
-const skeletonItems = Array.from({ length: 9 }, (_, index) => index);
+const skeletonItems = Array.from({ length: 15 }, (_, index) => index);
 
 withDefaults(
   defineProps<{

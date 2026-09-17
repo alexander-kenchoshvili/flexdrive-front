@@ -33,10 +33,12 @@ export default {
       return false;
     }
 
-    return resolveWhenPageIsReady(to.fullPath, {
+    // New pages start at the top without waiting for async content.
+    // Saved positions and hash targets still wait for the page above.
+    return {
       left: 0,
       top: 0,
       behavior: "auto",
-    });
+    };
   },
 } satisfies RouterConfig;
