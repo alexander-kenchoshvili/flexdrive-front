@@ -217,6 +217,7 @@ onBeforeUnmount(() => {
 
 <template>
   <header
+    data-site-header
     class="sticky top-0 z-40 border-b border-header-border bg-header-bg shadow-[0_14px_34px_-24px_var(--shadow-color)]"
   >
     <div class="container-fluid px-3 py-3 sm:px-4">

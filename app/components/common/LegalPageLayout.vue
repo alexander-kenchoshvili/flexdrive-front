@@ -31,6 +31,10 @@ const scrollToSection = (event: MouseEvent, sectionId: string) => {
 
   event.preventDefault();
   window.history.replaceState({}, "", `#${sectionId}`);
+  // Measure the responsive header instead of relying on a fixed scroll margin.
+  const header = document.querySelector<HTMLElement>("[data-site-header]");
+  const headerHeight = header?.getBoundingClientRect().height ?? 96;
+  target.style.scrollMarginTop = `${headerHeight + 16}px`;
   target.scrollIntoView({
     behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ? "auto"
