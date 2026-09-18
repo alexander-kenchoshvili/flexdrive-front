@@ -1,4 +1,5 @@
 import { createError } from "h3";
+import { markPagePending } from "~/utils/pageScrollCoordinator";
 import type { LocationQueryRaw } from "vue-router";
 import { apiFetchRaw } from "~/composables/apiFetch";
 import type { CatalogCategoryItem } from "~/types/catalog";
@@ -120,6 +121,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   if (import.meta.client && from && to.path === from.path) {
     return;
+  }
+
+  if (import.meta.client) {
+    // A reused CMS page may not trigger Nuxt page:start again.
+    markPagePending(to.fullPath);
   }
 
   store.isComponentsLoad = false;

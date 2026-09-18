@@ -3,8 +3,13 @@ import { waitForPageReady } from "~/utils/pageScrollCoordinator";
 
 const CATALOG_ROOT_PATH = "/catalog";
 
-const isCatalogListingPath = (path: string) =>
-  path === CATALOG_ROOT_PATH || /^\/catalog\/category\/[^/]+$/.test(path);
+const isCatalogListingPath = (path: string) => {
+  const normalizedPath = path.replace(/\/+$/, "");
+  return (
+    normalizedPath === CATALOG_ROOT_PATH ||
+    /^\/catalog\/category\/[^/]+$/.test(normalizedPath)
+  );
+};
 
 const resolveWhenPageIsReady = async <T>(path: string, position: T) => {
   await waitForPageReady(path);
@@ -33,12 +38,13 @@ export default {
       return false;
     }
 
-    // New pages start at the top without waiting for async content.
-    // Saved positions and hash targets still wait for the page above.
-    return {
+    // Every new page scrolls only once its replacement content is mounted.
+    // CMS pages publish readiness from ComponentsLoader; native pages use
+    // Nuxt page:finish. Neither path needs an arbitrary navigation delay.
+    return resolveWhenPageIsReady(to.fullPath, {
       left: 0,
       top: 0,
       behavior: "auto",
-    };
+    });
   },
 } satisfies RouterConfig;

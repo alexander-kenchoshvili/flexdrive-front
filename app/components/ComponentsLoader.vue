@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
+import { markPageReady } from "~/utils/pageScrollCoordinator";
 import {
   computed,
   defineAsyncComponent,
@@ -14,6 +15,7 @@ import type { ComponentsMap, SmartComponentRenderData } from "~/types/page";
 
 type RenderedComponent = {
   key: string;
+  version: number;
   component: Component;
   props: SmartComponentRenderData;
 };
@@ -21,11 +23,13 @@ type RenderedComponent = {
 const CONTENT_READY_FALLBACK_MS = 10_000;
 
 const globalStore = useGlobalStore();
+const router = useRouter();
 const { components, isComponentsLoad } = storeToRefs(globalStore);
 const pageLoadingIndicator = useLoadingIndicator();
 
 const renderedComponents = shallowRef<RenderedComponent[]>([]);
 const renderVersion = ref(0);
+const mountedComponentKeys = new Set<string>();
 const loaderRef = ref<HTMLElement | null>(null);
 const contentRef = ref<HTMLElement | null>(null);
 const lockedMinHeight = ref<string | null>(null);
@@ -49,6 +53,8 @@ const getAsyncComponent = (name: string) => {
 };
 
 const initComponents = () => {
+  renderVersion.value += 1;
+  mountedComponentKeys.clear();
   const nextRenderedComponents: RenderedComponent[] = [];
   const componentsMap = (components.value || {}) as ComponentsMap;
 
@@ -60,6 +66,7 @@ const initComponents = () => {
 
     nextRenderedComponents.push({
       key: value?.conf?.unicId || `${name}-${index}`,
+      version: renderVersion.value,
       component: getAsyncComponent(name),
       props: {
         ...value?.data,
@@ -69,7 +76,6 @@ const initComponents = () => {
   });
 
   renderedComponents.value = nextRenderedComponents;
-  renderVersion.value += 1;
 };
 
 const setLockedHeight = (element?: HTMLElement | null) => {
@@ -94,12 +100,17 @@ const clearContentReadyWait = () => {
 const releaseLockedHeight = () => {
   clearContentReadyWait();
   lockedMinHeight.value = null;
+  // Reused CMS pages do not emit a new Nuxt page:finish event.
+  // Signal readiness when replacement content has layout height.
+  markPageReady(router.currentRoute.value.fullPath);
   pageLoadingIndicator.finish();
 };
 
 const releaseHeightWhenContentIsReady = async () => {
+  const version = renderVersion.value;
   pageLoadingIndicator.start();
   await nextTick();
+  if (version !== renderVersion.value || !isComponentsLoad.value) return;
   clearContentReadyWait();
 
   const element = contentRef.value;
@@ -109,7 +120,10 @@ const releaseHeightWhenContentIsReady = async () => {
   }
 
   const releaseIfReady = () => {
-    if (element.offsetHeight <= 0) {
+    if (
+      mountedComponentKeys.size < renderedComponents.value.length ||
+      element.offsetHeight <= 0
+    ) {
       return false;
     }
 
@@ -135,6 +149,14 @@ const releaseHeightWhenContentIsReady = async () => {
     releaseLockedHeight,
     CONTENT_READY_FALLBACK_MS,
   );
+};
+
+const handleComponentMounted = (key: string, version: number) => {
+  if (version !== renderVersion.value || !isComponentsLoad.value) return;
+  mountedComponentKeys.add(key);
+  if (mountedComponentKeys.size === renderedComponents.value.length) {
+    void releaseHeightWhenContentIsReady();
+  }
 };
 
 watch(
@@ -202,6 +224,7 @@ onBeforeUnmount(() => {
           :is="item.component"
           :key="item.key"
           :data="item.props"
+          @vue:mounted="handleComponentMounted(item.key, item.version)"
         />
       </div>
     </Transition>

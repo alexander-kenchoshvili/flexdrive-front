@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { markPagePending, markPageReady } from "~/utils/pageScrollCoordinator";
 import { useMediaQuery } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import type { LocationQuery, LocationQueryValue } from "vue-router";
@@ -1320,7 +1321,10 @@ hasInitialized.value = true;
 
 watch(
   () => route.fullPath,
-  async () => {
+  async (path, _previousPath, onCleanup) => {
+    let cancelled = false;
+    onCleanup(() => { cancelled = true; });
+    markPagePending(path);
     const shouldSyncVehicleDraft = hasVehicleRouteChanged(route.query);
     closeMobileFilterSheet();
     syncControlsFromRoute(route.query, {
@@ -1329,7 +1333,12 @@ watch(
     if (shouldSyncVehicleDraft) {
       await loadVehicleOptionsForDraft();
     }
+    if (cancelled) return;
     await loadProducts();
+    await nextTick();
+    if (!cancelled) {
+      markPageReady(path);
+    }
   },
 );
 
