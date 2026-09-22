@@ -4,6 +4,7 @@ import BasePicture from "~/components/common/BasePicture.vue";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { buildCatalogCategoryPath } from "~/utils/routePaths";
+import { waitForPageReady } from "~/utils/pageScrollCoordinator";
 import type {
   CatalogCategoryItem,
   CatalogProductSuggestion,
@@ -275,6 +276,9 @@ const submitSearch = async () => {
   const normalizedQuery = normalizedSearchText.value;
   if (!normalizedQuery) return;
 
+  const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
+  const searchPath = router.resolve({ path: "/catalog", query: { q: normalizedQuery } }).fullPath;
+
   saveRecentSearch(normalizedQuery);
   trackSearch(normalizedQuery);
   closeAllSearchSurfaces();
@@ -284,6 +288,17 @@ const submitSearch = async () => {
     query: {
       q: normalizedQuery,
     },
+  });
+
+  if (!isCatalogSearch || router.currentRoute.value.fullPath !== searchPath) return;
+  await waitForPageReady(searchPath);
+  await nextTick();
+  window.requestAnimationFrame(() => {
+    if (router.currentRoute.value.fullPath !== searchPath) return;
+    document.getElementById("catalog-results-start")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   });
 };
 

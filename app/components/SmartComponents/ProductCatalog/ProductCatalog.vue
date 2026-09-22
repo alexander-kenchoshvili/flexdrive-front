@@ -1505,6 +1505,7 @@ useSeoMeta({
         </div>
 
         <div
+          id="catalog-results-start"
           ref="resultsStartRef"
           class="flex flex-col gap-2 scroll-mt-28 lg:scroll-mt-40"
         >
