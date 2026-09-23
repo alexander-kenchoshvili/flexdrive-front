@@ -93,6 +93,7 @@ export const useBuyNowStore = defineStore("buy-now", () => {
         slug: session.value.slug,
         name: session.value.name,
         sku: session.value.sku,
+        display_sku: session.value.display_sku,
         price: session.value.price,
         price_snapshot: session.value.price_snapshot,
         quantity: session.value.quantity,

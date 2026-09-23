@@ -29,6 +29,7 @@ export interface CommerceCartItem {
   slug: string;
   name: string;
   sku: string;
+  display_sku?: string;
   category: CatalogCategoryRef;
   price: string;
   price_snapshot: string;
@@ -51,6 +52,7 @@ export interface CommerceCheckoutSummaryItem {
   slug: string;
   name: string;
   sku: string;
+  display_sku?: string;
   price: string;
   price_snapshot: string;
   quantity: number;
@@ -103,6 +105,7 @@ export interface CommerceBuyNowSession {
   slug: string;
   name: string;
   sku: string;
+  display_sku?: string;
   price: string;
   price_snapshot: string;
   quantity: number;
@@ -277,6 +280,7 @@ export interface CommerceOrderItem {
   id: number;
   product_name: string;
   sku: string;
+  display_sku?: string;
   unit_price: string;
   quantity: number;
   line_total: string;
@@ -286,6 +290,7 @@ export interface CommerceOrderItem {
 export interface CommerceOrderLookupItem {
   product_name: string;
   sku: string;
+  display_sku?: string;
   unit_price: string;
   quantity: number;
   line_total: string;

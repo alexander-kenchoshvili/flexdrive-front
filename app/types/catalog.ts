@@ -67,6 +67,7 @@ export interface CatalogProductListItem {
   name: string;
   slug: string;
   sku: string;
+  display_sku?: string;
   manufacturer_part_number: string;
   short_description: string;
   price: string;
@@ -192,6 +193,7 @@ export interface CatalogProductImage {
 export interface CatalogProductDetail extends CatalogProductListItem {
   description: string;
   sku: string;
+  display_sku?: string;
   stock_qty: number;
   status: string;
   images: CatalogProductImage[];
@@ -237,6 +239,7 @@ export interface CatalogProductSuggestion {
   slug: string;
   name: string;
   sku: string;
+  display_sku?: string;
   manufacturer_part_number: string;
   price: string;
   price_available?: boolean;

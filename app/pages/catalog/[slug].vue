@@ -163,7 +163,9 @@ const productLead = computed(() =>
 const productDescription = computed(() =>
   sanitizeText(product.value?.description),
 );
-const productSku = computed(() => sanitizeText(product.value?.sku));
+const productSku = computed(() =>
+  sanitizeText(product.value?.sku),
+);
 const productManufacturerPartNumber = computed(() =>
   sanitizeText(product.value?.manufacturer_part_number),
 );
@@ -253,7 +255,7 @@ const productAnalyticsItem = computed(() => {
     id: product.value.id,
     slug: product.value.slug,
     name: productTitle.value,
-    sku: productSku.value,
+    sku: product.value.sku,
     manufacturerPartNumber: productManufacturerPartNumber.value,
     category: productCategory.value,
     brand: productBrand.value,

@@ -213,7 +213,7 @@ const canDecrement = computed(
           </NuxtLink>
 
           <p class="mt-2 text-sm text-text-secondary">
-            SKU: {{ item.sku || "N/A" }}
+            SKU: {{ item.sku || "—" }}
           </p>
 
           <div class="mt-3 flex flex-wrap items-center gap-2.5">
