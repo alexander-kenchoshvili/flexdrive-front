@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { translateAuthError } from "~/utils/authErrors";
 import { ExclamationTriangleIcon } from "@heroicons/vue/24/outline";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
@@ -121,17 +122,6 @@ const extractFirstErrorMessage = (payload: unknown): string | null => {
   return null;
 };
 
-const translateFieldMessage = (
-  field: keyof AccountProfileUpdatePayload,
-  message: string,
-) => {
-  if (field === "email" && message.toLowerCase().includes("already exists")) {
-    return "ეს ელფოსტა უკვე გამოიყენება.";
-  }
-
-  return message;
-};
-
 const extractFieldErrors = (apiError: unknown): AccountFieldErrors => {
   const payload =
     (
@@ -189,7 +179,7 @@ const extractFieldErrors = (apiError: unknown): AccountFieldErrors => {
     if (!message) continue;
 
     nextErrors[key as keyof AccountProfileUpdatePayload] =
-      translateFieldMessage(key as keyof AccountProfileUpdatePayload, message);
+      translateAuthError(message);
   }
 
   return nextErrors;
@@ -207,12 +197,12 @@ const normalizeApiErrorMessage = (apiError: unknown, fallback: string) => {
       }
     | undefined;
 
-  return (
+  return translateAuthError(
     extractFirstErrorMessage(normalizedError?.data) ||
     extractFirstErrorMessage(normalizedError?.response?._data) ||
     extractFirstErrorMessage(normalizedError?.response?.data) ||
-    normalizedError?.message ||
-    fallback
+    normalizedError?.message,
+    fallback,
   );
 };
 

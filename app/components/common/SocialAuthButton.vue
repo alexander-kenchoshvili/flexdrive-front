@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { translateAuthError } from "~/utils/authErrors";
 const props = withDefaults(
   defineProps<{
     disabled?: boolean;
@@ -136,7 +137,7 @@ const handleClick = () => {
   try {
     window.location.assign(buildStartUrl());
   } catch (error: any) {
-    renderError.value = error?.message || props.errorMessage;
+    renderError.value = translateAuthError(error?.message, props.errorMessage);
     emit("error", renderError.value);
     requestInFlight.value = false;
   }

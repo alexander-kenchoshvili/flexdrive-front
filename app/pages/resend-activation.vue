@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getAuthErrorMessage } from "~/utils/authErrors";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 
@@ -27,35 +28,6 @@ const { defineField, errors, handleSubmit, setFieldError } = useForm({
 
 const [email, emailAttrs] = defineField("email");
 
-const extractFirstErrorMessage = (payload: any): string | null => {
-  if (!payload) return null;
-  if (typeof payload === "string") return payload;
-
-  if (Array.isArray(payload)) {
-    for (const item of payload) {
-      const nested = extractFirstErrorMessage(item);
-      if (nested) return nested;
-    }
-    return null;
-  }
-
-  if (typeof payload === "object") {
-    const priorityKeys = ["email", "detail", "message", "non_field_errors"];
-    const keys = [...priorityKeys, ...Object.keys(payload)];
-    const seen = new Set<string>();
-
-    for (const key of keys) {
-      if (seen.has(key) || !(key in payload)) continue;
-      seen.add(key);
-
-      const nested = extractFirstErrorMessage(payload[key]);
-      if (nested) return nested;
-    }
-  }
-
-  return null;
-};
-
 const resendActivation = handleSubmit(async (values) => {
   loading.value = true;
   message.value = null;
@@ -78,14 +50,12 @@ const resendActivation = handleSubmit(async (values) => {
       response?.message ||
       "თუ ეს ელფოსტა სისტემაში არსებობს და ანგარიში ჯერ არ არის გააქტიურებული, ახალი აქტივაციის ბმული გაიგზავნა.";
   } catch (error: any) {
-    const emailFieldError = extractFirstErrorMessage(error?.data?.email);
+    const emailFieldError = error?.data?.email ? getAuthErrorMessage(error.data.email) : null;
     if (emailFieldError) {
       setFieldError("email", emailFieldError);
     }
 
-    const backendMessage = extractFirstErrorMessage(error?.data || error);
-    errorMessage.value =
-      backendMessage || "დაფიქსირდა შეცდომა. სცადეთ თავიდან.";
+    errorMessage.value = getAuthErrorMessage(error?.data || error);
   } finally {
     loading.value = false;
   }

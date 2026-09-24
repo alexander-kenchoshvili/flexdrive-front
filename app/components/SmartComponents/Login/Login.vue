@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { translateAuthError, getAuthErrorMessage } from "~/utils/authErrors";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import { normalizeAuthRedirect } from "~/utils/authRouting";
@@ -80,7 +81,7 @@ watch(
   () => route.query.google_error,
   (message) => {
     if (typeof message === "string" && message.trim()) {
-      errorMessage.value = message;
+      errorMessage.value = translateAuthError(message);
     }
   },
   { immediate: true },
@@ -90,7 +91,7 @@ watch(
   () => route.query.facebook_error,
   (message) => {
     if (typeof message === "string" && message.trim()) {
-      errorMessage.value = message;
+      errorMessage.value = translateAuthError(message);
     }
   },
   { immediate: true },
@@ -131,14 +132,10 @@ const loginUser = handleSubmit(async (values) => {
     const emailFieldError = e?.data?.email?.[0];
     const passwordFieldError = e?.data?.password?.[0];
 
-    if (emailFieldError) setFieldError("email", emailFieldError);
-    if (passwordFieldError) setFieldError("password", passwordFieldError);
+    if (emailFieldError) setFieldError("email", getAuthErrorMessage(emailFieldError));
+    if (passwordFieldError) setFieldError("password", getAuthErrorMessage(passwordFieldError));
 
-    errorMessage.value =
-      e?.data?.non_field_errors?.[0] ||
-      e?.data?.detail ||
-      e?.message ||
-      "ავტორიზაცია ვერ შესრულდა. სცადეთ თავიდან.";
+    errorMessage.value = getAuthErrorMessage(e?.data || e, "ავტორიზაცია ვერ შესრულდა. სცადეთ თავიდან.");
   } finally {
     loading.value = false;
   }
@@ -146,12 +143,12 @@ const loginUser = handleSubmit(async (values) => {
 
 const handleGoogleError = (message: string) => {
   errorMessage.value =
-    message || "Google-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.";
+    translateAuthError(message, "Google-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.");
 };
 
 const handleFacebookError = (message: string) => {
   errorMessage.value =
-    message || "Facebook-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.";
+    translateAuthError(message, "Facebook-ით შესვლა ვერ შესრულდა. სცადეთ თავიდან.");
 };
 </script>
 

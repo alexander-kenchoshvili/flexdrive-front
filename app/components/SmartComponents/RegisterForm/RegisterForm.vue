@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { translateAuthError, getAuthErrorMessage } from "~/utils/authErrors";
 import { CheckCircleIcon } from "@heroicons/vue/24/solid";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
@@ -55,7 +56,7 @@ const redirectIfAuthenticated = async () => {
   }
 };
 
-const { defineField, errors, handleSubmit, resetForm } = useForm({
+const { defineField, errors, handleSubmit, resetForm, setFieldError } = useForm({
   validationSchema: toTypedSchema(registerSchema),
   initialValues: {
     email: "",
@@ -82,7 +83,7 @@ watch(
   () => route.query.google_error,
   (message) => {
     if (typeof message === "string" && message.trim()) {
-      errorMessage.value = message;
+      errorMessage.value = translateAuthError(message);
     }
   },
   { immediate: true },
@@ -92,7 +93,7 @@ watch(
   () => route.query.facebook_error,
   (message) => {
     if (typeof message === "string" && message.trim()) {
-      errorMessage.value = message;
+      errorMessage.value = translateAuthError(message);
     }
   },
   { immediate: true },
@@ -134,8 +135,13 @@ const submitForm = handleSubmit(async (values) => {
     });
     isSuccessModalOpen.value = true;
   } catch (error: any) {
-    errorMessage.value =
-      error?.data?.detail || "რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.";
+    const fields = { email: "email", password: "password", confirm_password: "confirmPassword", terms_accepted: "termsAccepted" } as const;
+    for (const [apiField, formField] of Object.entries(fields)) {
+      if (error?.data?.[apiField]) {
+        setFieldError(formField, getAuthErrorMessage(error.data[apiField]));
+      }
+    }
+    errorMessage.value = getAuthErrorMessage(error?.data || error, "რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.");
   } finally {
     loading.value = false;
   }
@@ -143,12 +149,12 @@ const submitForm = handleSubmit(async (values) => {
 
 const handleGoogleError = (message: string) => {
   errorMessage.value =
-    message || "Google-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.";
+    translateAuthError(message, "Google-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.");
 };
 
 const handleFacebookError = (message: string) => {
   errorMessage.value =
-    message || "Facebook-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.";
+    translateAuthError(message, "Facebook-ით რეგისტრაცია ვერ შესრულდა. სცადეთ თავიდან.");
 };
 </script>
 

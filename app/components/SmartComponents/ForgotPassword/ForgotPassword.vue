@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getAuthErrorMessage } from "~/utils/authErrors";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import { CheckCircleIcon } from "@heroicons/vue/24/solid";
@@ -56,13 +57,11 @@ const sendRequest = handleSubmit(async (values) => {
   } catch (error: any) {
     const emailFieldError = error?.data?.email?.[0];
     if (emailFieldError) {
-      setFieldError("email", emailFieldError);
+      setFieldError("email", getAuthErrorMessage(emailFieldError));
     }
 
     errorMessage.value =
-      error?.data?.detail ||
-      error?.data?.message ||
-      "დაფიქსირდა შეცდომა. სცადეთ თავიდან.";
+      getAuthErrorMessage(error?.data || error);
   } finally {
     loading.value = false;
   }

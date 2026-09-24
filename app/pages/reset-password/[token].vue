@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getAuthErrorMessage } from "~/utils/authErrors";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import { CheckCircleIcon } from "@heroicons/vue/24/solid";
@@ -40,35 +41,6 @@ const closeSuccessModal = () => {
   void router.push("/login");
 };
 
-const extractFirstErrorMessage = (payload: any): string | null => {
-  if (!payload) return null;
-  if (typeof payload === "string") return payload;
-
-  if (Array.isArray(payload)) {
-    for (const item of payload) {
-      const nested = extractFirstErrorMessage(item);
-      if (nested) return nested;
-    }
-    return null;
-  }
-
-  if (typeof payload === "object") {
-    const priorityKeys = ["password", "detail", "message", "non_field_errors"];
-    const keys = [...priorityKeys, ...Object.keys(payload)];
-    const seen = new Set<string>();
-
-    for (const key of keys) {
-      if (seen.has(key) || !(key in payload)) continue;
-      seen.add(key);
-
-      const nested = extractFirstErrorMessage(payload[key]);
-      if (nested) return nested;
-    }
-  }
-
-  return null;
-};
-
 const resetPassword = handleSubmit(async (values) => {
   errorMessage.value = null;
   message.value = null;
@@ -89,14 +61,12 @@ const resetPassword = handleSubmit(async (values) => {
     message.value = "პაროლი წარმატებით განახლდა. ახლა შეგიძლიათ შეხვიდეთ სისტემაში.";
     isSuccessModalOpen.value = true;
   } catch (error: any) {
-    const passwordFieldError = extractFirstErrorMessage(error?.data?.password);
+    const passwordFieldError = error?.data?.password ? getAuthErrorMessage(error.data.password) : null;
     if (passwordFieldError) {
       setFieldError("password", passwordFieldError);
     }
 
-    const backendMessage = extractFirstErrorMessage(error?.data || error);
-    errorMessage.value =
-      backendMessage || "დაფიქსირდა შეცდომა. სცადეთ თავიდან.";
+    errorMessage.value = getAuthErrorMessage(error?.data || error);
   } finally {
     loading.value = false;
   }

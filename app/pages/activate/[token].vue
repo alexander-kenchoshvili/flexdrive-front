@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getAuthErrorMessage } from "~/utils/authErrors";
 const route = useRoute();
 const router = useRouter();
 
@@ -14,35 +15,6 @@ useNoindexPage({
   title: "ანგარიშის აქტივაცია",
   description: "ანგარიშის აქტივაციის ტექნიკური გვერდი.",
 });
-
-const extractFirstErrorMessage = (payload: any): string | null => {
-  if (!payload) return null;
-  if (typeof payload === "string") return payload;
-
-  if (Array.isArray(payload)) {
-    for (const item of payload) {
-      const nested = extractFirstErrorMessage(item);
-      if (nested) return nested;
-    }
-    return null;
-  }
-
-  if (typeof payload === "object") {
-    const priorityKeys = ["detail", "message", "non_field_errors"];
-    const keys = [...priorityKeys, ...Object.keys(payload)];
-    const seen = new Set<string>();
-
-    for (const key of keys) {
-      if (seen.has(key) || !(key in payload)) continue;
-      seen.add(key);
-
-      const nested = extractFirstErrorMessage(payload[key]);
-      if (nested) return nested;
-    }
-  }
-
-  return null;
-};
 
 onMounted(async () => {
   const token = route.params.token;
@@ -61,8 +33,7 @@ onMounted(async () => {
       router.push("/login");
     }, 2000);
   } catch (e: any) {
-    const backendMessage = extractFirstErrorMessage(e?.data || e);
-    error.value = backendMessage || "აქტივაცია ვერ შესრულდა. სცადეთ თავიდან.";
+    error.value = getAuthErrorMessage(e?.data || e, "აქტივაცია ვერ შესრულდა. სცადეთ თავიდან.");
   } finally {
     loading.value = false;
   }
