@@ -65,6 +65,11 @@ export const buildRobotsTxt = ({
   if (!allowIndexing) {
     lines.push("User-agent: *");
     lines.push("Disallow: /");
+    // Permit legal-page checks while keeping pre-launch noindex metadata.
+    lines.push("Allow: /privacy-policy$");
+    lines.push("Allow: /privacy-policy/$");
+    lines.push("Allow: /terms$");
+    lines.push("Allow: /terms/$");
     return lines.join("\n");
   }
 
