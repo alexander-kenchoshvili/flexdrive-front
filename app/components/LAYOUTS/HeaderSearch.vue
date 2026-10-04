@@ -272,6 +272,18 @@ const openMobileSheet = async () => {
   mobileInputRef.value?.focus();
 };
 
+// Only user input clears an applied search; route synchronization must not navigate.
+const handleSearchInput = async (event: Event) => {
+  const value = (event.target as HTMLInputElement).value.trim();
+  const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
+  if (value || !isCatalogSearch || !extractSearchQueryFromRoute()) return;
+
+  const query = { ...route.query };
+  delete query.q;
+  delete query.page;
+  await router.push({ path: route.path, query, hash: route.hash });
+};
+
 const submitSearch = async () => {
   const normalizedQuery = normalizedSearchText.value;
   if (!normalizedQuery) return;
@@ -475,6 +487,7 @@ defineExpose({
             aria-autocomplete="list"
             class="h-11 min-w-0 flex-1 bg-transparent px-1 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
             @focus="openDesktopPanel"
+            @input="handleSearchInput"
             @keydown="handleInputKeydown"
           />
 
@@ -884,6 +897,7 @@ defineExpose({
                 autocomplete="off"
                 spellcheck="false"
                 class="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+                @input="handleSearchInput"
                 @keydown="handleInputKeydown"
               />
 

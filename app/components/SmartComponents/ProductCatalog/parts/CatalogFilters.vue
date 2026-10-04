@@ -129,12 +129,6 @@ const vehicleYearOptions = computed<SelectOption[]>(() =>
     value: String(item.year),
   })),
 );
-const vehicleEngineOptions = computed<SelectOption[]>(() =>
-  props.vehicleEngines.map((engine) => ({
-    label: engine.name,
-    value: engine.slug,
-  })),
-);
 const brandOptions = computed<SelectOption[]>(() =>
   props.brands.length
     ? prependAllOption(
@@ -184,11 +178,6 @@ const vehicleYearModel = computed({
   set: (value: string | number | null) =>
     emit("update:vehicleYear", toStringValue(value)),
 });
-const vehicleEngineModel = computed({
-  get: () => props.vehicleEngine,
-  set: (value: string | number | null) =>
-    emit("update:vehicleEngine", toStringValue(value)),
-});
 const brandModel = computed({
   get: () => props.selectedBrand,
   set: (value: string | number | null) => {
@@ -237,7 +226,7 @@ const vehicleHelperText = computed(() => {
   }
 
   return (
-    "შეგიძლია დაიწყო მხოლოდ მარკით და შემდეგ დააზუსტო მოდელი, წელი ან ძრავი."
+    "შეგიძლია დაიწყო მხოლოდ მარკით და შემდეგ დააზუსტო მოდელი ან წელი."
   );
 });
 
@@ -331,22 +320,6 @@ watch([minPriceModel, maxPriceModel], () => {
           placeholder="წელი"
           empty-text="წლების დიაპაზონი ჯერ არ არის მიბმული"
           :disabled="disabled || vehicleOptionsPending || !vehicleMake"
-        />
-        <BaseSelect
-          v-model="vehicleEngineModel"
-          :options="vehicleEngineOptions"
-          :display-value="vehicleEngineDisplayValue"
-          placeholder="ძრავი"
-          empty-text="ძრავის არჩევანი არ არის"
-          :disabled="
-            disabled ||
-            vehicleOptionsPending ||
-            !vehicleModel ||
-            !vehicleYear ||
-            (vehicleEngineOptionsReady &&
-              !vehicleEngine &&
-              !vehicleEngineOptions.length)
-          "
         />
       </div>
 
