@@ -797,6 +797,7 @@ const handleBuyNow = async () => {
                   @pointercancel="closeProductZoom"
                 >
                   <BasePicture
+                    product-image
                     :data="activeImage.image"
                     :alt="activeImage.alt_text || productTitle"
                     preset="detail"
@@ -873,6 +874,7 @@ const handleBuyNow = async () => {
                 >
                   <div class="aspect-square">
                     <BasePicture
+                      product-image
                       :data="image.image"
                       :alt="image.alt_text || `${productTitle} ${index + 1}`"
                       preset="thumb"
@@ -899,6 +901,7 @@ const handleBuyNow = async () => {
                 :style="productZoomImageStyle"
               >
                 <BasePicture
+                  product-image
                   :data="activeImage.image"
                   alt=""
                   preset="detail"

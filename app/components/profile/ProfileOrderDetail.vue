@@ -629,6 +629,7 @@ const getTrackingStateLabel = (state: string) => {
                   class="h-11 w-11 shrink-0 overflow-hidden rounded-[14px] border border-border-default bg-white/95"
                 >
                   <BasePicture
+                    product-image
                     :data="resolveItemImage(item)"
                     :alt="item.product_name"
                     class="h-full w-full"

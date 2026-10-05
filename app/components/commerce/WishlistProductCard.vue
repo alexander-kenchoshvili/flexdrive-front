@@ -122,6 +122,7 @@ const availability = computed(() => {
         class="relative block aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,rgba(255,123,44,0.16)_0%,rgba(255,159,75,0.08)_52%,rgba(255,201,104,0.16)_100%)]"
       >
         <BasePicture
+          product-image
           :data="imageAsset"
           :alt="item.name"
           preset="card"

@@ -116,6 +116,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
       >
         <div class="h-14 w-14 shrink-0 overflow-hidden rounded-[14px] bg-white/95 sm:h-16 sm:w-16">
           <BasePicture
+            product-image
             :data="resolveThumbnail(item)"
             :alt="item.name"
             preset="thumb"

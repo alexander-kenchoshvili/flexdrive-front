@@ -701,6 +701,7 @@ defineExpose({
                         class="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-border-default bg-surface-2"
                       >
                         <BasePicture
+                          product-image
                           :data="
                             suggestion.primary_image.desktop ||
                             suggestion.primary_image.tablet ||
@@ -1065,6 +1066,7 @@ defineExpose({
                   class="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-border-default bg-surface-2"
                 >
                   <BasePicture
+                    product-image
                     :data="
                       suggestion.primary_image.desktop ||
                       suggestion.primary_image.tablet ||

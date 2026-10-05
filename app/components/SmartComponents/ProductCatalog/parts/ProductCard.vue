@@ -164,6 +164,7 @@ const compatibilityBadge = computed(() => {
     >
       <div class="relative h-full w-full">
         <BasePicture
+          product-image
           v-if="imageAsset.desktop || imageAsset.tablet || imageAsset.mobile"
           :data="imageAsset"
           :alt="product.name"

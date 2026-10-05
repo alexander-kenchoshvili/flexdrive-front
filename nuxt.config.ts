@@ -74,6 +74,7 @@ export default defineNuxtConfig({
       NUXT_BASE_API_URL: publicApiUrl,
       siteUrl: publicSiteUrl,
       siteEnv: env.NUXT_PUBLIC_SITE_ENV || env.NODE_ENV || "development",
+      disableProductImageContextMenu: true,
       allowIndexing,
       siteName: env.NUXT_PUBLIC_SITE_NAME || "FlexDrive",
       defaultSeoTitle:

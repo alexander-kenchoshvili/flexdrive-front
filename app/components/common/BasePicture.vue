@@ -33,6 +33,7 @@ const props = withDefaults(
     preset?: CloudinaryImagePreset;
     optimize?: boolean;
     widths?: BasePictureWidthOverrides;
+    productImage?: boolean;
   }>(),
   {
     data: null,
@@ -47,10 +48,23 @@ const props = withDefaults(
     preset: "default",
     optimize: true,
     widths: () => ({}),
+    productImage: false,
   },
 );
 
 const loading = computed(() => (props.lazy ? "lazy" : "eager"));
+const config = useRuntimeConfig();
+
+const handleContextMenu = (event: MouseEvent) => {
+  if (
+    !import.meta.dev &&
+    props.productImage &&
+    config.public.siteEnv === "production" &&
+    String(config.public.disableProductImageContextMenu) === "true"
+  ) {
+    event.preventDefault();
+  }
+};
 
 const rawDesktopSrc = computed(
   () => props.data?.desktop || props.data?.tablet || props.data?.mobile || "",
@@ -114,6 +128,7 @@ const tabletMedia = computed(() => `(max-width: ${props.tabletBreakpoint}px)`);
       :fetchpriority="fetchpriority"
       :class="imageClass"
       :style="imageStyle"
+      @contextmenu="handleContextMenu"
     />
   </picture>
 </template>

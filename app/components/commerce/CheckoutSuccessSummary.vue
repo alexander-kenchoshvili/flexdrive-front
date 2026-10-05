@@ -254,6 +254,7 @@ const miniItemMeta = (item: CommerceOrderItem) =>
                   class="h-12 w-12 shrink-0 overflow-hidden rounded-[12px] border border-border-default bg-white/95"
                 >
                   <BasePicture
+                    product-image
                     :data="resolveItemImage(item)"
                     :alt="item.product_name"
                     class="h-full w-full"
@@ -319,6 +320,7 @@ const miniItemMeta = (item: CommerceOrderItem) =>
                 class="h-10 w-10 shrink-0 overflow-hidden rounded-[10px] border border-border-default bg-white/95"
               >
                 <BasePicture
+                  product-image
                   :data="resolveItemImage(item)"
                   :alt="item.product_name"
                   class="h-full w-full"

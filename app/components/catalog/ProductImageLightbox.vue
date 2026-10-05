@@ -242,6 +242,7 @@ onBeforeUnmount(() => {
               @click.self="closeLightbox"
             >
               <BasePicture
+                product-image
                 :data="activeImage.image"
                 :alt="activeImage.alt_text || title"
                 preset="detail"
@@ -283,6 +284,7 @@ onBeforeUnmount(() => {
               @click="updateActiveIndex(index)"
             >
               <BasePicture
+                product-image
                 :data="image.image"
                 :alt="image.alt_text || `${title} ${index + 1}`"
                 preset="thumb"

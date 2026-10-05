@@ -187,6 +187,7 @@ const canDecrement = computed(
 
         <div class="bg-[linear-gradient(135deg,#ff7b2c_0%,#ff9f4b_52%,#ffc968_100%)]">
           <BasePicture
+            product-image
             :data="imageData"
             :alt="productTitle"
             preset="thumb"
