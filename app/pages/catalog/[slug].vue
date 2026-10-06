@@ -67,6 +67,7 @@ const buyNowFeedbackTone = ref<"warning" | "error" | null>(null);
 const selectedQuantity = ref(1);
 const activeTab = ref<"description" | "specs">("description");
 const selectedImageIndex = ref(0);
+const lightboxImageIndex = ref(0);
 const isLightboxOpen = ref(false);
 const thumbnailStripRef = ref<HTMLDivElement | null>(null);
 const thumbnailButtonRefs = ref<HTMLButtonElement[]>([]);
@@ -356,6 +357,7 @@ watch(
     clearThumbnailHoverTimer();
     thumbnailButtonRefs.value = [];
     selectedImageIndex.value = 0;
+    lightboxImageIndex.value = 0;
     isLightboxOpen.value = false;
     isProductZoomActive.value = false;
   },
@@ -452,13 +454,15 @@ const syncDesktopZoomAvailability = (event?: MediaQueryListEvent) => {
 const openLightbox = (index = selectedImageIndex.value) => {
   if (!galleryImages.value.length) return;
 
+  clearThumbnailHoverTimer();
   closeProductZoom();
-  selectedImageIndex.value = index;
+  lightboxImageIndex.value = index;
   isLightboxOpen.value = true;
 };
 
 const closeLightbox = () => {
   isLightboxOpen.value = false;
+  selectThumbnailImage(lightboxImageIndex.value);
 };
 
 onMounted(() => {
@@ -1328,7 +1332,7 @@ const handleBuyNow = async () => {
         </section>
 
         <ProductImageLightbox
-          v-model:active-index="selectedImageIndex"
+          v-model:active-index="lightboxImageIndex"
           :show="isLightboxOpen"
           :images="galleryImages"
           :title="productTitle"

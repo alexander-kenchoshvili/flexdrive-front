@@ -482,7 +482,7 @@ const submitContactForm = handleSubmit(
           </form>
         </div>
 
-        <aside class="space-y-4">
+        <aside class="space-y-4 lg:sticky lg:top-40 lg:self-start">
           <div
             class="rounded-[22px] border border-border-default bg-surface p-4 shadow-[0_18px_44px_-38px_var(--shadow-color)] sm:rounded-[26px] sm:p-5"
           >

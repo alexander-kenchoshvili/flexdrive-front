@@ -65,6 +65,35 @@ const closeLightbox = () => {
   emit("close");
 };
 
+const handleImageAreaClick = (event: MouseEvent) => {
+  const container = event.currentTarget;
+  if (!(container instanceof HTMLElement)) return;
+
+  const image = container.querySelector("img");
+  if (!image || !image.naturalWidth || !image.naturalHeight) return;
+
+  // object-contain leaves empty space inside the image element's box.
+  // Only the centered, rendered photograph should keep the lightbox open.
+  const box = image.getBoundingClientRect();
+  const scale = Math.min(
+    box.width / image.naturalWidth,
+    box.height / image.naturalHeight,
+  );
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  const left = box.left + (box.width - width) / 2;
+  const top = box.top + (box.height - height) / 2;
+
+  if (
+    event.clientX < left ||
+    event.clientX > left + width ||
+    event.clientY < top ||
+    event.clientY > top + height
+  ) {
+    closeLightbox();
+  }
+};
+
 const setThumbnailButtonRef = (
   element: Element | ComponentPublicInstance | null,
   index: number,
@@ -239,7 +268,7 @@ onBeforeUnmount(() => {
 
             <div
               class="mx-auto flex h-full max-w-[1480px] items-center justify-center"
-              @click.self="closeLightbox"
+              @click="handleImageAreaClick"
             >
               <BasePicture
                 product-image
