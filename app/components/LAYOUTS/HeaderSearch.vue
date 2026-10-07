@@ -88,6 +88,7 @@ const showSuggestionList = computed(
   () =>
     hasEnoughCharacters.value &&
     !suggestionsPending.value &&
+    lastCompletedQuery.value === normalizedSearchText.value &&
     suggestions.value.length > 0,
 );
 const showNoResults = computed(
@@ -177,6 +178,7 @@ const saveRecentSearch = (value: string) => {
 };
 
 const resetSuggestionsState = () => {
+  ++latestSuggestionsRequestId.value;
   activeSuggestionIndex.value = -1;
   suggestions.value = [];
   suggestionsPending.value = false;
@@ -199,6 +201,8 @@ const ensureCategoriesLoaded = async () => {
 
 const fetchSuggestions = async (query: string) => {
   const normalizedQuery = query.trim();
+  // A queued debounce may run after the input changed or the panel closed.
+  if (normalizedQuery !== normalizedSearchText.value || !isSearchSurfaceOpen.value) return;
 
   if (normalizedQuery.length < 2) {
     resetSuggestionsState();
@@ -237,11 +241,13 @@ const fetchSuggestionsDebounced = useDebounceFn((query: string) => {
 const closeDesktopPanel = () => {
   isDesktopOpen.value = false;
   activeSuggestionIndex.value = -1;
+  if (!isSearchSurfaceOpen.value) resetSuggestionsState();
 };
 
 const closeMobileSheet = () => {
   isMobileOpen.value = false;
   activeSuggestionIndex.value = -1;
+  if (!isSearchSurfaceOpen.value) resetSuggestionsState();
 };
 
 const closeAllSearchSurfaces = () => {
@@ -267,7 +273,11 @@ const openMobileSheet = async () => {
   emit("open-mobile-search");
   isMobileOpen.value = true;
   activeSuggestionIndex.value = -1;
-  await ensureCategoriesLoaded();
+  if (normalizedSearchText.value.length >= 2) {
+    void fetchSuggestions(normalizedSearchText.value);
+  } else {
+    await ensureCategoriesLoaded();
+  }
   await nextTick();
   mobileInputRef.value?.focus();
 };
@@ -396,7 +406,8 @@ const syncSearchTextFromRoute = () => {
 };
 
 watch(normalizedSearchText, (nextValue) => {
-  activeSuggestionIndex.value = -1;
+  // Invalidate in-flight responses immediately, before the next debounce starts.
+  resetSuggestionsState();
 
   if (!isSearchSurfaceOpen.value) return;
 
@@ -408,8 +419,9 @@ watch(normalizedSearchText, (nextValue) => {
     return;
   }
 
+  suggestionsPending.value = true;
   fetchSuggestionsDebounced(nextValue);
-});
+}, { flush: "sync" });
 
 watch(
   () => route.fullPath,
@@ -448,6 +460,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  resetSuggestionsState();
   if (!import.meta.client) return;
   document.body.style.overflow = "";
 });
