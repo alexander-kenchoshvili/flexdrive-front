@@ -66,6 +66,11 @@ export const buildRobotsTxt = ({
   if (!allowIndexing) {
     lines.push("User-agent: *");
     lines.push("Disallow: /");
+    // Permit Facebook link previews for public blogs before search indexing opens.
+    lines.push("");
+    lines.push("User-agent: facebookexternalhit");
+    lines.push("Allow: /blogs/");
+    lines.push("Disallow: /");
     return lines.join("\n");
   }
 
