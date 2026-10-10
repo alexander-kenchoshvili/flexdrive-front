@@ -57,6 +57,11 @@ export default defineNuxtConfig({
     "@nuxt/eslint",
   ],
   css: ["~/assets/css/main.css", "~/assets/css/design-system.css"],
+  routeRules: {
+    "/business": { ssr: false, prerender: false, headers: { "cache-control": "private, no-store", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer" } },
+    "/business/**": { ssr: false, prerender: false, headers: { "cache-control": "private, no-store", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer" } },
+    "/api/business/**": { headers: { "cache-control": "private, no-store" } },
+  },
 
   imports: {
     dirs: ["stores"],

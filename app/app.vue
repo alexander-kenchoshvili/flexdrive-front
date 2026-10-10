@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { buildOrganizationStructuredData } from "~/utils/structuredData";
+import { isBusinessPath } from "~/utils/businessRouting";
 
 const menuStore = useMenu();
 const footerStore = useFooter();
@@ -11,7 +12,10 @@ const { settings } = storeToRefs(siteSettingsStore);
 const route = useRoute();
 const config = useRuntimeConfig();
 
-await Promise.all([menuStore.fetchMenu(), footerStore.fetchFooter()]);
+const isBusiness = computed(() => isBusinessPath(route.path));
+if (!isBusiness.value) {
+  await Promise.all([menuStore.fetchMenu(), footerStore.fetchFooter()]);
+}
 
 const dismissRateLimitError = () => {
   globalStore.setRateLimited(false);
@@ -75,6 +79,7 @@ useHead(() => ({
   />
 
   <BaseModal
+    v-if="!isBusiness"
     :show="globalStore.isRateLimited"
     title="შეცდომა: ძალიან ბევრი მოთხოვნა"
     @close="dismissRateLimitError"
@@ -100,5 +105,5 @@ useHead(() => ({
     <NuxtPage />
   </NuxtLayout>
 
-  <CookieConsentBanner />
+  <CookieConsentBanner v-if="!isBusiness" />
 </template>

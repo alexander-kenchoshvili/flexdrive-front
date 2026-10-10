@@ -6,6 +6,7 @@ import type { LocationQuery, LocationQueryValue } from "vue-router";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
+import { useCatalogSearchAnalytics } from "~/composables/catalog/useCatalogSearchAnalytics";
 import { resolveCmsCollectionSeoPolicy } from "~/utils/cmsCollectionSeo";
 import {
   buildCatalogCategoryPath,
@@ -74,6 +75,8 @@ const {
   getVehicleYears,
   getVehicleEngines,
 } = useCatalogApi();
+const { captureSearch, recordSearchResults } = useCatalogSearchAnalytics();
+let loadedSearch: { snapshot: ReturnType<typeof captureSearch>; count: number } | null = null;
 
 const PAGE_SIZE = 15;
 const SORT_VALUES: CatalogSort[] = [
@@ -986,6 +989,8 @@ const pushQueryAndScrollToResults = async (options?: { resetPage?: boolean }) =>
 };
 
 const loadProducts = async () => {
+  const params = buildParamsFromControls();
+  const searchSnapshot = captureSearch(params);
   const requestId = ++latestProductsRequestId.value;
   productsPending.value = true;
   productsError.value = null;
@@ -995,12 +1000,12 @@ const loadProducts = async () => {
 
   if (hasInitialized.value) {
     try {
-      responseData = await getCatalogProductsRaw(buildParamsFromControls());
+      responseData = await getCatalogProductsRaw(params);
     } catch (error) {
       requestError = error;
     }
   } else {
-    const request = await getCatalogProducts(buildParamsFromControls());
+    const request = await getCatalogProducts(params);
     responseData = (request.data.value as CatalogListResponse | null) ?? null;
     requestError = request.error.value;
   }
@@ -1020,6 +1025,8 @@ const loadProducts = async () => {
   }
 
   productsResponse.value = responseData;
+  loadedSearch = { snapshot: searchSnapshot, count: responseData.count };
+  if (hasHydrated.value) recordSearchResults(searchSnapshot, responseData.count);
 };
 
 const loadCategories = async () => {
@@ -1358,6 +1365,7 @@ watch(isDesktopCatalogLayout, (isDesktop) => {
 
 onMounted(() => {
   hasHydrated.value = true;
+  if (loadedSearch) recordSearchResults(loadedSearch.snapshot, loadedSearch.count);
 });
 
 useHead(() => {

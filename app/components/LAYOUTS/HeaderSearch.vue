@@ -31,7 +31,7 @@ const isMobileViewport = useMediaQuery("(max-width: 639px)");
 const { getCatalogCategoriesRaw, getCatalogProductSuggestions } =
   useCatalogApi();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
-const { trackSearch } = useEcommerceAnalytics();
+const { trackSearchSelection } = useEcommerceAnalytics();
 const { functionalityConsentGranted } = useCookieConsent();
 
 const rootRef = ref<HTMLElement | null>(null);
@@ -302,7 +302,6 @@ const submitSearch = async () => {
   const searchPath = router.resolve({ path: "/catalog", query: { q: normalizedQuery } }).fullPath;
 
   saveRecentSearch(normalizedQuery);
-  trackSearch(normalizedQuery);
   closeAllSearchSurfaces();
 
   await router.push({
@@ -328,7 +327,7 @@ const goToSuggestion = async (suggestion: CatalogProductSuggestion) => {
   const normalizedQuery = normalizedSearchText.value;
   saveRecentSearch(normalizedQuery || suggestion.name);
   if (normalizedQuery) {
-    trackSearch(normalizedQuery);
+    trackSearchSelection(normalizedQuery, suggestion.display_sku || suggestion.sku);
   }
   closeAllSearchSurfaces();
   await navigateTo(`/catalog/${suggestion.slug}`);

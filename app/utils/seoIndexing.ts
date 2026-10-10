@@ -7,6 +7,7 @@ const ALWAYS_NOINDEX_EXACT_PATHS = new Set([
 ]);
 
 const ALWAYS_NOINDEX_PREFIXES = [
+  "/business",
   "/activate",
   "/checkout",
   "/profile",
@@ -70,6 +71,7 @@ export const buildRobotsTxt = ({
 
   lines.push("User-agent: *");
   lines.push("Allow: /");
+  lines.push("Disallow: /business");
 
   if (sitemapUrl) {
     lines.push(`Sitemap: ${sitemapUrl}`);

@@ -31,6 +31,7 @@ async function mountSearch(location, options = {}) {
   });
   await router.push(location);
   const trackedSearches = [];
+  const trackedSelections = [];
   const mocks = {
     "@vueuse/core": {
       onClickOutside() {}, useMediaQuery: () => options.mobileViewport ?? vue.ref(false), useDebounceFn: options.debounce ?? ((fn) => fn),
@@ -47,7 +48,8 @@ async function mountSearch(location, options = {}) {
     ...vue, useRoute, useRouter,
     defineEmits: () => () => {}, defineProps: () => ({}),
     withDefaults: (props, defaults) => ({ ...defaults, ...props }), defineExpose() {},
-    useEcommerceAnalytics: () => ({ trackSearch: (q) => trackedSearches.push(q) }),
+    useEcommerceAnalytics: () => ({ trackSearch: (q) => trackedSearches.push(q), trackSearchSelection: (...args) => trackedSelections.push(args) }),
+    navigateTo: (path) => router.push(path),
     useCookieConsent: () => ({ functionalityConsentGranted: vue.ref(false) }),
     window: { localStorage: { removeItem() {} }, requestAnimationFrame() {} },
     document: { body: { style: {} } },
@@ -56,7 +58,7 @@ async function mountSearch(location, options = {}) {
   const app = renderer.createApp({
     setup() {
       search = new Function("require", "exports", ...Object.keys(globals),
-        `${outputText}\nreturn { searchText, handleSearchInput, submitSearch, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
+        `${outputText}\nreturn { searchText, handleSearchInput, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
       )((name) => mocks[name] ?? require(name), {}, ...Object.values(globals));
       return () => null;
     },
@@ -69,10 +71,20 @@ async function mountSearch(location, options = {}) {
     await search.handleSearchInput({ target: { value } });
     await flush();
   };
-  return { search, router, input, trackedSearches, app };
+  return { search, router, input, trackedSearches, trackedSelections, app };
 }
 
 const term = "ფარი";
+
+test("choosing a suggestion records selection with public company SKU, not another search", async (t) => {
+  const context = await mountSearch("/");
+  t.after(() => context.app.unmount());
+  await context.input("ფარი");
+  await context.search.goToSuggestion({ name: "ფარი", slug: "FD-01-0001", sku: "FD-01-0001", display_sku: "FD-01-0001" });
+  assert.deepEqual(context.trackedSearches, []);
+  assert.deepEqual(context.trackedSelections, [["ფარი", "FD-01-0001"]]);
+  assert.equal(context.router.currentRoute.value.path, "/catalog/FD-01-0001");
+});
 
 test("manual clearing removes the applied search before changing vehicle make", async (t) => {
   const context = await mountSearch({ path: "/catalog", query: { q: term, make: "subaru", page: "3", ordering: "price" } });
@@ -104,7 +116,7 @@ test("editing a nonempty term keeps the existing submit-search behavior", async 
   await context.search.submitSearch();
   await flush();
   assert.deepEqual(context.router.currentRoute.value.query, { q: "სარკე" });
-  assert.deepEqual(context.trackedSearches, ["სარკე"]);
+  assert.deepEqual(context.trackedSearches, []); // The catalog records the actual response.
 });
 
 test("clearing outside catalog listings does not navigate or alter query parameters", async (t) => {

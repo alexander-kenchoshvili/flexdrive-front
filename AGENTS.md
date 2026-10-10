@@ -1,5 +1,123 @@
 # Project Instructions
 
+## Browser Tracking Host Isolation - 2026-10-10
+
+- User authorized disabling browser Google/Meta tracking outside flexdrive.ge.
+  Shared isProductionTrackingHost checks the actual window.location.hostname,
+  exact canonical host only. GTM stops before consent/script initialization;
+  ecommerce/search/selection/purchase emit no dataLayer events elsewhere.
+- Localhost, IPs, Vercel/staging and temporary DigitalOcean production URLs are
+  blocked even with saved/new granted consent. www redirects to the canonical
+  domain under the existing middleware; www itself does not initialize tracking.
+- Existing combined consent, business-route exclusions, company SKU/value and
+  purchase event_id contracts remain. Dashboard report reads are independent.
+- 35 focused tracking/search/business tests, Nuxt typecheck and scoped ESLint pass.
+  No env/GTM/provider change, browser/server session, real purchase or deployment.
+  Supersedes old staging tracking setup requirements; user handles push/deploy.
+  Actual domain/event delivery and purchase dedup remain cutover verification.
+
+## Meta Marketing Dashboard Connector - 2026-10-10
+
+- User authorized connecting Meta to dashboard; production env entry is for user.
+  /business/marketing now renders BusinessMarketing/useBusinessMarketing, backed
+  by private API business/marketing. Facebook/Instagram current profiles and period
+  insights, Ads costs/clicks/reach/website attribution/campaigns are separate.
+- Use existing Tailwind/font/color tokens and BaseButton. Lazy modular ECharts bar
+  chart loads only for private marketing activity. No new package/public secret.
+  Missing/range/error states are not zeros, stale data carries original timestamp;
+  period changes/unmount cancel old requests and retain independent business auth.
+- FB activity max90 days, IG max30; profile counts are current, not growth. Ads use
+  account currency/timezone (currently USD/Asia/Tbilisi); no GEL conversion. Unique
+  reach is whole-period; Meta attribution is not added to actual order ledger.
+- 47 business frontend tests, typecheck/scoped ESLint and production build passed;
+  details in paired docs/BUSINESS_DASHBOARD_STAGE5.md. Real backend reader returned
+  Oct1-10 FB followers3, IG followers0, zero activity and genuine empty Ads.
+- Backend-only BUSINESS_META_ACCESS_TOKEN already exists locally. User enters same
+  full value in production, then deployed connector reads it. No production edit,
+  push/deploy, browser/server start or fake data. Visual user review remains next;
+  active campaign rendering/ecommerce events/domain verification remain separate.
+
+## GA4 Local Live Connection Verified - 2026-10-10
+
+- User authorized paired backend local .env configuration from the Desktop reader
+  JSON. Backend secret configured, Analytics Data API Enabled and actual readonly
+  GA4 traffic/search batch requests succeeded, exact flexdrive.ge only, true empty
+  October 1-10 report. Supersedes older not_configured status below for local backend.
+- Backend empty dimensionless response parser fixed with a regression test;
+  15 connector/scope tests pass. No frontend secret/config or production deployment.
+  Backend restart may be needed; user dashboard visual review remains pending.
+  See paired backend docs/BUSINESS_DASHBOARD_STAGE4.md for verification evidence.
+
+## GA4 Users Dashboard Prepared - 2026-10-09
+
+- User requested GA4 connector now, superseding older domain-cutover deferral for
+  connector code only. /business/users uses BusinessUsers/useBusinessAnalytics and
+  paired backend protected business/analytics endpoint. Host is only flexdrive.ge;
+  server credentials remain absent, so current UI honestly shows not_configured.
+- Georgian visitor/source/search reports, modular lazy ECharts chart/daily table,
+  version-2 results/no-results terms and automatic observed-data summary. Shared
+  BaseButton, Tailwind design tokens/date dark mode/existing scrollbar styling.
+  Errors are not zeros; old server snapshots carry stale message/date. Pending
+  requests cancel on period change/unmount, independent business auth is retained.
+- 40 business frontend tests pass (7 new analytics), typecheck/scoped ESLint and
+  production build pass. Browser visual review remains for user; no storefront
+  browser/server session started. Google service key/Data API activation and live
+  read/metric compatibility are pending confirmation; no env/secrets edit/deploy.
+- Stage 4 is not complete yet. Actual ecommerce event/funnel delivery is still
+  unverified/deferred; never infer ordered conversion from plain event counts.
+  Details: paired backend docs/BUSINESS_DASHBOARD_STAGE4.md.
+
+## Search GTM Published - 2026-10-09
+
+- User explicitly requested immediate GTM publication. GTM-MVNFL9TH version 10,
+  GA4 search results and selection tracking, is verified Live, Latest; exactly
+  eight prepared search changes published. Supersedes draft status below.
+- Frontend push/deployment is still deferred to the user. New payload fields start
+  after deployment; actual event delivery/DebugView verification remains pending.
+  GA4 definitions are saved; dashboard connector remains deferred to domain cutover.
+- Proof: paired backend artifacts/analytics/ga4-search-version-10-live.png.
+
+## Search Analytics Preparation - 2026-10-09
+
+- User authorized focused search tracking work. Push/deploy remain for the end.
+- HeaderSearch submit no longer counts before results; catalog sends search after
+  successful current response/client mount with actual total count, outcome,
+  filtered yes/no and tracking version 2. Header suggestion selection uses separate
+  select_search_result with public company SKU. Core search/API/UI unchanged.
+- useCatalogSearchAnalytics uses in-memory shared useState and synchronous actual
+  router query tracking. Pagination/sort/filter/category remount cannot duplicate;
+  old path/query revisions cannot attach stale results. Errors are not zero results.
+  Full reload/reentry is a fresh results view. No persistent search history/storage.
+- Existing consent/private-route rules preserved, no replay of denied searches.
+  Search-event text masks obvious contacts/caps 100 chars only in analytics copy;
+  automatic GA4 events and query URLs still need their own privacy verification.
+- 48 focused tests passed, including actual catalog setup/API count/error behavior,
+  header selection/navigation, Vue/router dedup/stale/consent/SSR cases. Scoped ESLint,
+  Nuxt typecheck and whitespace checks pass. No storefront browser/server run.
+- Existing GTM now has eight unpublished workspace changes for these events;
+  GA4 has three Event dimensions and Standard search_result_count metric saved.
+  No GTM Submit/Publish or production deployment. Coordinated release and Tag
+  Assistant/DebugView verification remain; read-only dashboard connector at domain
+  cutover. Paired backend docs/SEARCH_ANALYTICS.md records exact mappings/status.
+
+## Tracking Consent Dispatch Correction - 2026-10-09
+
+- User authorized a focused correction after online Tag Assistant showed Consent
+  not configured. google-tag-manager.client.ts now pushes gtag Arguments rather
+  than rest-parameter Arrays; default/update are recognised in local Tag Assistant.
+- Keep analytics/marketing COMBINED. Preserve the existing cookie/banner and GTM
+  blocking before acceptance. Loaded Meta receives consent revoke/grant on changes
+  and latest-choice synchronization on GTM script load. Private business pages
+  still initialize neither Google nor Meta.
+- Eight actual-plugin/composable Vue tests plus 13 business tests pass; scoped
+  ESLint/typecheck/whitespace pass. User-started localhost browser verified denied
+  default, acceptance/granted, denied revocation payload and no vendor scripts on
+  rejected reload. Original all-false local choice restored; debug session stopped.
+- No GTM publish/config/env/credentials or deployment/push. Production requires
+  frontend deployment and repeat GA4/Meta verification; Meta network suppression
+  and delayed-load edge cases are not claimed as browser-proven by unit tests.
+  Evidence is in paired backend artifacts/analytics/ga4-consent-*-local.png.
+
 ## Product Context
 
 This repository is the frontend for FlexDrive, an online auto parts store.

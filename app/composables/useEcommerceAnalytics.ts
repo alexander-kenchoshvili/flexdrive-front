@@ -1,3 +1,7 @@
+import { isBusinessPath } from "~/utils/businessRouting";
+import { isProductionTrackingHost } from "~/utils/trackingHost";
+import { normalizeSearchAnalyticsTerm } from "~/utils/searchAnalytics";
+
 export type EcommerceAnalyticsItemInput = {
   id?: number | string | null;
   slug?: string | null;
@@ -136,7 +140,9 @@ export const useEcommerceAnalytics = () => {
   const config = useRuntimeConfig();
   const gtmId = normalizeGtmId(config.public.gtmId);
   const { trackingConsentGranted } = useCookieConsent();
-  const isEnabled = import.meta.client && Boolean(gtmId);
+  const isEnabled =
+    import.meta.client && Boolean(gtmId) &&
+    isProductionTrackingHost(window.location.hostname);
 
   if (import.meta.client) {
     watch(
@@ -154,7 +160,7 @@ export const useEcommerceAnalytics = () => {
     event: string,
     eventParams: DataLayerItem = {},
   ) => {
-    if (!isEnabled || !trackingConsentGranted.value) {
+    if (!isEnabled || !trackingConsentGranted.value || isBusinessPath(window.location.pathname)) {
       return false;
     }
 
@@ -173,7 +179,7 @@ export const useEcommerceAnalytics = () => {
     items: EcommerceAnalyticsItemInput[],
     extraEcommerceParams: DataLayerItem = {},
   ) => {
-    if (!isEnabled || !trackingConsentGranted.value) {
+    if (!isEnabled || !trackingConsentGranted.value || isBusinessPath(window.location.pathname)) {
       return false;
     }
 
@@ -248,12 +254,27 @@ export const useEcommerceAnalytics = () => {
     });
   };
 
-  const trackSearch = (searchTerm: string) => {
-    const normalizedSearchTerm = normalizeText(searchTerm);
-    if (!normalizedSearchTerm) return false;
+  const trackSearch = (searchTerm: string, resultCount: number, filtered = false) => {
+    const normalizedSearchTerm = normalizeSearchAnalyticsTerm(searchTerm);
+    if (!normalizedSearchTerm || !Number.isSafeInteger(resultCount) || resultCount < 0) return false;
 
     return pushAnalyticsEvent("search", {
       search_term: normalizedSearchTerm,
+      search_result_count: resultCount,
+      search_outcome: resultCount === 0 ? "no_results" : "results",
+      search_filtered: filtered ? "yes" : "no",
+      search_tracking_version: "2",
+    });
+  };
+
+  const trackSearchSelection = (searchTerm: string, companySku: string) => {
+    const normalizedSearchTerm = normalizeSearchAnalyticsTerm(searchTerm);
+    const itemId = normalizeText(companySku);
+    if (!normalizedSearchTerm || !itemId) return false;
+    return pushAnalyticsEvent("select_search_result", {
+      search_term: normalizedSearchTerm,
+      selected_item_id: itemId,
+      search_tracking_version: "2",
     });
   };
 
@@ -304,6 +325,7 @@ export const useEcommerceAnalytics = () => {
     trackBeginCheckout,
     trackAddPaymentInfo,
     trackSearch,
+    trackSearchSelection,
     trackPurchase,
   };
 };

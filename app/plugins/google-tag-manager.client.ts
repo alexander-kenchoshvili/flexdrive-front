@@ -1,6 +1,10 @@
+import { isBusinessPath } from "~/utils/businessRouting";
+import { isProductionTrackingHost } from "~/utils/trackingHost";
+
 type AnalyticsWindow = Window & {
   dataLayer?: unknown[];
   gtag?: (...args: unknown[]) => void;
+  fbq?: (command: "consent", action: "grant" | "revoke") => void;
   __flexdriveGtmId?: string;
 };
 
@@ -17,6 +21,8 @@ const normalizeGtmId = (value: unknown) => {
 export default defineNuxtPlugin({
   name: "google-tag-manager",
   setup() {
+    if (isBusinessPath(window.location.pathname)) return;
+    if (!isProductionTrackingHost(window.location.hostname)) return;
     const config = useRuntimeConfig();
     const gtmId = normalizeGtmId(config.public.gtmId);
 
@@ -37,8 +43,10 @@ export default defineNuxtPlugin({
       analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
       analyticsWindow.gtag =
         analyticsWindow.gtag ||
-        ((...args: unknown[]) => {
-          analyticsWindow.dataLayer?.push(args);
+        (function gtag() {
+          // Google recognises gtag commands as Arguments, not ordinary arrays.
+          // eslint-disable-next-line prefer-rest-params
+          analyticsWindow.dataLayer?.push(arguments);
         });
       return analyticsWindow.dataLayer;
     };
@@ -69,6 +77,14 @@ export default defineNuxtPlugin({
       analyticsWindow.gtag?.("consent", command, consentState.value);
     };
 
+    const applyMetaConsent = () => {
+      // Google's Consent Mode does not revoke an already loaded Meta Pixel.
+      analyticsWindow.fbq?.(
+        "consent",
+        trackingConsentGranted.value ? "grant" : "revoke",
+      );
+    };
+
     useHead(() => ({
       script: gtmScriptEnabled.value
         ? [
@@ -76,6 +92,7 @@ export default defineNuxtPlugin({
               key: "google-tag-manager",
               src: `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(gtmId)}`,
               async: true,
+              onload: applyMetaConsent,
             },
           ]
         : [],
@@ -98,6 +115,7 @@ export default defineNuxtPlugin({
     };
 
     applyGoogleConsent("default");
+    applyMetaConsent();
 
     if (trackingConsentGranted.value) {
       loadGtm();
@@ -107,6 +125,7 @@ export default defineNuxtPlugin({
       consentState,
       () => {
         applyGoogleConsent("update");
+        applyMetaConsent();
 
         if (trackingConsentGranted.value) {
           loadGtm();
