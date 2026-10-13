@@ -12,6 +12,7 @@ import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import BaseButton from "~/components/common/BaseButton.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
 import ProductDetailSkeleton from "~/components/catalog/ProductDetailSkeleton.vue";
+import ProductFitments from "~/components/catalog/ProductFitments.vue";
 import ProductImageLightbox from "~/components/catalog/ProductImageLightbox.vue";
 import WishlistToggleButton from "~/components/commerce/WishlistToggleButton.vue";
 import ProductCard from "~/components/SmartComponents/ProductCatalog/parts/ProductCard.vue";
@@ -21,10 +22,13 @@ import { normalizeApiErrorMessage } from "~/composables/commerce/errorUtils";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { sanitizeText } from "~/composables/helpers";
 import { useBuyNowStore } from "~/stores/useBuyNowStore";
+import { publicPageError } from "~/utils/publicPageError";
+import { productSchemaImage } from "~/utils/productSchemaImage";
 import { buildCatalogCategoryPath } from "~/utils/routePaths";
 import {
   buildBreadcrumbStructuredData,
   buildProductStructuredData,
+  serializeStructuredData,
 } from "~/utils/structuredData";
 import type { ComponentPublicInstance } from "vue";
 import type {
@@ -124,7 +128,14 @@ const loadProduct = async () => {
 
   globalStore.setCurrentMenu("catalog");
 
-  const request = await getCatalogProduct(slug.value);
+  let request;
+  try {
+    request = await getCatalogProduct(slug.value);
+  } catch (error) {
+    loadError.value = error;
+    pending.value = false;
+    return;
+  }
 
   if (request.error.value) {
     loadError.value = request.error.value;
@@ -141,15 +152,17 @@ await loadProduct();
 if (!product.value && resolveStatusCode(loadError.value) === 404) {
   throw createError({
     statusCode: 404,
-    statusMessage: "პროდუქტი ვერ მოიძებნა",
+    statusMessage: "Not Found",
+    message: "პროდუქტი ვერ მოიძებნა",
   });
 }
 
+if (!product.value && loadError.value) {
+  throw createError(publicPageError(loadError.value, "პროდუქტის ჩატვირთვა დროებით ვერ მოხერხდა"));
+}
+
 if (!product.value && !loadError.value) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: "პროდუქტი ვერ მოიძებნა",
-  });
+  throw createError(publicPageError(null, "პროდუქტის ჩატვირთვა დროებით ვერ მოხერხდა"));
 }
 
 const productTitle = computed(
@@ -612,8 +625,9 @@ const productSchema = computed(() => {
     url: productCanonicalPath.value,
     name: productSeoTitle.value,
     description: productSeoDescription.value,
-    image: productSeoImage.value,
+    image: productSchemaImage(product.value),
     sku: productSku.value || undefined,
+    manufacturerPartNumber: productManufacturerPartNumber.value || undefined,
     price: priceAvailable.value ? priceValue.value : null,
     currency: "GEL",
     inStock: Boolean(product.value.in_stock),
@@ -631,7 +645,7 @@ useHead(() => ({
           {
             key: "product-breadcrumb-schema",
             type: "application/ld+json",
-            children: JSON.stringify(breadcrumbSchema.value),
+            textContent: serializeStructuredData(breadcrumbSchema.value),
           },
         ]
       : []),
@@ -640,7 +654,7 @@ useHead(() => ({
           {
             key: "product-schema",
             type: "application/ld+json",
-            children: JSON.stringify(productSchema.value),
+            textContent: serializeStructuredData(productSchema.value),
           },
         ]
       : []),
@@ -974,6 +988,15 @@ const handleBuyNow = async () => {
                 />
               </div>
 
+              <dl v-if="productManufacturerPartNumber" class="mt-4 text-sm">
+                <div class="flex flex-wrap gap-x-2 gap-y-1">
+                  <dt class="text-text-muted">OEM / ნაწილის ნომერი:</dt>
+                  <dd class="min-w-0 break-all font-semibold text-text-primary">
+                    {{ productManufacturerPartNumber }}
+                  </dd>
+                </div>
+              </dl>
+
               <div
                 class="mt-6 rounded-[8px] border border-border-default bg-surface-2 p-2 md:rounded-[20px] md:p-5"
               >
@@ -1291,6 +1314,11 @@ const handleBuyNow = async () => {
                 </p>
               </div>
             </div>
+
+            <ProductFitments
+              :fitments="product.fitments"
+              :universal="product.is_universal_fitment"
+            />
           </div>
         </div>
 

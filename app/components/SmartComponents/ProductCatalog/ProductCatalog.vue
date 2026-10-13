@@ -4,6 +4,8 @@ import { useMediaQuery } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import type { LocationQuery, LocationQueryValue } from "vue-router";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
+import { publicPageError } from "~/utils/publicPageError";
+import AppPagination from "~/components/common/AppPagination.vue";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
 import { useCatalogSearchAnalytics } from "~/composables/catalog/useCatalogSearchAnalytics";
@@ -12,7 +14,7 @@ import {
   buildCatalogCategoryPath,
   getCatalogCategorySlugFromPath,
 } from "~/utils/routePaths";
-import { buildBreadcrumbStructuredData } from "~/utils/structuredData";
+import { buildBreadcrumbStructuredData, serializeStructuredData } from "~/utils/structuredData";
 import type { SmartComponentData } from "~/types/page";
 import type {
   CatalogCategoryItem,
@@ -70,6 +72,8 @@ const {
   getCatalogProductsRaw,
   getCatalogCategories,
   getCatalogCategoriesRaw,
+  getCatalogCategory,
+  getCatalogCategoryRaw,
   getVehicleMakes,
   getVehicleModels,
   getVehicleYears,
@@ -149,7 +153,8 @@ const draftVehicleEngine = ref("");
 const minPrice = ref("");
 const maxPrice = ref("");
 const currentPage = ref(1);
-const isMobilePagination = useMediaQuery("(max-width: 640px)");
+const routeCategory = ref<CatalogCategoryItem | null>(null);
+let categoryDetailRevision = 0;
 const isDesktopCatalogLayout = useMediaQuery("(min-width: 1024px)");
 const isMobileFilterSheetOpen = ref(false);
 const hasHydrated = ref(false);
@@ -308,6 +313,7 @@ const showVehicleOptionsError = computed(
 
 const selectedCategory = computed(
   () =>
+    (routeCategory.value?.slug === selectedCategorySlug.value ? routeCategory.value : null) ||
     categoriesResponse.value.find(
       (category) => category.slug === selectedCategorySlug.value,
     ) || null,
@@ -368,7 +374,7 @@ const categorySeoImage = computed(
   () => selectedCategorySeo.value?.image || defaultSeoImage.value,
 );
 const { robots: categoryRobots } = useIndexingPolicy({
-  pageNoindex: computed(() => Boolean(selectedCategorySeo.value?.noindex)),
+  pageNoindex: computed(() => Boolean(selectedCategorySeo.value?.noindex) || selectedCategory.value?.product_count === 0),
 });
 const breadcrumbSchema = computed(() =>
   buildBreadcrumbStructuredData({
@@ -393,11 +399,6 @@ const breadcrumbItems = computed(() => {
 
 const resultCount = computed(() => productsResponse.value?.count ?? 0);
 const totalPages = computed(() => productsResponse.value?.total_pages ?? 1);
-const pageSize = computed(() => productsResponse.value?.page_size ?? PAGE_SIZE);
-const paginationMaxPagesShown = computed(() =>
-  isMobilePagination.value ? 3 : 5,
-);
-const paginationShowEndingButtons = computed(() => !isMobilePagination.value);
 const hasActiveFilterSelection = computed(
   () =>
     selectedCategorySlug.value !== null ||
@@ -1005,9 +1006,11 @@ const loadProducts = async () => {
       requestError = error;
     }
   } else {
-    const request = await getCatalogProducts(params);
-    responseData = (request.data.value as CatalogListResponse | null) ?? null;
-    requestError = request.error.value;
+    try {
+      const request = await getCatalogProducts(params);
+      responseData = (request.data.value as CatalogListResponse | null) ?? null;
+      requestError = request.error.value;
+    } catch (error) { requestError = error; }
   }
 
   if (requestId !== latestProductsRequestId.value) return;
@@ -1059,6 +1062,27 @@ const loadCategories = async () => {
   }
 
   categoriesResponse.value = responseData;
+};
+
+const loadRouteCategory = async () => {
+  const revision = ++categoryDetailRevision;
+  const requestedPath = route.path;
+  const categorySlug = getCatalogCategorySlugFromPath(route.path || "/");
+  if (!categorySlug) { routeCategory.value = null; return; }
+  if (routeCategory.value?.slug === categorySlug) return;
+  try {
+    const request = hasInitialized.value
+      ? { data: { value: await getCatalogCategoryRaw(categorySlug) }, error: { value: null } }
+      : await getCatalogCategory(categorySlug);
+    if (revision !== categoryDetailRevision || requestedPath !== route.path) return;
+    if (request.error.value || !request.data.value) {
+      throw createError(publicPageError(request.error.value, "კატეგორიის ჩატვირთვა დროებით ვერ მოხერხდა"));
+    }
+    routeCategory.value = request.data.value;
+  } catch (error) {
+    if (revision !== categoryDetailRevision || requestedPath !== route.path) return;
+    throw createError(publicPageError(error, "კატეგორიის ჩატვირთვა დროებით ვერ მოხერხდა"));
+  }
 };
 
 const loadVehicleMakes = async () => {
@@ -1304,10 +1328,12 @@ const handleRemoveActiveFilter = async (key: CatalogActiveFilterKey) => {
   await pushQueryAndScrollToResults({ resetPage: true });
 };
 
-const handlePageClick = async (page: number) => {
-  currentPage.value = page;
-  await pushQueryFromControls();
+const pageTo = (page: number) => ({
+  path: buildRoutePathFromControls(),
+  query: buildRouteQueryFromControls(page),
+});
 
+const handlePageNavigation = () => {
   if (import.meta.client) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1323,7 +1349,12 @@ await Promise.all([
   loadVehicleMakes(),
   loadVehicleOptionsForDraft(),
   loadProducts(),
+  loadRouteCategory(),
 ]);
+if (productsError.value || !productsResponse.value) {
+  throw createError(publicPageError(productsError.value, "კატალოგის ჩატვირთვა დროებით ვერ მოხერხდა"));
+}
+syncSelectedCategoryFromRoute(route.query);
 hasInitialized.value = true;
 
 watch(
@@ -1339,6 +1370,16 @@ watch(
     });
     if (shouldSyncVehicleDraft) {
       await loadVehicleOptionsForDraft();
+    }
+    if (cancelled) return;
+    try {
+      await loadRouteCategory();
+    } catch (error) {
+      if (!cancelled) {
+        showError(createError(publicPageError(error, "კატეგორიის ჩატვირთვა დროებით ვერ მოხერხდა")));
+        markPageReady(path);
+      }
+      return;
     }
     if (cancelled) return;
     await loadProducts();
@@ -1374,7 +1415,7 @@ useHead(() => {
         {
           key: "catalog-breadcrumb-schema",
           type: "application/ld+json",
-          children: JSON.stringify(breadcrumbSchema.value),
+          textContent: serializeStructuredData(breadcrumbSchema.value),
         },
       ]
     : [];
@@ -1395,7 +1436,7 @@ useSeoMeta({
   title: () => categorySeoTitle.value,
   description: () => categorySeoDescription.value,
   robots: () =>
-    selectedCategorySeo.value?.noindex ? categoryRobots.value : undefined,
+    selectedCategorySeo.value?.noindex || selectedCategory.value?.product_count === 0 ? categoryRobots.value : undefined,
   ogTitle: () => categorySeoTitle.value,
   ogDescription: () => categorySeoDescription.value,
   ogImage: () => categorySeoImage.value,
@@ -1557,31 +1598,15 @@ useSeoMeta({
             />
           </div>
 
-          <ClientOnly>
-            <div v-if="totalPages > 1" class="flex justify-center py-2">
-              <vue-awesome-paginate
-                v-model="currentPage"
-                :total-items="resultCount"
-                :items-per-page="pageSize"
-                :max-pages-shown="paginationMaxPagesShown"
-                :show-ending-buttons="paginationShowEndingButtons"
-                :show-breakpoint-buttons="true"
-                :hide-prev-next-when-ends="true"
-                first-page-content="პირველი"
-                last-page-content="ბოლო"
-                pagination-container-class="catalog-pagination"
-                paginate-buttons-class="catalog-paginate-button"
-                number-buttons-class="catalog-paginate-number"
-                first-button-class="catalog-paginate-edge"
-                last-button-class="catalog-paginate-edge"
-                back-button-class="catalog-paginate-nav"
-                next-button-class="catalog-paginate-nav"
-                active-page-class="catalog-paginate-active"
-                disabled-paginate-buttons-class="catalog-paginate-disabled"
-                @click="handlePageClick"
-              />
-            </div>
-          </ClientOnly>
+          <div v-if="totalPages > 1" class="flex justify-center py-2">
+            <AppPagination
+              :current-page="currentPage"
+              :total-pages="totalPages"
+              :page-to="pageTo"
+              variant="catalog"
+              @navigate="handlePageNavigation"
+            />
+          </div>
         </div>
       </div>
 

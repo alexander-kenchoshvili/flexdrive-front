@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { useMediaQuery, watchDebounced } from "@vueuse/core";
+import { watchDebounced } from "@vueuse/core";
 import type { LocationQuery, LocationQueryValue } from "vue-router";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
+import { publicPageError } from "~/utils/publicPageError";
+import AppPagination from "~/components/common/AppPagination.vue";
 import BaseButton from "~/components/common/BaseButton.vue";
 import { useBlogApi } from "~/composables/blog/useBlogApi";
-import { buildBreadcrumbStructuredData } from "~/utils/structuredData";
+import { buildBreadcrumbStructuredData, serializeStructuredData } from "~/utils/structuredData";
 import type {
   BlogCategoryFacet,
   BlogListItem,
@@ -45,7 +47,6 @@ const selectedCategory = ref<string | null>(null);
 const searchTerm = ref("");
 const currentPage = ref(1);
 
-const isMobilePagination = useMediaQuery("(max-width: 640px)");
 
 const title = computed(() => (props.data?.title as string) || "ბლოგი");
 const subtitle = computed(() => (props.data?.subtitle as string) || "");
@@ -69,13 +70,10 @@ const breadcrumbSchema = computed(() =>
 const posts = computed<BlogListItem[]>(() => postsResponse.value?.results ?? []);
 const resultCount = computed(() => postsResponse.value?.count ?? 0);
 const totalPages = computed(() => postsResponse.value?.total_pages ?? 1);
-const pageSize = computed(() => postsResponse.value?.page_size ?? 9);
 const categories = computed<BlogCategoryFacet[]>(
   () => postsResponse.value?.facets?.categories ?? [],
 );
 
-const paginationMaxPagesShown = computed(() => (isMobilePagination.value ? 3 : 5));
-const paginationShowEndingButtons = computed(() => !isMobilePagination.value);
 const paginationSeoTitle = computed(() =>
   currentPage.value > 1 ? `${title.value} - გვერდი ${currentPage.value}` : undefined,
 );
@@ -218,10 +216,12 @@ const handleSortUpdate = async (value: BlogSort) => {
   await pushQueryFromControls({ resetPage: true });
 };
 
-const handlePageClick = async (page: number) => {
-  currentPage.value = page;
-  await pushQueryFromControls();
+const pageTo = (page: number) => ({
+  path: route.path,
+  query: buildRouteQueryFromControls(page),
+});
 
+const handlePageNavigation = () => {
   if (import.meta.client) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -233,6 +233,9 @@ const retryLoad = async () => {
 
 syncControlsFromQuery(route.query);
 await loadPosts();
+if (postsError.value || !postsResponse.value) {
+  throw createError(publicPageError(postsError.value, "ბლოგის ჩატვირთვა დროებით ვერ მოხერხდა"));
+}
 hasInitialized.value = true;
 
 watch(
@@ -265,7 +268,7 @@ useHead(() => ({
         {
           key: "blog-list-breadcrumb-schema",
           type: "application/ld+json",
-          children: JSON.stringify(breadcrumbSchema.value),
+          textContent: serializeStructuredData(breadcrumbSchema.value),
         },
       ]
     : [],
@@ -360,31 +363,15 @@ useHead(() => ({
           />
         </div>
 
-        <ClientOnly>
-          <div v-if="totalPages > 1" class="flex justify-center py-3 sm:py-4">
-            <vue-awesome-paginate
-              v-model="currentPage"
-              :total-items="resultCount"
-              :items-per-page="pageSize"
-              :max-pages-shown="paginationMaxPagesShown"
-              :show-ending-buttons="paginationShowEndingButtons"
-              :show-breakpoint-buttons="true"
-              :hide-prev-next-when-ends="true"
-              first-page-content="პირველი"
-              last-page-content="ბოლო"
-              pagination-container-class="blog-list-pagination"
-              paginate-buttons-class="blog-list-paginate-button"
-              number-buttons-class="blog-list-paginate-number"
-              first-button-class="blog-list-paginate-edge"
-              last-button-class="blog-list-paginate-edge"
-              back-button-class="blog-list-paginate-nav"
-              next-button-class="blog-list-paginate-nav"
-              active-page-class="blog-list-paginate-active"
-              disabled-paginate-buttons-class="blog-list-paginate-disabled"
-              @click="handlePageClick"
-            />
-          </div>
-        </ClientOnly>
+        <div v-if="totalPages > 1" class="flex justify-center py-3 sm:py-4">
+          <AppPagination
+            :current-page="currentPage"
+            :total-pages="totalPages"
+            :page-to="pageTo"
+            variant="blog-list"
+            @navigate="handlePageNavigation"
+          />
+        </div>
       </div>
     </div>
   </section>

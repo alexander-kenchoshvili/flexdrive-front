@@ -1,3 +1,4 @@
+import { formatSeoTitle } from "~/utils/seoTitle";
 import { storeToRefs } from "pinia";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 
@@ -59,10 +60,7 @@ export const useSeoDefaults = () => {
 
   useHead(() => ({
     titleTemplate: (titleChunk) => {
-      if (!titleChunk) {
-        return defaultTitle.value;
-      }
-      return `${titleChunk} | ${siteName.value}`;
+      return formatSeoTitle(titleChunk || defaultTitle.value, siteName.value);
     },
     link: [{ rel: "canonical", href: canonicalUrl.value }],
     meta: [{ name: "theme-color", content: "#4F6F1F" }],

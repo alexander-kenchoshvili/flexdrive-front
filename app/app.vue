@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { buildOrganizationStructuredData } from "~/utils/structuredData";
+import { buildOrganizationStructuredData, serializeStructuredData } from "~/utils/structuredData";
 import { isBusinessPath } from "~/utils/businessRouting";
 
 const menuStore = useMenu();
@@ -64,7 +64,7 @@ useHead(() => ({
         {
           key: "organization-schema",
           type: "application/ld+json",
-          children: JSON.stringify(organizationSchema.value),
+          textContent: serializeStructuredData(organizationSchema.value),
         },
       ]
     : [],

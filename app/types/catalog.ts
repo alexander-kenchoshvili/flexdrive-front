@@ -190,6 +190,16 @@ export interface CatalogProductImage {
   image: CatalogImageAsset;
 }
 
+export interface CatalogProductFitment {
+  id: number;
+  make: { id: number; name: string; slug: string };
+  model: { id: number; name: string; slug: string };
+  engine: { id: number; name: string; slug: string } | null;
+  year_from: number;
+  year_to: number;
+  notes: string;
+}
+
 export interface CatalogProductDetail extends CatalogProductListItem {
   description: string;
   sku: string;
@@ -198,6 +208,7 @@ export interface CatalogProductDetail extends CatalogProductListItem {
   status: string;
   images: CatalogProductImage[];
   specs: CatalogProductSpec[];
+  fitments: CatalogProductFitment[];
   related_products: CatalogProductListItem[];
   created_at: string;
   updated_at: string;

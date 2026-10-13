@@ -74,6 +74,11 @@ export const useCatalogApi = () => {
     return apiFetchRaw<CatalogListResponse>(endpoint);
   };
 
+  const getCatalogCategory = (slug: string) =>
+    apiFetch<CatalogCategoryItem>(`/catalog/categories/${encodeURIComponent(slug)}/`);
+  const getCatalogCategoryRaw = (slug: string) =>
+    apiFetchRaw<CatalogCategoryItem>(`/catalog/categories/${encodeURIComponent(slug)}/`);
+
   const getCatalogCategories = async () => {
     return apiFetch<CatalogCategoryItem[]>("/catalog/categories/");
   };
@@ -131,6 +136,8 @@ export const useCatalogApi = () => {
     getCatalogProducts,
     getCatalogProductsRaw,
     getCatalogCategories,
+    getCatalogCategory,
+    getCatalogCategoryRaw,
     getCatalogCategoriesRaw,
     getVehicleMakes,
     getVehicleModels,

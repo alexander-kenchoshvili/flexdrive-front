@@ -1,5 +1,21 @@
 # Project Instructions
 
+## SEO Current Decisions - 2026-10-13
+
+- JSON-LD uses textContent with safe escaping; global title adds FlexDrive once.
+  Backend blank seo_title derives name/make/model/years/side/manufacturer, with
+  NO automatic OEM/MPN or SKU additions. Manual SEO overrides are preserved;
+  admin name edits survive both imports while price/stock continue updating.
+- SSR pagination links, visible OEM/fitments, actual Product schema photos and
+  initial HTTP errors implemented. Unknown/inactive category404, real empty
+  category200/noindex; category lookup uses the new backend detail endpoint.
+- Backend catalog0028/0029 and category detail API must be ready before frontend.
+  User handles push/deploy; no browser/server start, domain/indexing/provider
+  checks or changes without a new request. Keep BlogInnerHeader.vue user edit.
+- Prior scoped tests/typecheck/build passed; post-revert3 title tests passed.
+  Detailed reports/logs archived in backend ignored local-docs/seo-2026-10-13/;
+  rollout instructions: paired backend docs/SEO_RELEASE_2026-10-13.md.
+
 ## Browser Tracking Host Isolation - 2026-10-10
 
 - User authorized disabling browser Google/Meta tracking outside flexdrive.ge.

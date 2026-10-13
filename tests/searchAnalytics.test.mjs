@@ -207,6 +207,7 @@ test("actual catalog setup reports its loaded API count after mount and ignores 
     }) },
     "~/utils/routePaths": { getCatalogCategorySlugFromPath: () => null },
     "~/utils/cmsCollectionSeo": {}, "~/utils/structuredData": {},
+    "~/utils/publicPageError": execute("app/utils/publicPageError.ts", {}, { "~/utils/httpError": execute("app/utils/httpError.ts") }),
   };
   const globals = {
     ...vue, defineProps: () => ({}), useRoute: () => route,

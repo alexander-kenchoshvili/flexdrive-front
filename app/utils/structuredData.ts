@@ -27,6 +27,7 @@ type ProductStructuredDataInput = {
   description?: string | null;
   image?: string | null;
   sku?: string | null;
+  manufacturerPartNumber?: string | null;
   price?: number | null;
   currency?: string | null;
   inStock?: boolean | null;
@@ -153,6 +154,7 @@ export const buildProductStructuredData = ({
   description,
   image,
   sku,
+  manufacturerPartNumber,
   price,
   currency,
   inStock,
@@ -178,6 +180,10 @@ export const buildProductStructuredData = ({
 
   if (sku) {
     product.sku = sku;
+  }
+
+  if (manufacturerPartNumber?.trim()) {
+    product.mpn = manufacturerPartNumber.trim();
   }
 
   if (brandName) {
@@ -281,3 +287,7 @@ export const buildArticleStructuredData = ({
 
   return article;
 };
+
+// Keep JSON intact when embedded in an HTML script, including closing-tag text.
+export const serializeStructuredData = (value: Record<string, unknown>) =>
+  JSON.stringify(value).replace(/</g, "\\u003c");

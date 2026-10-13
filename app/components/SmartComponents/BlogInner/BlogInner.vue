@@ -10,6 +10,7 @@ import type {
 } from "~/types/page";
 import {
   buildArticleStructuredData,
+  serializeStructuredData,
   buildBreadcrumbStructuredData,
 } from "~/utils/structuredData";
 import BlogAuthorBox from "./parts/BlogAuthorBox.vue";
@@ -127,7 +128,7 @@ useHead(() => ({
           {
             key: "blog-inner-breadcrumb-schema",
             type: "application/ld+json",
-            children: JSON.stringify(breadcrumbSchema.value),
+            textContent: serializeStructuredData(breadcrumbSchema.value),
           },
         ]
       : []),
@@ -136,7 +137,7 @@ useHead(() => ({
           {
             key: "article-schema",
             type: "application/ld+json",
-            children: JSON.stringify(articleSchema.value),
+            textContent: serializeStructuredData(articleSchema.value),
           },
         ]
       : []),
