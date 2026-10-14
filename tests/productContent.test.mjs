@@ -122,10 +122,10 @@ async function page(overrides = {}) {
   return { html, headTags, productSchema };
 }
 
-test("actual product default-description SSR visibly contains OEM and fitments without opening specifications", async () => {
+test("actual product default-description SSR omits the header OEM row and visibly contains fitments", async () => {
   const { html, headTags, productSchema } = await page();
-  assert.match(html, /OEM \/ ნაწილის ნომერი:/);
-  assert.match(html, /91059-SG000/);
+  assert.doesNotMatch(html, /OEM \/ ნაწილის ნომერი:/);
+  assert.doesNotMatch(html, /91059-SG000/);
   assert.match(html, /მანქანასთან შესაბამისობა/);
   assert.match(html, /Subaru Forester/);
   assert.match(html, /2012–2018/);
@@ -147,10 +147,10 @@ test("missing OEM and fitments produce no invented number, compatibility section
   assert.equal(productSchema.sku, "FD-02-0001");
 });
 
-test("part-number text is escaped in actual visible SSR and retains its exact value in JSON-LD", async () => {
+test("part number stays out of the visible header and retains its safely serialized exact value in JSON-LD", async () => {
   const number = '00-A</script><img src=x onerror="alert(1)"> & ქართული';
   const { html, headTags, productSchema } = await page({ manufacturer_part_number: number, specs: [] });
-  assert.match(html, /00-A&lt;\/script&gt;&lt;img/);
+  assert.doesNotMatch(html, /00-A|OEM \/ ნაწილის ნომერი:/);
   assert.doesNotMatch(html, /<img src=x/);
   assert.equal(productSchema.mpn, number);
   assert.doesNotMatch(headTags, /<img src=x/);

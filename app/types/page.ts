@@ -46,6 +46,7 @@ export interface ContentItemData {
   catalog_category?: CatalogCategoryLink | null;
   editor: string | null;
   created_at: string | null;
+  updated_at?: string | null;
   blog_meta?: BlogMetaData | null;
   related_posts?: ContentItemData[] | null;
 }

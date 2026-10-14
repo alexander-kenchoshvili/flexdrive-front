@@ -195,6 +195,28 @@ test("article and breadcrumb JSON-LD preserve Georgian text, dates and author", 
   assert.equal(article.url, "https://flexdrive.ge/blogs/1-example");
 });
 
+test("article dates follow API modification dates and preserve publication independently", async (t) => {
+  for (const dates of [
+    { published_at: "2026-10-09T09:00:00Z", updated_at: "2026-10-13T10:00:00Z", modified: "2026-10-13T10:00:00Z" },
+    { published_at: "2026-10-10T09:00:00Z", updated_at: null, modified: "2026-10-10T09:00:00Z" },
+    { published_at: null, updated_at: null, modified: undefined },
+  ]) {
+    await t.test(JSON.stringify(dates), async (caseTest) => {
+      const c = context(caseTest, "/blogs/1-example", { props: { data: {
+        title: "Article", updated_at: dates.updated_at,
+        blog_meta: { published_at: dates.published_at },
+      } } });
+      c.mocks["~/stores/useSiteSettings"] = { useSiteSettings: c.globals.useSiteSettings };
+      c.mocks["~/composables/helpers"] = execute("app/composables/helpers.ts");
+      await setup("app/components/SmartComponents/BlogInner/BlogInner.vue", c.globals, c.mocks);
+      const { data } = await schemas(c.head);
+      const article = data.find((item) => item["@type"] === "Article");
+      assert.equal(article.datePublished, dates.published_at || undefined);
+      assert.equal(article.dateModified, dates.modified);
+    });
+  }
+});
+
 test("organization data exists on home/contact and is removed on other routes", async (t) => {
   const c = context(t, "/", { client: true });
   c.globals.useMenu = () => ({ fetchMenu: async () => {} });

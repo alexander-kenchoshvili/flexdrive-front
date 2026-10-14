@@ -988,15 +988,6 @@ const handleBuyNow = async () => {
                 />
               </div>
 
-              <dl v-if="productManufacturerPartNumber" class="mt-4 text-sm">
-                <div class="flex flex-wrap gap-x-2 gap-y-1">
-                  <dt class="text-text-muted">OEM / ნაწილის ნომერი:</dt>
-                  <dd class="min-w-0 break-all font-semibold text-text-primary">
-                    {{ productManufacturerPartNumber }}
-                  </dd>
-                </div>
-              </dl>
-
               <div
                 class="mt-6 rounded-[8px] border border-border-default bg-surface-2 p-2 md:rounded-[20px] md:p-5"
               >

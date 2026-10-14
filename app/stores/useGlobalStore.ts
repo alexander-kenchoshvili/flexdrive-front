@@ -11,7 +11,7 @@ import {
   normalizePageLoadError,
 } from "~/utils/httpError";
 import { normalizeSeoPath } from "~/utils/seoIndexing";
-import { parseSingleViewPath } from "~/utils/routePaths";
+import { getCatalogCategorySlugFromPath, parseSingleViewPath } from "~/utils/routePaths";
 import { useMenu } from "./useMenu";
 
 const hasRenderableComponents = (
@@ -179,7 +179,16 @@ export const useGlobalStore = defineStore("global", {
         return;
       }
 
-      const slug = normalizedPath.split("/").filter(Boolean)[0] || "main";
+      const segments = normalizedPath.split("/").filter(Boolean);
+      if (segments.length > 1 && !getCatalogCategorySlugFromPath(normalizedPath)) {
+        this.resetPageState();
+        throw createPageLoadError({
+          statusCode: 404,
+          statusMessage: "გვერდი ვერ მოიძებნა",
+        });
+      }
+
+      const slug = segments[0] || "main";
       this.isSingleView = false;
       await this.fetchPageData(slug);
     },

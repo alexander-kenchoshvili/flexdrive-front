@@ -1,5 +1,12 @@
 # Project Instructions
 
+## Product Header OEM Removal - 2026-10-14
+
+- User requested removing the separate OEM / part-number row from the product
+  header. Removed the row added in SEO commit 986b285 (2026-10-13 05:20 +04:00).
+- Keep existing specifications, OEM search/data and Product schema mpn. Do not
+  restore the header row as part of SEO work. User handles push/deploy.
+
 ## SEO Current Decisions - 2026-10-13
 
 - JSON-LD uses textContent with safe escaping; global title adds FlexDrive once.
@@ -15,6 +22,17 @@
 - Prior scoped tests/typecheck/build passed; post-revert3 title tests passed.
   Detailed reports/logs archived in backend ignored local-docs/seo-2026-10-13/;
   rollout instructions: paired backend docs/SEO_RELEASE_2026-10-13.md.
+
+- User authorized only invented-URL issue2 now: CMS rejects fake nested paths;
+  real article prefix is validated by backend before cache, wrong prefixes404,
+  old slugs under the valid prefix301 to the real URL with query retained.
+  41 frontend tests, scoped lint/typecheck pass. Backend33 tests pass. Both repos
+  need push/deploy; no migration. Product title rule preserved.
+- User separately authorized blog dates: backend exposes effective updated_at
+  from newest text/metadata edit; existing Article dateModified consumes it.
+  ContentItemData type and real JSON-LD tests updated; published_at independent.
+  Sitemap page selection/noindex/domain/env deferred until indexing opening;
+  photos user-owned.
 
 ## Browser Tracking Host Isolation - 2026-10-10
 
