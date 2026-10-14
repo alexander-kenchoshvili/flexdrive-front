@@ -18,6 +18,7 @@ import WishlistToggleButton from "~/components/commerce/WishlistToggleButton.vue
 import ProductCard from "~/components/SmartComponents/ProductCatalog/parts/ProductCard.vue";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
+import { useProductGalleryPreload } from "~/composables/catalog/useProductGalleryPreload";
 import { normalizeApiErrorMessage } from "~/composables/commerce/errorUtils";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { sanitizeText } from "~/composables/helpers";
@@ -71,6 +72,7 @@ const buyNowFeedbackTone = ref<"warning" | "error" | null>(null);
 const selectedQuantity = ref(1);
 const activeTab = ref<"description" | "specs">("description");
 const selectedImageIndex = ref(0);
+const galleryMainTriggerRef = ref<HTMLButtonElement | null>(null);
 const lightboxImageIndex = ref(0);
 const isLightboxOpen = ref(false);
 const thumbnailStripRef = ref<HTMLDivElement | null>(null);
@@ -291,6 +293,8 @@ const galleryImages = computed<CatalogProductImage[]>(() => {
     alt_text: `${productTitle.value} ${index + 1}`,
   }));
 });
+
+useProductGalleryPreload(galleryImages, galleryMainTriggerRef);
 
 const setThumbnailButtonRef = (
   element: Element | ComponentPublicInstance | null,
@@ -805,6 +809,7 @@ const handleBuyNow = async () => {
               >
                 <button
                   v-if="activeImage"
+                  ref="galleryMainTriggerRef"
                   type="button"
                   class="product-gallery-main-trigger group relative block h-full w-full cursor-zoom-in overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-inset"
                   aria-label="სურათის დიდად ნახვა"

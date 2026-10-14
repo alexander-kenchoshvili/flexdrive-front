@@ -107,6 +107,7 @@ async function page(overrides = {}) {
     "~/composables/useIndexingPolicy": { useIndexingPolicy: () => ({ robots: vue.ref("noindex, nofollow") }) },
     "~/stores/useBuyNowStore": { useBuyNowStore: () => ({}) }, "~/composables/commerce/errorUtils": {},
     "~/composables/catalog/useCatalogPlaceholderMedia": execute(source("app/composables/catalog/useCatalogPlaceholderMedia.ts")),
+    "~/composables/catalog/useProductGalleryPreload": execute(source("app/composables/catalog/useProductGalleryPreload.ts"), {}, { "../media/useCloudinaryImage": execute(source("app/composables/media/useCloudinaryImage.ts")) }),
     "~/composables/catalog/useCatalogApi": { useCatalogApi: () => ({ getCatalogProduct: async () => {
       requests++; return { data: vue.ref(product), error: vue.ref(null) };
     } }) },

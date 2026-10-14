@@ -1,5 +1,21 @@
 # Project Instructions
 
+## Product Gallery Background Preloading - 2026-10-15
+
+- User authorized reducing first-hover image delay. Product detail now uses the
+  isolated useProductGalleryPreload composable after the visible main image loads.
+- Small thumbnails/layout, hover's existing 100ms delay, click/lightbox/zoom and
+  commerce behavior remain. Shared BasePicture and backend are unchanged.
+- Warm only the current viewport's existing detail URLs at low fetch priority,
+  at most two at once, and decode before advancing the queue. Retain warmed images
+  for this gallery; discard queued work/listeners/references on change or unmount.
+  In-flight requests may complete. Failures leave normal image loading available.
+- 11 focused preload tests plus 6 actual product SSR tests passed; frontend
+  typecheck, scoped ESLint and whitespace checks passed. No browser/server start,
+  provider/DB/env changes, push or deploy. Actual first-hover timing remains for
+  browser verification; user handles frontend push/deploy. Extra gallery image
+  traffic is expected even when some photos are never selected.
+
 ## Product Header OEM Removal - 2026-10-14
 
 - User requested removing the separate OEM / part-number row from the product
