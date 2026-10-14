@@ -19,6 +19,7 @@ import ProductCard from "~/components/SmartComponents/ProductCatalog/parts/Produ
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
 import { useProductGalleryPreload } from "~/composables/catalog/useProductGalleryPreload";
+import { PRODUCT_ZOOM_IMAGE_WIDTH, useProductZoomPreload } from "~/composables/catalog/useProductZoomPreload";
 import { normalizeApiErrorMessage } from "~/composables/commerce/errorUtils";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { sanitizeText } from "~/composables/helpers";
@@ -398,6 +399,10 @@ watch(
 
 const activeImage = computed(
   () => galleryImages.value[selectedImageIndex.value] || null,
+);
+
+const { isProductZoomReady } = useProductZoomPreload(
+  activeImage, galleryMainTriggerRef, isDesktopZoomAvailable,
 );
 
 const productZoomLensStyle = computed(() => ({
@@ -928,7 +933,7 @@ const handleBuyNow = async () => {
                   :data="activeImage.image"
                   alt=""
                   preset="detail"
-                  :widths="{ desktop: 2000 }"
+                  :widths="isProductZoomReady ? { desktop: PRODUCT_ZOOM_IMAGE_WIDTH } : {}"
                   fit="contain"
                   class="h-full w-full"
                 />

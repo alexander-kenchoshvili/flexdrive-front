@@ -1,5 +1,25 @@
 # Project Instructions
 
+## Product Desktop Zoom First-Hover Delay - 2026-10-15
+
+- User reported the separate zoom pane was initially white. Its 2000px image
+  previously began loading only when the pane mounted on hover; gallery detail
+  preloading deliberately covered only ordinary detail sizes.
+- Isolated useProductZoomPreload now warms/decodes the selected photo's 2000px
+  URL after the visible main image loads, only when existing desktop mouse zoom
+  is available. Works for single-photo products too; no bulk 2000px gallery load.
+- Zoom uses the already-loaded detail photo until its sharper version is decoded.
+  Failed warmups retain that fallback. Source-specific readiness, stale-result
+  guards and cleanup prevent wrong-photo readiness or late writes after unmount.
+  Decoded zoom photos are retained only for this mounted product page.
+- Pane geometry, lens/mouse behavior, thumbnails, lightbox and commerce logic
+  remain. Shared BasePicture, previous gallery preloader and backend are unchanged.
+- 25 tests passed (8 zoom, 11 gallery preload, 6 product SSR), plus frontend
+  typecheck, scoped ESLint and whitespace checks. No browser/server start,
+  provider/DB/env changes, push or deploy. Actual browser timing remains unmeasured;
+  user handles frontend push/deploy. This adds one selected-photo warmup alongside
+  the existing two-at-a-time detail queue; in-flight requests may finish on leave.
+
 ## Product Gallery Background Preloading - 2026-10-15
 
 - User authorized reducing first-hover image delay. Product detail now uses the
