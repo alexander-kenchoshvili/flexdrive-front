@@ -538,11 +538,13 @@ defineExpose({
                   :class="index === activeSuggestionIndex ? 'border-accent-primary bg-accent-soft' : 'border-border-default bg-surface hover:bg-surface-2'"
                   @click="goToSuggestion(suggestion)"
                 >
-                  <BasePicture
-                    :images="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
-                    :alt="suggestion.name" preset="search" fit="contain" lazy
-                    class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2"
-                  />
+                  <span class="block h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2">
+                    <BasePicture
+                      product-image
+                      :data="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
+                      :alt="suggestion.primary_image.alt_text || suggestion.name" preset="search" fit="contain" lazy
+                    />
+                  </span>
                   <span class="min-w-0 flex-1">
                     <span class="header-search-result-title block text-sm font-semibold text-text-primary">{{ suggestion.name }}</span>
                     <span class="mt-1 block text-xs text-text-muted">{{ suggestion.fitment_summary }}</span>
@@ -553,6 +555,10 @@ defineExpose({
               </li>
             </ul>
             <p v-else-if="showNoResults" class="text-sm text-text-secondary">შედეგი ვერ მოიძებნა. შეცვალე სიტყვა ან არჩეული ფილტრები.</p>
+            <BaseButton v-if="showSuggestionList" variant="ghost" class="mt-3 w-full items-center justify-center" @click="submitSearch">
+              <span>ყველა შედეგის ნახვა</span>
+              <span aria-hidden="true">→</span>
+            </BaseButton>
           </div>
         </div>
       </transition>
@@ -613,11 +619,13 @@ defineExpose({
                     :class="index === activeSuggestionIndex ? 'border-accent-primary bg-accent-soft' : 'border-border-default bg-surface'"
                     @click="goToSuggestion(suggestion)"
                   >
-                    <BasePicture
-                      :images="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
-                      :alt="suggestion.name" preset="search" fit="contain" lazy
-                      class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2"
-                    />
+                    <span class="block h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2">
+                      <BasePicture
+                        product-image
+                        :data="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
+                        :alt="suggestion.primary_image.alt_text || suggestion.name" preset="search" fit="contain" lazy
+                      />
+                    </span>
                     <span class="min-w-0 flex-1">
                       <span class="header-search-result-title block text-sm font-semibold text-text-primary">{{ suggestion.name }}</span>
                       <span class="mt-1 block text-xs text-text-muted">{{ suggestion.fitment_summary }}</span>
@@ -628,6 +636,10 @@ defineExpose({
                 </li>
               </ul>
               <p v-else-if="showNoResults" class="text-sm text-text-secondary">შედეგი ვერ მოიძებნა. შეცვალე სიტყვა ან არჩეული ფილტრები.</p>
+              <BaseButton v-if="showSuggestionList" variant="ghost" class="mt-3 w-full justify-between" @click="submitSearch">
+                <span>ყველა შედეგის ნახვა</span>
+                <span aria-hidden="true">→</span>
+              </BaseButton>
             </div>
           </div>
         </DialogPanel>
