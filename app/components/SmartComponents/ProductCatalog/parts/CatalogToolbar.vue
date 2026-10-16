@@ -14,8 +14,7 @@ type CatalogActiveFilterKey =
   | "side"
   | "price"
   | "in_stock"
-  | "on_sale"
-  | "has_image";
+  | "on_sale";
 type CatalogActiveFilter = {
   key: CatalogActiveFilterKey;
   label: string;

@@ -50,8 +50,7 @@ type CatalogActiveFilterKey =
   | "side"
   | "price"
   | "in_stock"
-  | "on_sale"
-  | "has_image";
+  | "on_sale";
 type CatalogActiveFilter = {
   key: CatalogActiveFilterKey;
   label: string;
@@ -136,12 +135,12 @@ const selectedSort = ref<CatalogSort>("recommended");
 const searchQuery = ref("");
 const selectedCategoryId = ref<number | null>(null);
 const selectedCategorySlug = ref<string | null>(null);
+const selectedCategorySlugs = ref<string[]>([]);
 const selectedBrand = ref("");
 const selectedPlacement = ref("");
 const selectedSide = ref("");
 const selectedInStock = ref(false);
 const selectedOnSale = ref(false);
-const selectedHasImage = ref(false);
 const selectedVehicleMake = ref("");
 const selectedVehicleModel = ref("");
 const selectedVehicleYear = ref("");
@@ -215,6 +214,9 @@ const pageSubtitle = computed(() => {
 });
 
 const selectedCategoryLabel = computed(() => {
+  if (selectedCategorySlugs.value.length) {
+    return selectedCategorySlugs.value.map((value) => categoriesResponse.value.find((category) => category.slug === value || String(category.id) === value)?.name || value).join(", ");
+  }
   if (!selectedCategorySlug.value) {
     return "";
   }
@@ -241,7 +243,7 @@ const selectedBrandLabel = computed(() => {
   if (!selectedBrand.value) return "";
   return (
     productsResponse.value?.facets?.brands?.find(
-      (brand) => brand.slug === selectedBrand.value,
+      (brand) => brand.slug === selectedBrand.value || String(brand.id) === selectedBrand.value,
     )?.name || selectedBrand.value
   );
 });
@@ -402,13 +404,14 @@ const totalPages = computed(() => productsResponse.value?.total_pages ?? 1);
 const hasActiveFilterSelection = computed(
   () =>
     selectedCategorySlug.value !== null ||
+    selectedCategoryId.value !== null ||
+    selectedCategorySlugs.value.length > 0 ||
     hasActiveVehicleFilter.value ||
     Boolean(selectedBrand.value) ||
     Boolean(selectedPlacement.value) ||
     Boolean(selectedSide.value) ||
     selectedInStock.value ||
     selectedOnSale.value ||
-    selectedHasImage.value ||
     Boolean(minPrice.value.trim()) ||
     Boolean(maxPrice.value.trim()),
 );
@@ -558,9 +561,6 @@ const activeFilterChips = computed<CatalogActiveFilter[]>(() => {
     chips.push({ key: "on_sale", label: "ფასდაკლება" });
   }
 
-  if (selectedHasImage.value) {
-    chips.push({ key: "has_image", label: "სურათით" });
-  }
 
   return chips;
 });
@@ -712,6 +712,12 @@ const syncSelectedCategoryFromRoute = (query: LocationQuery) => {
     route.path || "/",
   );
   const categoryQueryValue = firstQueryValue(query.category);
+  selectedCategorySlugs.value = categorySlugFromPath ? [] : [...new Set((firstQueryValue(query.categories) || "").split(",").filter(Boolean))];
+  if (selectedCategorySlugs.value.length) {
+    selectedCategoryId.value = null;
+    selectedCategorySlug.value = null;
+    return;
+  }
 
   if (categorySlugFromPath) {
     selectedCategorySlug.value = categorySlugFromPath;
@@ -752,7 +758,6 @@ const syncControlsFromRoute = (
   selectedSide.value = toCleanQueryString(firstQueryValue(query.side));
   selectedInStock.value = toBooleanFromQuery(firstQueryValue(query.in_stock));
   selectedOnSale.value = toBooleanFromQuery(firstQueryValue(query.on_sale));
-  selectedHasImage.value = toBooleanFromQuery(firstQueryValue(query.has_image));
 
   const routeVehicle = readVehicleSelectionFromQuery(query);
   selectedVehicleMake.value = routeVehicle.make;
@@ -769,10 +774,17 @@ const syncControlsFromRoute = (
 };
 
 const setSelectedCategoryId = (value: number | null) => {
+  selectedCategorySlugs.value = [];
   selectedCategoryId.value = value;
   selectedCategorySlug.value =
     categoriesResponse.value.find((category) => category.id === value)?.slug ||
     null;
+};
+
+const setSelectedCategorySlugs = (values: string[]) => {
+  selectedCategoryId.value = null;
+  selectedCategorySlug.value = null;
+  selectedCategorySlugs.value = values;
 };
 
 const buildParamsFromControls = (): CatalogListParams => {
@@ -789,7 +801,9 @@ const buildParamsFromControls = (): CatalogListParams => {
     params.ordering = selectedSort.value;
   }
 
-  if (selectedCategorySlug.value) {
+  if (selectedCategorySlugs.value.length) {
+    params.categories = selectedCategorySlugs.value.join(",");
+  } else if (selectedCategorySlug.value) {
     params.category = selectedCategorySlug.value;
   } else if (selectedCategoryId.value) {
     params.category = selectedCategoryId.value;
@@ -834,9 +848,6 @@ const buildParamsFromControls = (): CatalogListParams => {
     params.on_sale = true;
   }
 
-  if (selectedHasImage.value) {
-    params.has_image = true;
-  }
 
   const min = toOptionalNumber(minPrice.value);
   const max = toOptionalNumber(maxPrice.value);
@@ -849,6 +860,7 @@ const buildParamsFromControls = (): CatalogListParams => {
 
 const buildRouteQueryFromControls = (page: number): Record<string, string> => {
   const query: Record<string, string> = {};
+  if (selectedCategorySlugs.value.length) query.categories = selectedCategorySlugs.value.join(",");
 
   if (normalizedSearchQuery.value) {
     query.q = normalizedSearchQuery.value;
@@ -902,9 +914,6 @@ const buildRouteQueryFromControls = (page: number): Record<string, string> => {
     query.on_sale = "true";
   }
 
-  if (selectedHasImage.value) {
-    query.has_image = "true";
-  }
 
   if (page > 1) {
     query.page = String(page);
@@ -1238,6 +1247,7 @@ const handleApplyFilters = async () => {
 
 const handleMobileFilterApply = async (value: {
   selectedCategoryId: number | null;
+  selectedCategorySlugs?: string[];
   minPrice: string;
   maxPrice: string;
   sort: CatalogSort;
@@ -1246,12 +1256,12 @@ const handleMobileFilterApply = async (value: {
   selectedSide: string;
   inStock: boolean;
   onSale: boolean;
-  hasImage: boolean;
   vehicle: CatalogVehicleSelection;
 }) => {
   if (!isVehicleSelectionValid(value.vehicle)) return;
 
   setSelectedCategoryId(value.selectedCategoryId);
+  if (value.selectedCategorySlugs?.length) setSelectedCategorySlugs(value.selectedCategorySlugs);
   minPrice.value = value.minPrice;
   maxPrice.value = value.maxPrice;
   selectedSort.value = value.sort;
@@ -1260,7 +1270,6 @@ const handleMobileFilterApply = async (value: {
   selectedSide.value = value.selectedSide;
   selectedInStock.value = value.inStock;
   selectedOnSale.value = value.onSale;
-  selectedHasImage.value = value.hasImage;
   applyVehicleSelection(value.vehicle);
   closeMobileFilterSheet();
   await pushQueryAndScrollToResults({ resetPage: true });
@@ -1273,7 +1282,6 @@ const handleResetFilters = async () => {
   selectedSide.value = "";
   selectedInStock.value = false;
   selectedOnSale.value = false;
-  selectedHasImage.value = false;
   clearDraftVehicleFilter();
   clearAppliedVehicleFilter();
   minPrice.value = "";
@@ -1291,7 +1299,6 @@ const handleClearCatalogState = async () => {
   selectedSide.value = "";
   selectedInStock.value = false;
   selectedOnSale.value = false;
-  selectedHasImage.value = false;
   clearDraftVehicleFilter();
   clearAppliedVehicleFilter();
   minPrice.value = "";
@@ -1321,8 +1328,6 @@ const handleRemoveActiveFilter = async (key: CatalogActiveFilterKey) => {
     selectedInStock.value = false;
   } else if (key === "on_sale") {
     selectedOnSale.value = false;
-  } else if (key === "has_image") {
-    selectedHasImage.value = false;
   }
 
   await pushQueryAndScrollToResults({ resetPage: true });
@@ -1525,12 +1530,12 @@ useSeoMeta({
             :has-applied-vehicle="hasActiveVehicleFilter"
             :selected-category-id="selectedCategoryId"
             :selected-category-slug="selectedCategorySlug"
+            :selected-category-slugs="selectedCategorySlugs"
             :selected-brand="selectedBrand"
             :selected-placement="selectedPlacement"
             :selected-side="selectedSide"
             :in-stock="selectedInStock"
             :on-sale="selectedOnSale"
-            :has-image="selectedHasImage"
             :min-price="minPrice"
             :max-price="maxPrice"
             :disabled="productsPending"
@@ -1539,12 +1544,12 @@ useSeoMeta({
             @update:vehicle-year="handleDesktopVehicleYearUpdate"
             @update:vehicle-engine="handleDesktopVehicleEngineUpdate"
             @update:selected-category-id="setSelectedCategoryId"
+            @update:selected-category-slugs="setSelectedCategorySlugs"
             @update:selected-brand="selectedBrand = $event"
             @update:selected-placement="selectedPlacement = $event"
             @update:selected-side="selectedSide = $event"
             @update:in-stock="selectedInStock = $event"
             @update:on-sale="selectedOnSale = $event"
-            @update:has-image="selectedHasImage = $event"
             @update:min-price="minPrice = $event"
             @update:max-price="maxPrice = $event"
             @reset-vehicle="handleResetVehicleFilter"
@@ -1631,12 +1636,12 @@ useSeoMeta({
         :has-invalid-vehicle="hasInvalidDraftVehicle"
         :selected-category-id="selectedCategoryId"
         :selected-category-slug="selectedCategorySlug"
+        :selected-category-slugs="selectedCategorySlugs"
         :selected-brand="selectedBrand"
         :selected-placement="selectedPlacement"
         :selected-side="selectedSide"
         :in-stock="selectedInStock"
         :on-sale="selectedOnSale"
-        :has-image="selectedHasImage"
         :min-price="minPrice"
         :max-price="maxPrice"
         :sort="selectedSort"

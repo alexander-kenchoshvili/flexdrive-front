@@ -1,5 +1,88 @@
 # Project Instructions
 
+## Header Dropdown Compact Expansion - 2026-10-16
+
+- User requested one primary search action: atmd768px+ keep only the top submit;
+  shared filter footer hides its submit via md:hidden, removes desktop divider and
+  reduces spacing. Small ghost Clear remains; below768px the Dialog keeps its submit.
+  Chrome verifies one visible desktop Search and mobile Search retained at767px;
+  original viewport/dark theme and Volkswagen desktop draft preserved.27 focused
+  tests/scoped lint/whitespace pass. No actual search submitted or category-code change.
+- Latest user authorization supersedes the read-only category audit: HeaderSearch
+  and catalog category lists now call the default nonempty category API (no true
+  includeEmpty flag). Zero published-product categories, including New, are hidden;
+  category detail/SEO routes and stored categories remain intact. Optional API/server
+  compatibility is retained, but current UI lists do not opt into empty categories.
+- Removed catalog photo-only filter from desktop/mobile controls, props/drafts,
+  selected chips, reset/apply state, route parsing/building, request params, frontend
+  type and analytics filter keys. Legacy has_image=true/false listing URLs are ignored
+  and new pagination/filter links drop it. Backend API compatibility unchanged.
+- 52 focused tests pass, including category loading/reloading and legacy URL/SSR
+  pagination regressions; app typecheck, scoped ESLint and whitespace pass. Chrome
+  verifies eight nonempty categories in header/catalog and only Stock/Sale quick
+  filters on desktop/mobile375x812. Original viewport/dark theme restored; no filter
+  applied, catalog search submitted, data/env/provider writes, server start or deploy.
+- Follow-up bug fixed: Header uses md(768px) for its mobile trigger, but search
+  previously hid Dialog at sm(640px). HeaderSearch viewport query now uses767px,
+  desktop input uses md:block and mobile trigger/Dialog use md:hidden. Existing
+  resize watcher closes the old surface correctly at768px. Chrome verifies actual
+  click opening at640px/767px, desktop input opening at768px and open-sheet resize
+  cleanup.27 focused tests, typecheck, scoped lint/whitespace pass. Temporary viewport
+  override reset; no search submitted or backend/provider/env/deploy change.
+- Current user-authorized trial replaces the always-reserved blank area. At1024px+
+  the four-column grid is compact until a listbox trigger has aria-expanded=true.
+  Scoped :has CSS expands its shared menu space;120ms collapse delay preserves
+  space during pointer/focus handoff,180ms padding transition opens/closes smoothly.
+  Grid overflow:clip keeps lists inside during animation. Existing reduced-motion
+  rules apply. Shared BaseSelect and search/filter behavior remain unchanged.
+- Existing Chrome localhost verifies compact195px -> open459px -> compact195px;
+  category/make switching retains459px. Lists256px stay inside. Desktop light/dark
+  and375x812 mobile checked; mobile retains inline lists without horizontal overflow.
+  Original viewport/dark theme restored.27 focused tests and scoped lint/whitespace
+  pass. No search submitted, server start, business-data/env/provider edits or deploy.
+- Previous reserved-space component backup: paired backend local-docs/search/header-search-reserved-space-20261016.vue.
+  Screenshots in paired backend artifacts/search/header-compact-idle.jpg and
+  header-compact-expanded.jpg. Earlier rollback/overlay records below are historical.
+
+## Header Dropdown Four-Column Layout - 2026-10-16
+
+- User requested rollback of the floating overlay trial. Restored only its four
+  backed-up files, preserving all earlier uncommitted search/filter work; removed
+  trial-only selectOverlayLayout.ts. BaseSelect has its prior inline behavior.
+- Header category select now shares the vehicle grid: four columns on desktop
+  (>=1024px), two at640px+, one on narrow mobile. All four use inline-options and
+  expand the row when opened. No internal search inputs; category multiple selection
+  and removal remain. User wants this expanding layout for review.
+- Chrome localhost verifies desktop4/two at900px/one at375px, no horizontal
+  overflow and unchanged expanded height switching category/make.27 focused tests
+  and scoped lint/whitespace pass; original viewport restored.
+- Prior overlay screenshot/geometry notes are historical, not the current UI.
+
+## Header Search Filter Form - 2026-10-16
+
+- User authorized a compact header search with make/model/year (NO engine) and all
+  active categories, including empty ones. Existing BaseSelect gains opt-in multiple
+  selection/inline options without changing scalar v-model; BaseButton/design tokens
+  and one shared HeaderSearchFilters component serve desktop/mobile. Mobile Dialog
+  uses installed Headless UI focus/scroll handling; light/dark use existing tokens.
+- Header make/model/year and category dropdowns have no extra search input per
+  user follow-up. Keep the reusable BaseSelect searchable option for other uses.
+- Text/vehicle/categories are drafts until Search/Enter. Clearing text no longer
+  navigates automatically. Selected categories OR together, with individual removal;
+  product suggestions respect the same filters and retain stale-response protection.
+  Make resets model/year; model resets year. Header no longer records recent searches.
+- Additive backend categories CSV/repeated values on products/suggestions and
+  category include_empty=true required. Catalog retains multi-category selections
+  across sort/pagination/mobile filters/reset. Existing OEM/SKU parsing/ranking,
+  tracking host/consent protections and five-suggestion limit remain.
+- 40 focused frontend tests passed; expanded57/59 includes two existing product SEO
+  harness failures missing gallery-preloader mocks, reproduced against committed HEAD.
+  Backend78 focused tests passed. Typecheck/scoped lint/whitespace passed. No browser
+  or server start per explicit-request-only rule: mobile/desktop/theme visual checks
+  remain. No DB/provider/env edits, push/deploy. Both repos need deployment, backend
+  first or together; no migration. See paired docs/HEADER_SEARCH_FILTERS.md.
+
+
 ## Product Desktop Zoom First-Hover Delay - 2026-10-15
 
 - User reported the separate zoom pane was initially white. Its 2000px image

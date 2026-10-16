@@ -14,6 +14,7 @@ export interface CatalogListParams {
   page_size?: number;
   q?: string;
   category?: string | number;
+  categories?: string;
   make?: string | number;
   model?: string | number;
   year?: number;
@@ -27,7 +28,6 @@ export interface CatalogListParams {
   is_featured?: boolean;
   in_stock?: boolean;
   on_sale?: boolean;
-  has_image?: boolean;
   ordering?: CatalogSort;
 }
 

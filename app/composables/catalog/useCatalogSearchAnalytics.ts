@@ -8,8 +8,8 @@ type SearchSnapshot = {
 };
 
 const FILTER_KEYS: Array<keyof CatalogListParams> = [
-  "category", "make", "model", "year", "engine", "brand", "placement", "side",
-  "min_price", "max_price", "in_stock", "on_sale", "has_image", "is_new", "is_featured",
+  "category", "categories", "make", "model", "year", "engine", "brand", "placement", "side",
+  "min_price", "max_price", "in_stock", "on_sale", "is_new", "is_featured",
 ];
 
 export const useCatalogSearchAnalytics = () => {

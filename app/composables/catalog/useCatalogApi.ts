@@ -16,7 +16,6 @@ const BOOL_PARAM_KEYS: Array<keyof CatalogListParams> = [
   "is_featured",
   "in_stock",
   "on_sale",
-  "has_image",
 ];
 
 const NUMBER_PARAM_KEYS: Array<keyof CatalogListParams> = [
@@ -79,12 +78,12 @@ export const useCatalogApi = () => {
   const getCatalogCategoryRaw = (slug: string) =>
     apiFetchRaw<CatalogCategoryItem>(`/catalog/categories/${encodeURIComponent(slug)}/`);
 
-  const getCatalogCategories = async () => {
-    return apiFetch<CatalogCategoryItem[]>("/catalog/categories/");
+  const getCatalogCategories = async (includeEmpty = false) => {
+    return apiFetch<CatalogCategoryItem[]>(includeEmpty ? "/catalog/categories/?include_empty=true" : "/catalog/categories/");
   };
 
-  const getCatalogCategoriesRaw = async () => {
-    return apiFetchRaw<CatalogCategoryItem[]>("/catalog/categories/");
+  const getCatalogCategoriesRaw = async (includeEmpty = false) => {
+    return apiFetchRaw<CatalogCategoryItem[]>(includeEmpty ? "/catalog/categories/?include_empty=true" : "/catalog/categories/");
   };
 
   const getVehicleMakes = async () => {
@@ -119,10 +118,10 @@ export const useCatalogApi = () => {
     );
   };
 
-  const getCatalogProductSuggestions = async (query: string) => {
+  const getCatalogProductSuggestions = async (query: string, filters: Pick<CatalogListParams, "make" | "model" | "year" | "categories"> = {}) => {
     const normalizedQuery = query.trim();
     const endpoint = normalizedQuery
-      ? `/catalog/products/suggestions/?q=${encodeURIComponent(normalizedQuery)}`
+      ? `/catalog/products/suggestions/?${buildListQuery({ ...filters, q: normalizedQuery })}`
       : "/catalog/products/suggestions/";
 
     return apiFetchRaw<CatalogProductSuggestion[]>(endpoint);

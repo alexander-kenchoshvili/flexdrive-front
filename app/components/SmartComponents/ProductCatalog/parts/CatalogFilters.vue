@@ -41,12 +41,12 @@ const props = withDefaults(
     hasAppliedVehicle?: boolean;
     selectedCategoryId?: number | null;
     selectedCategorySlug?: string | null;
+    selectedCategorySlugs?: string[];
     selectedBrand?: string;
     selectedPlacement?: string;
     selectedSide?: string;
     inStock?: boolean;
     onSale?: boolean;
-    hasImage?: boolean;
     minPrice?: string;
     maxPrice?: string;
     disabled?: boolean;
@@ -72,12 +72,12 @@ const props = withDefaults(
     hasAppliedVehicle: false,
     selectedCategoryId: null,
     selectedCategorySlug: null,
+    selectedCategorySlugs: () => [],
     selectedBrand: "",
     selectedPlacement: "",
     selectedSide: "",
     inStock: false,
     onSale: false,
-    hasImage: false,
     minPrice: "",
     maxPrice: "",
     disabled: false,
@@ -90,12 +90,12 @@ const emit = defineEmits<{
   (e: "update:vehicleYear", value: string): void;
   (e: "update:vehicleEngine", value: string): void;
   (e: "update:selectedCategoryId", value: number | null): void;
+  (e: "update:selectedCategorySlugs", value: string[]): void;
   (e: "update:selectedBrand", value: string): void;
   (e: "update:selectedPlacement", value: string): void;
   (e: "update:selectedSide", value: string): void;
   (e: "update:inStock", value: boolean): void;
   (e: "update:onSale", value: boolean): void;
-  (e: "update:hasImage", value: boolean): void;
   (e: "update:minPrice", value: string): void;
   (e: "update:maxPrice", value: string): void;
   (e: "resetVehicle"): void;
@@ -130,37 +130,22 @@ const vehicleYearOptions = computed<SelectOption[]>(() =>
   })),
 );
 const brandOptions = computed<SelectOption[]>(() =>
-  props.brands.length
-    ? prependAllOption(
-        "ყველა ბრენდი",
-        props.brands.map((brand) => ({
-          label: `${brand.name} (${brand.count})`,
-          value: brand.slug,
-        })),
-      )
-    : [],
+  prependAllOption("ყველა ბრენდი", props.brands.map((brand) => ({
+    label: `${brand.name} (${brand.count})`,
+    value: String(brand.id) === props.selectedBrand ? props.selectedBrand : brand.slug,
+  }))),
 );
 const placementOptions = computed<SelectOption[]>(() =>
-  props.placements.length
-    ? prependAllOption(
-        "ყველა მდებარეობა",
-        props.placements.map((option) => ({
-          label: `${option.label} (${option.count})`,
-          value: option.value,
-        })),
-      )
-    : [],
+  prependAllOption("ყველა მდებარეობა", props.placements.map((option) => ({
+    label: `${option.label} (${option.count})`,
+    value: option.value,
+  }))),
 );
 const sideOptions = computed<SelectOption[]>(() =>
-  props.sides.length
-    ? prependAllOption(
-        "ყველა მხარე",
-        props.sides.map((option) => ({
-          label: `${option.label} (${option.count})`,
-          value: option.value,
-        })),
-      )
-    : [],
+  prependAllOption("ყველა მხარე", props.sides.map((option) => ({
+    label: `${option.label} (${option.count})`,
+    value: option.value,
+  }))),
 );
 
 const vehicleMakeModel = computed({
@@ -239,13 +224,11 @@ const toggleCategory = (id: number) => {
   emit("apply");
 };
 
-const updateQuickFilter = (key: "inStock" | "onSale" | "hasImage", value: boolean) => {
+const updateQuickFilter = (key: "inStock" | "onSale", value: boolean) => {
   if (key === "inStock") {
     emit("update:inStock", value);
-  } else if (key === "onSale") {
-    emit("update:onSale", value);
   } else {
-    emit("update:hasImage", value);
+    emit("update:onSale", value);
   }
   emit("apply");
 };
@@ -337,7 +320,17 @@ watch([minPriceModel, maxPriceModel], () => {
 
     <section class="mt-4 border-t border-border-default pt-4">
       <h3 class="text-sm font-bold text-text-primary">კატეგორია</h3>
+      <BaseSelect
+        v-if="selectedCategorySlugs.length"
+        class="mt-3"
+        :selected-values="selectedCategorySlugs"
+        :options="categories.map((category) => ({ label: category.name, value: category.slug }))"
+        label="არჩეული კატეგორიები"
+        multiple inline-options
+        @update:selected-values="emit('update:selectedCategorySlugs', $event.map(String)); emit('apply')"
+      />
       <ul
+        v-else
         class="catalog-filter-scroll mt-3 max-h-[330px] space-y-2 overflow-y-auto pr-1"
         role="radiogroup"
         aria-label="კატეგორია"
@@ -443,18 +436,6 @@ watch([minPriceModel, maxPriceModel], () => {
             :disabled="disabled"
             class="h-4 w-4 accent-[var(--accent-primary)]"
             @change="updateQuickFilter('onSale', getCheckedValue($event))"
-          />
-        </label>
-        <label
-          class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border-default bg-surface px-3 py-2 text-sm font-semibold text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
-        >
-          <span>სურათით</span>
-          <input
-            type="checkbox"
-            :checked="hasImage"
-            :disabled="disabled"
-            class="h-4 w-4 accent-[var(--accent-primary)]"
-            @change="updateQuickFilter('hasImage', getCheckedValue($event))"
           />
         </label>
       </div>

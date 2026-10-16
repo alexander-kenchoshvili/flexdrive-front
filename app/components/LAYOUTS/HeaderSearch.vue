@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { onClickOutside, useDebounceFn, useMediaQuery } from "@vueuse/core";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/vue";
+import HeaderSearchFilters from "./HeaderSearchFilters.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
-import { buildCatalogCategoryPath } from "~/utils/routePaths";
+import { getCatalogCategorySlugFromPath } from "~/utils/routePaths";
 import { waitForPageReady } from "~/utils/pageScrollCoordinator";
 import type {
   CatalogCategoryItem,
   CatalogProductSuggestion,
+  CatalogVehicleMake,
+  CatalogVehicleModel,
+  CatalogVehicleYear,
 } from "~/types/catalog";
 
 const emit = defineEmits<{
@@ -27,29 +32,17 @@ const props = withDefaults(
 
 const route = useRoute();
 const router = useRouter();
-const isMobileViewport = useMediaQuery("(max-width: 639px)");
-const { getCatalogCategoriesRaw, getCatalogProductSuggestions } =
+// Match the parent Header mobile trigger and desktop input at the md breakpoint.
+const isMobileViewport = useMediaQuery("(max-width: 767px)");
+const { getCatalogCategoriesRaw, getCatalogProductSuggestions, getVehicleMakes, getVehicleModels, getVehicleYears } =
   useCatalogApi();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
 const { trackSearchSelection } = useEcommerceAnalytics();
-const { functionalityConsentGranted } = useCookieConsent();
 
 const rootRef = ref<HTMLElement | null>(null);
 const mobileInputRef = ref<HTMLInputElement | null>(null);
 
-const RECENT_SEARCHES_KEY = "flexdrive-header-searches";
-const RECENT_SEARCHES_LIMIT = 5;
 const searchPlaceholder = "მოძებნე ნაწილი, OEM ან SKU";
-const quickSearchModes = [
-  {
-    label: "ნაწილი",
-    copy: "პროდუქტის სახელით",
-  },
-  {
-    label: "OEM/SKU",
-    copy: "პროდუქტის კოდით",
-  },
-];
 
 const searchText = ref("");
 const isDesktopOpen = ref(false);
@@ -61,16 +54,10 @@ const suggestions = ref<CatalogProductSuggestion[]>([]);
 const suggestionsPending = ref(false);
 const suggestionsError = ref<string | null>(null);
 const activeSuggestionIndex = ref(-1);
-const recentSearches = ref<string[]>([]);
 const latestSuggestionsRequestId = ref(0);
 const lastCompletedQuery = ref("");
 
-const emptyStateTitle = "სწრაფი ძებნა";
-const emptyStateCopy =
-  "დაიწყე ნაწილის სახელის, OEM-ის ან SKU-ის ჩაწერა, ან აირჩიე კატეგორია.";
-
 const normalizedSearchText = computed(() => searchText.value.trim());
-const quickCategories = computed(() => categories.value.slice(0, 5));
 const showDesktopPanel = computed(
   () => !isMobileViewport.value && isDesktopOpen.value,
 );
@@ -79,9 +66,6 @@ const isSearchSurfaceOpen = computed(
 );
 const hasEnoughCharacters = computed(
   () => normalizedSearchText.value.length >= 2,
-);
-const showDiscoveryState = computed(
-  () => normalizedSearchText.value.length === 0,
 );
 const showTypingHint = computed(() => normalizedSearchText.value.length === 1);
 const showSuggestionList = computed(
@@ -114,69 +98,6 @@ const extractSearchQueryFromRoute = () => {
   return typeof queryValue === "string" ? queryValue : "";
 };
 
-const clearRecentSearches = () => {
-  recentSearches.value = [];
-
-  if (!import.meta.client) return;
-
-  window.localStorage.removeItem(RECENT_SEARCHES_KEY);
-};
-
-const loadRecentSearches = () => {
-  if (!import.meta.client) return;
-
-  if (!functionalityConsentGranted.value) {
-    clearRecentSearches();
-    return;
-  }
-
-  const rawValue = window.localStorage.getItem(RECENT_SEARCHES_KEY);
-  if (!rawValue) return;
-
-  try {
-    const parsed = JSON.parse(rawValue);
-    if (Array.isArray(parsed)) {
-      recentSearches.value = parsed
-        .map((item) => String(item || "").trim())
-        .filter(Boolean)
-        .slice(0, RECENT_SEARCHES_LIMIT);
-    }
-  } catch {
-    recentSearches.value = [];
-  }
-};
-
-const persistRecentSearches = () => {
-  if (!import.meta.client) return;
-
-  if (!functionalityConsentGranted.value) {
-    clearRecentSearches();
-    return;
-  }
-
-  window.localStorage.setItem(
-    RECENT_SEARCHES_KEY,
-    JSON.stringify(recentSearches.value.slice(0, RECENT_SEARCHES_LIMIT)),
-  );
-};
-
-const saveRecentSearch = (value: string) => {
-  const normalizedValue = value.trim();
-  if (!normalizedValue || !import.meta.client) return;
-
-  if (!functionalityConsentGranted.value) {
-    clearRecentSearches();
-    return;
-  }
-
-  recentSearches.value = [
-    normalizedValue,
-    ...recentSearches.value.filter((item) => item !== normalizedValue),
-  ].slice(0, RECENT_SEARCHES_LIMIT);
-
-  persistRecentSearches();
-};
-
 const resetSuggestionsState = () => {
   ++latestSuggestionsRequestId.value;
   activeSuggestionIndex.value = -1;
@@ -186,18 +107,119 @@ const resetSuggestionsState = () => {
   lastCompletedQuery.value = "";
 };
 
+// A catalog refinement must not overwrite a header draft that is not submitted yet.
+const headerRouteKey = computed(() => JSON.stringify([
+  route.path.replace(/\/$/, ""),
+  ...["q", "make", "model", "year", "category", "categories"].map((key) => {
+    const value = route.query[key];
+    return (Array.isArray(value) ? value[0] : value) || "";
+  }),
+]));
+const clearCatalogRefinementsOnSubmit = ref(false);
+const selectedMake = ref("");
+const selectedModel = ref("");
+const selectedYear = ref("");
+const selectedCategories = ref<string[]>([]);
+const makes = ref<CatalogVehicleMake[]>([]);
+const models = ref<CatalogVehicleModel[]>([]);
+const years = ref<CatalogVehicleYear[]>([]);
+const makesLoaded = ref(false);
+const makesPending = ref(false);
+const vehiclePending = ref(false);
+const categoriesError = ref(false);
+const makesError = ref(false);
+const vehicleError = ref(false);
+let vehicleRequestId = 0;
+let disposed = false;
+const filterError = computed(() => categoriesError.value || makesError.value || vehicleError.value
+  ? "ფილტრების ჩატვირთვა ვერ მოხერხდა." : "");
+const categoryOptions = computed(() => categories.value.map((category) => ({ label: category.name, value: category.slug })));
+const makeOptions = computed(() => [{ label: "ყველა მარკა", value: "" }, ...makes.value.map((make) => ({ label: make.name, value: make.slug }))]);
+const modelOptions = computed(() => [{ label: "ყველა მოდელი", value: "" }, ...models.value.map((model) => ({ label: model.name, value: model.slug }))]);
+const yearOptions = computed(() => [{ label: "ყველა წელი", value: "" }, ...[...years.value].reverse().map(({ year }) => ({ label: String(year), value: String(year) }))]);
+const canSubmit = computed(() => normalizedSearchText.value.length !== 1 && normalizedSearchText.value.length <= 255);
+const filterParams = computed(() => ({
+  ...(selectedMake.value ? { make: selectedMake.value } : {}),
+  ...(selectedMake.value && selectedModel.value ? { model: selectedModel.value } : {}),
+  ...(selectedMake.value && selectedYear.value ? { year: Number(selectedYear.value) } : {}),
+  ...(selectedCategories.value.length ? { categories: selectedCategories.value.join(",") } : {}),
+}));
+const filtersKey = computed(() => JSON.stringify(filterParams.value));
+
 const ensureCategoriesLoaded = async () => {
   if (categoriesLoaded.value || categoriesPending.value) return;
-
   categoriesPending.value = true;
-
+  categoriesError.value = false;
   try {
-    categories.value = (await getCatalogCategoriesRaw()) ?? [];
+    const response = await getCatalogCategoriesRaw();
+    if (disposed) return;
+    categories.value = response ?? [];
+    selectedCategories.value = selectedCategories.value.map((value) =>
+      categories.value.find((category) => String(category.id) === value)?.slug || value,
+    );
     categoriesLoaded.value = true;
+  } catch {
+    if (!disposed) categoriesError.value = true;
   } finally {
-    categoriesPending.value = false;
+    if (!disposed) categoriesPending.value = false;
   }
 };
+const ensureMakesLoaded = async () => {
+  if (makesLoaded.value || makesPending.value) return;
+  makesPending.value = true;
+  makesError.value = false;
+  try {
+    const response = await getVehicleMakes();
+    if (disposed) return;
+    makes.value = response ?? [];
+    makesLoaded.value = true;
+  } catch {
+    if (!disposed) makesError.value = true;
+  } finally {
+    if (!disposed) makesPending.value = false;
+  }
+};
+const loadVehicleOptions = async () => {
+  const requestId = ++vehicleRequestId;
+  const make = selectedMake.value;
+  const model = selectedModel.value;
+  models.value = [];
+  years.value = [];
+  vehicleError.value = false;
+  vehiclePending.value = Boolean(make);
+  if (!make) return;
+  try {
+    const [nextModels, nextYears] = await Promise.all([
+      getVehicleModels(make), getVehicleYears(make, model || undefined),
+    ]);
+    if (disposed || requestId !== vehicleRequestId) return;
+    models.value = nextModels;
+    years.value = nextYears;
+  } catch {
+    if (!disposed && requestId === vehicleRequestId) vehicleError.value = true;
+  } finally {
+    if (!disposed && requestId === vehicleRequestId) vehiclePending.value = false;
+  }
+};
+const ensureFiltersLoaded = () => Promise.all([ensureCategoriesLoaded(), ensureMakesLoaded(), loadVehicleOptions()]);
+const updateMake = (value: string) => {
+  selectedModel.value = "";
+  selectedYear.value = "";
+  selectedMake.value = value;
+};
+const updateModel = (value: string) => {
+  selectedYear.value = "";
+  selectedModel.value = value;
+};
+const clearFilters = () => {
+  clearCatalogRefinementsOnSubmit.value = true;
+  searchText.value = "";
+  selectedMake.value = "";
+  selectedModel.value = "";
+  selectedYear.value = "";
+  selectedCategories.value = [];
+};
+watch([selectedMake, selectedModel], () => { if (isSearchSurfaceOpen.value) void loadVehicleOptions(); });
 
 const fetchSuggestions = async (query: string) => {
   const normalizedQuery = query.trim();
@@ -210,18 +232,19 @@ const fetchSuggestions = async (query: string) => {
   }
 
   const requestId = ++latestSuggestionsRequestId.value;
+  const requestedFilters = filtersKey.value;
   suggestionsPending.value = true;
   suggestionsError.value = null;
 
   try {
-    const response = await getCatalogProductSuggestions(normalizedQuery);
+    const response = await getCatalogProductSuggestions(normalizedQuery, filterParams.value);
 
-    if (requestId !== latestSuggestionsRequestId.value) return;
+    if (disposed || requestId !== latestSuggestionsRequestId.value || requestedFilters !== filtersKey.value) return;
 
     suggestions.value = response;
     lastCompletedQuery.value = normalizedQuery;
   } catch {
-    if (requestId !== latestSuggestionsRequestId.value) return;
+    if (disposed || requestId !== latestSuggestionsRequestId.value || requestedFilters !== filtersKey.value) return;
 
     suggestions.value = [];
     suggestionsError.value =
@@ -256,10 +279,11 @@ const closeAllSearchSurfaces = () => {
 };
 
 const openDesktopPanel = async () => {
-  if (isMobileViewport.value) return;
+  if (isMobileViewport.value || isDesktopOpen.value) return;
 
   isDesktopOpen.value = true;
   activeSuggestionIndex.value = -1;
+  void ensureFiltersLoaded();
 
   if (normalizedSearchText.value.length >= 2) {
     void fetchSuggestions(normalizedSearchText.value);
@@ -270,46 +294,43 @@ const openDesktopPanel = async () => {
 };
 
 const openMobileSheet = async () => {
+  if (isMobileOpen.value) return;
   emit("open-mobile-search");
   isMobileOpen.value = true;
   activeSuggestionIndex.value = -1;
+  void ensureFiltersLoaded();
   if (normalizedSearchText.value.length >= 2) {
     void fetchSuggestions(normalizedSearchText.value);
   } else {
     await ensureCategoriesLoaded();
   }
   await nextTick();
-  mobileInputRef.value?.focus();
-};
-
-// Only user input clears an applied search; route synchronization must not navigate.
-const handleSearchInput = async (event: Event) => {
-  const value = (event.target as HTMLInputElement).value.trim();
-  const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
-  if (value || !isCatalogSearch || !extractSearchQueryFromRoute()) return;
-
-  const query = { ...route.query };
-  delete query.q;
-  delete query.page;
-  await router.push({ path: route.path, query, hash: route.hash });
+  if (normalizedSearchText.value) mobileInputRef.value?.focus();
 };
 
 const submitSearch = async () => {
   const normalizedQuery = normalizedSearchText.value;
-  if (!normalizedQuery) return;
+  if (!canSubmit.value) return;
 
   const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
-  const searchPath = router.resolve({ path: "/catalog", query: { q: normalizedQuery } }).fullPath;
+  const refinements: Record<string, string> = {};
+  if (isCatalogSearch && !clearCatalogRefinementsOnSubmit.value) {
+    for (const key of ["brand", "placement", "side", "in_stock", "on_sale", "min_price", "max_price", "ordering"]) {
+      const rawValue = route.query[key];
+      const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+      if (typeof value === "string" && value) refinements[key] = value;
+    }
+  }
+  const query = { ...refinements, ...(normalizedQuery ? { q: normalizedQuery } : {}), ...filterParams.value };
+  const searchPath = router.resolve({ path: "/catalog", query }).fullPath;
 
-  saveRecentSearch(normalizedQuery);
   closeAllSearchSurfaces();
 
   await router.push({
     path: "/catalog",
-    query: {
-      q: normalizedQuery,
-    },
+    query,
   });
+  clearCatalogRefinementsOnSubmit.value = false;
 
   if (!isCatalogSearch || router.currentRoute.value.fullPath !== searchPath) return;
   await waitForPageReady(searchPath);
@@ -325,22 +346,11 @@ const submitSearch = async () => {
 
 const goToSuggestion = async (suggestion: CatalogProductSuggestion) => {
   const normalizedQuery = normalizedSearchText.value;
-  saveRecentSearch(normalizedQuery || suggestion.name);
   if (normalizedQuery) {
     trackSearchSelection(normalizedQuery, suggestion.display_sku || suggestion.sku);
   }
   closeAllSearchSurfaces();
   await navigateTo(`/catalog/${suggestion.slug}`);
-};
-
-const applyRecentSearch = async (value: string) => {
-  searchText.value = value;
-  await submitSearch();
-};
-
-const goToCategory = async (category: CatalogCategoryItem) => {
-  closeAllSearchSurfaces();
-  await router.push(buildCatalogCategoryPath(category.slug));
 };
 
 const suggestionPriceLabel = (suggestion: CatalogProductSuggestion) => {
@@ -400,11 +410,22 @@ const handleInputKeydown = async (event: KeyboardEvent) => {
 };
 
 const syncSearchTextFromRoute = () => {
+  clearCatalogRefinementsOnSubmit.value = false;
   searchText.value = extractSearchQueryFromRoute();
+  const first = (value: unknown) => String((Array.isArray(value) ? value[0] : value) || "");
+  const inCatalog = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
+  selectedMake.value = inCatalog ? first(route.query.make) : "";
+  selectedModel.value = selectedMake.value ? first(route.query.model) : "";
+  selectedYear.value = selectedMake.value ? first(route.query.year) : "";
+  const category = inCatalog ? getCatalogCategorySlugFromPath(route.path) || first(route.query.category) : "";
+  const plural = inCatalog ? first(route.query.categories) : "";
+  selectedCategories.value = [...new Set((category ? [category] : plural.split(",")).filter(Boolean))].map((value) =>
+    categories.value.find((item) => String(item.id) === value)?.slug || value,
+  );
   activeSuggestionIndex.value = -1;
 };
 
-watch(normalizedSearchText, (nextValue) => {
+watch([normalizedSearchText, filtersKey], ([nextValue]) => {
   // Invalidate in-flight responses immediately, before the next debounce starts.
   resetSuggestionsState();
 
@@ -422,13 +443,8 @@ watch(normalizedSearchText, (nextValue) => {
   fetchSuggestionsDebounced(nextValue);
 }, { flush: "sync" });
 
-watch(
-  () => route.fullPath,
-  () => {
-    closeAllSearchSurfaces();
-    syncSearchTextFromRoute();
-  },
-);
+watch(() => route.fullPath, closeAllSearchSurfaces);
+watch(headerRouteKey, syncSearchTextFromRoute);
 
 watch(isMobileViewport, (isMobile) => {
   if (isMobile) {
@@ -439,29 +455,20 @@ watch(isMobileViewport, (isMobile) => {
   closeMobileSheet();
 });
 
-watch(isMobileOpen, (isOpen) => {
-  if (!import.meta.client) return;
-  document.body.style.overflow = isOpen ? "hidden" : "";
-});
-
-watch(functionalityConsentGranted, (isGranted) => {
-  if (isGranted) {
-    loadRecentSearches();
-    return;
-  }
-
-  clearRecentSearches();
-});
-
 onMounted(() => {
-  loadRecentSearches();
+  // Remove history left by older versions; this panel no longer persists searches.
+  try {
+    window.localStorage.removeItem("flexdrive-header-searches");
+  } catch {
+    // Search remains available when browser storage is blocked.
+  }
   syncSearchTextFromRoute();
 });
 
 onBeforeUnmount(() => {
+  disposed = true;
+  ++vehicleRequestId;
   resetSuggestionsState();
-  if (!import.meta.client) return;
-  document.body.style.overflow = "";
 });
 
 onClickOutside(rootRef, () => {
@@ -473,773 +480,172 @@ onClickOutside(rootRef, () => {
 defineExpose({
   openMobileSheet,
 });
+
 </script>
 
 <template>
-  <div class="w-full" ref="rootRef">
-    <div v-if="!props.sheetOnly" class="hidden sm:block">
-      <div class="relative">
-        <form
-          class="group flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-[border-color,box-shadow,background-color] duration-200 focus-within:border-accent-primary focus-within:bg-surface focus-within:shadow-[0_14px_34px_-22px_rgba(82,120,32,0.32)]"
-          @submit.prevent="submitSearch"
-        >
-          <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-text-secondary transition-colors duration-200 group-focus-within:text-accent-primary"
-          >
-            <BaseIcon name="search" :size="18" />
-          </div>
-
-          <input
-            v-model="searchText"
-            type="search"
-            :placeholder="searchPlaceholder"
-            autocomplete="off"
-            spellcheck="false"
-            :aria-expanded="showDesktopPanel"
-            aria-autocomplete="list"
-            class="h-11 min-w-0 flex-1 bg-transparent px-1 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
-            @focus="openDesktopPanel"
-            @input="handleSearchInput"
-            @keydown="handleInputKeydown"
-          />
-
-          <button
-            type="submit"
-            class="hidden min-h-[44px] shrink-0 upper items-center gap-2 rounded-[12px] bg-accent-primary px-4 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover md:inline-flex"
-          >
-            ძებნა
-          </button>
-
-          <button
-            type="submit"
-            aria-label="ძებნა"
-            class="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-[12px] bg-accent-primary text-text-invert transition-colors duration-200 hover:bg-accent-hover md:hidden"
-          >
-            <BaseIcon name="search" :size="16" />
-          </button>
-        </form>
-
-        <transition name="header-search-panel">
-          <div
-            v-if="showDesktopPanel"
-            class="absolute left-0 right-0 top-[calc(100%+12px)] z-50 overflow-hidden rounded-[24px] border border-header-border bg-surface shadow-[0_28px_60px_-28px_rgba(2,6,23,0.25)]"
-          >
-            <div
-              class="header-search-scroll max-h-[min(70vh,640px)] overflow-y-auto p-4 md:p-5"
-            >
-              <div
-                v-if="showDiscoveryState"
-                class="grid gap-5 lg:grid-cols-[1.2fr_0.9fr]"
-              >
-                <section
-                  class="rounded-[20px] border border-border-default bg-surface-2/70 p-4"
-                >
-                  <p
-                    class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
-                  >
-                    {{ emptyStateTitle }}
-                  </p>
-                  <p class="mt-2 text-sm leading-6 text-text-secondary">
-                    {{ emptyStateCopy }}
-                  </p>
-
-                  <ul class="mt-4 grid gap-2 sm:grid-cols-3">
-                    <li
-                      v-for="mode in quickSearchModes"
-                      :key="mode.label"
-                      class="rounded-[14px] border border-border-default bg-surface px-3 py-2"
-                    >
-                      <span
-                        class="block text-[12px] font-bold text-text-primary"
-                      >
-                        {{ mode.label }}
-                      </span>
-                      <span class="mt-0.5 block text-[11px] text-text-muted">
-                        {{ mode.copy }}
-                      </span>
-                    </li>
-                  </ul>
-
-                  <div class="mt-5">
-                    <p class="text-sm font-semibold text-text-primary">
-                      ბოლო ძებნები
-                    </p>
-                    <div
-                      v-if="recentSearches.length"
-                      class="mt-3 flex flex-wrap gap-2"
-                    >
-                      <button
-                        v-for="term in recentSearches"
-                        :key="term"
-                        type="button"
-                        class="inline-flex min-h-[40px] items-center rounded-full border border-border-default bg-surface px-4 text-sm text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
-                        @click="applyRecentSearch(term)"
-                      >
-                        {{ term }}
-                      </button>
-                    </div>
-                    <p v-else class="mt-3 text-sm leading-6 text-text-muted">
-                      ძებნის ისტორია აქ გამოჩნდება.
-                    </p>
-                  </div>
-                </section>
-
-                <section
-                  class="rounded-[20px] border border-border-default bg-surface p-4"
-                >
-                  <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm font-semibold text-text-primary">
-                      პოპულარული კატეგორიები
-                    </p>
-                    <NuxtLink
-                      to="/catalog"
-                      class="text-sm font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover"
-                    >
-                      კატალოგი
-                    </NuxtLink>
-                  </div>
-
-                  <div
-                    v-if="categoriesPending && !quickCategories.length"
-                    class="mt-4 space-y-2"
-                  >
-                    <div
-                      v-for="index in 5"
-                      :key="index"
-                      class="h-11 animate-pulse rounded-[14px] border border-border-default bg-surface-2"
-                    />
-                  </div>
-
-                  <div v-else class="mt-4 grid gap-2">
-                    <button
-                      v-for="category in quickCategories"
-                      :key="category.id"
-                      type="button"
-                      class="group flex min-h-[52px] items-center justify-between rounded-[16px] border border-border-default bg-surface-2 px-4 text-left transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover"
-                      @click="goToCategory(category)"
-                    >
-                      <span class="min-w-0">
-                        <span
-                          class="block text-sm font-semibold text-text-primary"
-                        >
-                          {{ category.name }}
-                        </span>
-                        <span class="mt-1 block text-xs text-text-muted">
-                          {{ category.product_count }} პროდუქტი
-                        </span>
-                      </span>
-                      <span
-                        class="text-sm font-semibold text-text-muted transition-colors duration-200 group-hover:text-accent-primary"
-                      >
-                        →
-                      </span>
-                    </button>
-                  </div>
-                </section>
-              </div>
-
-              <div
-                v-else-if="showTypingHint"
-                class="rounded-[20px] border border-border-default bg-surface-2/70 px-4 py-6 text-sm text-text-secondary"
-              >
-                ჩაწერე მინიმუმ 2 სიმბოლო, რომ შესაბამისი პროდუქტები გაჩვენოთ.
-              </div>
-
-              <div v-else-if="suggestionsPending" class="space-y-3">
-                <div
-                  v-for="index in 5"
-                  :key="index"
-                  class="flex items-center gap-3 rounded-[18px] border border-border-default bg-surface-2/70 p-3"
-                >
-                  <div
-                    class="h-16 w-16 animate-pulse rounded-[14px] bg-surface"
-                  />
-                  <div class="min-w-0 flex-1 space-y-2">
-                    <div
-                      class="h-4 w-3/5 animate-pulse rounded-full bg-surface"
-                    />
-                    <div
-                      class="h-3 w-2/5 animate-pulse rounded-full bg-surface"
-                    />
-                  </div>
-                  <div class="h-4 w-16 animate-pulse rounded-full bg-surface" />
-                </div>
-              </div>
-
-              <div
-                v-else-if="suggestionsError"
-                class="rounded-[20px] border border-error/20 bg-error/5 px-4 py-6 text-sm text-text-secondary"
-              >
-                <p class="font-semibold text-text-primary">
-                  {{ suggestionsError }}
-                </p>
-                <button
-                  type="button"
-                  class="mt-4 inline-flex min-h-[40px] items-center rounded-full border border-accent-primary px-4 text-sm font-semibold text-accent-primary transition-colors duration-200 hover:bg-accent-primary hover:text-text-invert"
-                  @click="fetchSuggestions(normalizedSearchText)"
-                >
-                  ხელახლა ცდა
-                </button>
-              </div>
-
-              <div v-else-if="showSuggestionList" class="space-y-3">
-                <section>
-                  <div class="mb-3 flex items-center justify-between gap-3">
-                    <p class="text-sm font-semibold text-text-primary">
-                      შესაბამისი პროდუქტები
-                    </p>
-                    <p
-                      class="text-xs uppercase tracking-[0.14em] text-text-muted"
-                    >
-                      {{ suggestions.length }} შედეგი
-                    </p>
-                  </div>
-
-                  <div class="space-y-2">
-                    <button
-                      v-for="(suggestion, index) in suggestions"
-                      :key="suggestion.id"
-                      type="button"
-                      :class="[
-                        'group flex w-full items-center gap-3 rounded-[18px] border p-3 text-left transition-colors duration-200',
-                        index === activeSuggestionIndex
-                          ? 'border-accent-primary bg-header-hover'
-                          : 'border-border-default bg-surface hover:border-accent-primary hover:bg-header-hover/70',
-                      ]"
-                      @mouseenter="activeSuggestionIndex = index"
-                      @click="goToSuggestion(suggestion)"
-                    >
-                      <div
-                        class="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-border-default bg-surface-2"
-                      >
-                        <BasePicture
-                          product-image
-                          :data="
-                            suggestion.primary_image.desktop ||
-                            suggestion.primary_image.tablet ||
-                            suggestion.primary_image.mobile
-                              ? suggestion.primary_image
-                              : cardPlaceholderImage
-                          "
-                          :alt="
-                            suggestion.primary_image.alt_text || suggestion.name
-                          "
-                          preset="search"
-                          class="h-full w-full"
-                          fit="cover"
-                          lazy
-                        />
-                      </div>
-
-                      <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <p
-                            class="header-search-result-title text-sm font-semibold text-text-primary"
-                          >
-                            {{ suggestion.name }}
-                          </p>
-                          <span
-                            class="inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold"
-                            :class="suggestionStatusClass(suggestion)"
-                          >
-                            {{ suggestionStatusLabel(suggestion) }}
-                          </span>
-                        </div>
-                        <p class="mt-1 text-xs text-text-muted">
-                          {{ suggestion.fitment_summary }}
-                        </p>
-                      </div>
-
-                      <div class="shrink-0 text-right">
-                        <p class="text-sm font-bold text-accent-primary">
-                          {{ suggestionPriceLabel(suggestion) }} GEL
-                        </p>
-                        <p
-                          class="mt-1 text-xs text-text-muted transition-colors duration-200 group-hover:text-accent-primary"
-                        >
-                          დეტალები →
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-                </section>
-
-                <button
-                  type="button"
-                  class="flex min-h-[54px] w-full items-center justify-between rounded-[18px] border border-accent-primary/25 bg-accent-primary/6 px-4 text-left transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary/10"
-                  @click="submitSearch"
-                >
-                  <span>
-                    <span class="block text-sm font-semibold text-text-primary">
-                      ყველა შედეგის ნახვა
-                    </span>
-                    <span class="mt-1 block text-xs text-text-muted">
-                      მოთხოვნა: “{{ normalizedSearchText }}”
-                    </span>
-                  </span>
-                  <span class="text-sm font-semibold text-accent-primary">
-                    →
-                  </span>
-                </button>
-              </div>
-
-              <div
-                v-else-if="showNoResults"
-                class="grid gap-4 rounded-[22px] border border-border-default bg-surface-2/60 p-4 md:grid-cols-[1.1fr_0.9fr]"
-              >
-                <section>
-                  <p
-                    class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
-                  >
-                    შედეგი ვერ მოიძებნა
-                  </p>
-                  <p class="mt-2 text-base font-semibold text-text-primary">
-                    “{{ normalizedSearchText }}” შესაბამის პროდუქტებში ვერ
-                    ვიპოვეთ.
-                  </p>
-                  <p class="mt-2 text-sm leading-6 text-text-secondary">
-                    სცადე სხვა სიტყვა, OEM ან SKU, ან გადადი სრულ კატალოგში.
-                  </p>
-
-                  <button
-                    type="button"
-                    class="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-accent-primary px-5 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover"
-                    @click="submitSearch"
-                  >
-                    კატალოგში ძებნა
-                  </button>
-                </section>
-
-                <section
-                  class="rounded-[18px] border border-border-default bg-surface p-4"
-                >
-                  <p class="text-sm font-semibold text-text-primary">
-                    სცადე ეს კატეგორიები
-                  </p>
-                  <div class="mt-3 flex flex-wrap gap-2">
-                    <button
-                      v-for="category in quickCategories"
-                      :key="category.id"
-                      type="button"
-                      class="inline-flex min-h-[40px] items-center rounded-full border border-border-default px-4 text-sm text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
-                      @click="goToCategory(category)"
-                    >
-                      {{ category.name }}
-                    </button>
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-        </transition>
-      </div>
-    </div>
-
-    <div v-if="!props.hideMobileTrigger && !props.sheetOnly" class="sm:hidden">
-      <button
-        type="button"
-        class="flex min-h-[52px] w-full items-center gap-3 rounded-[14px] border border-header-border bg-header-surface px-3 text-left shadow-[0_12px_26px_-22px_var(--shadow-color)] transition-colors duration-200 hover:border-accent-primary hover:bg-surface"
-        @click="openMobileSheet"
+  <div ref="rootRef" class="w-full min-w-0">
+    <div v-if="!props.sheetOnly" class="relative hidden md:block">
+      <form
+        class="flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 transition-colors focus-within:border-accent-primary focus-within:bg-surface"
+        role="search"
+        @submit.prevent="submitSearch"
       >
-        <span
-          class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-text-secondary"
-        >
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary" aria-hidden="true">
           <BaseIcon name="search" :size="18" />
         </span>
-        <span class="min-w-0 flex-1">
-          <span class="block truncate text-sm font-medium text-text-primary">
-            {{ mobileTriggerLabel }}
-          </span>
-          <span class="mt-0.5 block text-xs text-text-muted">
-            OEM ან SKU
-          </span>
-        </span>
-      </button>
-    </div>
-
-    <transition name="header-search-sheet">
-      <div
-        v-if="isMobileOpen"
-        class="fixed inset-0 z-50 bg-[rgba(2,6,23,0.46)] sm:hidden"
-        @click="closeMobileSheet"
-      >
-        <section
-          class="absolute inset-x-0 top-0 flex max-h-[100dvh] min-h-[100dvh] flex-col rounded-b-[24px] border-b border-header-border bg-header-bg"
-          @click.stop
+        <input
+          v-model="searchText"
+          type="search"
+          :placeholder="searchPlaceholder"
+          :aria-label="searchPlaceholder"
+          :aria-expanded="showDesktopPanel"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="255"
+          class="h-11 min-w-0 flex-1 bg-transparent px-1 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+          @focus="openDesktopPanel"
+          @click="openDesktopPanel"
+          @keydown="handleInputKeydown"
+        />
+        <BaseButton type="submit" :disabled="!canSubmit">ძებნა</BaseButton>
+      </form>
+      <transition name="header-search-panel">
+        <div
+          v-if="showDesktopPanel"
+          class="header-search-panel header-search-scroll absolute inset-x-0 top-[calc(100%+12px)] z-50 overflow-y-auto overscroll-contain rounded-[20px] border border-header-border bg-surface p-4 shadow-[0_28px_60px_-28px_var(--shadow-color)] md:p-5"
+          @keydown.esc.stop="closeDesktopPanel"
         >
-          <div
-            class="border-b border-header-border bg-header-bg/95 px-4 pb-4 pt-5 backdrop-blur"
-          >
-            <div class="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <p
-                  class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
-                >
-                  სწრაფი ძებნა
-                </p>
-                <p class="mt-1 text-sm text-text-secondary">
-                  ნაწილი, OEM ან SKU ერთ ველში
-                </p>
-              </div>
-
-              <button
-                type="button"
-                aria-label="ძიების დახურვა"
-                class="inline-flex h-10 w-10 items-center justify-center rounded-[14px] border border-header-border text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary"
-                @click="closeMobileSheet"
-              >
-                <span class="text-xl leading-none">×</span>
-              </button>
-            </div>
-
-            <form
-              class="flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 shadow-[0_12px_26px_-22px_var(--shadow-color)]"
-              @submit.prevent="submitSearch"
-            >
-              <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface text-text-secondary"
-              >
-                <BaseIcon name="search" :size="18" />
-              </div>
-
-              <input
-                ref="mobileInputRef"
-                v-model="searchText"
-                type="search"
-                :placeholder="searchPlaceholder"
-                autocomplete="off"
-                spellcheck="false"
-                class="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
-                @input="handleSearchInput"
-                @keydown="handleInputKeydown"
-              />
-
-              <button
-                type="submit"
-                class="inline-flex min-h-[44px] items-center rounded-[12px] bg-accent-primary px-4 text-sm font-semibold text-text-invert transition-colors duration-200 hover:bg-accent-hover"
-              >
-                ძებნა
-              </button>
-            </form>
-          </div>
-
-          <div class="header-search-scroll flex-1 overflow-y-auto px-4 pb-6 pt-4">
-            <div v-if="showDiscoveryState" class="space-y-4">
-              <section
-                class="rounded-[20px] border border-border-default bg-surface p-4"
-              >
-                <p class="text-sm font-semibold text-text-primary">
-                  როგორ შეგიძლია მოძებნო
-                </p>
-                <ul class="mt-3 grid gap-2">
-                  <li
-                    v-for="mode in quickSearchModes"
-                    :key="mode.label"
-                    class="rounded-[14px] border border-border-default bg-surface-2 px-3 py-2"
-                  >
-                    <span class="block text-xs font-bold text-text-primary">
-                      {{ mode.label }}
-                    </span>
-                    <span class="mt-0.5 block text-xs text-text-muted">
-                      {{ mode.copy }}
-                    </span>
-                  </li>
-                </ul>
-              </section>
-
-              <section
-                class="rounded-[20px] border border-border-default bg-surface p-4"
-              >
-                <p class="text-sm font-semibold text-text-primary">
-                  ბოლო ძებნები
-                </p>
-                <div
-                  v-if="recentSearches.length"
-                  class="mt-3 flex flex-wrap gap-2"
-                >
-                  <button
-                    v-for="term in recentSearches"
-                    :key="term"
-                    type="button"
-                    class="inline-flex min-h-[40px] items-center rounded-full border border-border-default bg-surface-2 px-4 text-sm text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
-                    @click="applyRecentSearch(term)"
-                  >
-                    {{ term }}
-                  </button>
-                </div>
-                <p v-else class="mt-3 text-sm leading-6 text-text-muted">
-                  ძებნის ისტორია აქ გამოჩნდება.
-                </p>
-              </section>
-
-              <section
-                class="rounded-[20px] border border-border-default bg-surface p-4"
-              >
-                <p class="text-sm font-semibold text-text-primary">
-                  პოპულარული კატეგორიები
-                </p>
-
-                <div
-                  v-if="categoriesPending && !quickCategories.length"
-                  class="mt-4 space-y-2"
-                >
-                  <div
-                    v-for="index in 5"
-                    :key="index"
-                    class="h-11 animate-pulse rounded-[14px] bg-surface-2"
-                  />
-                </div>
-
-                <div v-else class="mt-4 grid gap-2">
-                  <button
-                    v-for="category in quickCategories"
-                    :key="category.id"
-                    type="button"
-                    class="flex min-h-[52px] items-center justify-between rounded-[16px] border border-border-default bg-surface-2 px-4 text-left transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover"
-                    @click="goToCategory(category)"
-                  >
-                    <span>
-                      <span
-                        class="block text-sm font-semibold text-text-primary"
-                      >
-                        {{ category.name }}
-                      </span>
-                      <span class="mt-1 block text-xs text-text-muted">
-                        {{ category.product_count }} პროდუქტი
-                      </span>
-                    </span>
-                    <span class="text-sm font-semibold text-text-muted">
-                      →
-                    </span>
-                  </button>
-                </div>
-              </section>
-            </div>
-
-            <div
-              v-else-if="showTypingHint"
-              class="rounded-[20px] border border-border-default bg-surface px-4 py-6 text-sm text-text-secondary"
-            >
-              ჩაწერე მინიმუმ 2 სიმბოლო, რომ შესაბამისი პროდუქტები გაჩვენოთ.
-            </div>
-
-            <div v-else-if="suggestionsPending" class="space-y-3">
-              <div
-                v-for="index in 5"
-                :key="index"
-                class="flex items-center gap-3 rounded-[18px] border border-border-default bg-surface p-3"
-              >
-                <div
-                  class="h-16 w-16 animate-pulse rounded-[14px] bg-surface-2"
-                />
-                <div class="min-w-0 flex-1 space-y-2">
-                  <div
-                    class="h-4 w-3/5 animate-pulse rounded-full bg-surface-2"
-                  />
-                  <div
-                    class="h-3 w-2/5 animate-pulse rounded-full bg-surface-2"
-                  />
-                </div>
-                <div class="h-4 w-16 animate-pulse rounded-full bg-surface-2" />
-              </div>
-            </div>
-
-            <div
-              v-else-if="suggestionsError"
-              class="rounded-[20px] border border-error/20 bg-error/5 px-4 py-6 text-sm text-text-secondary"
-            >
-              <p class="font-semibold text-text-primary">
-                {{ suggestionsError }}
-              </p>
-              <button
-                type="button"
-                class="mt-4 inline-flex min-h-[40px] items-center rounded-full border border-accent-primary px-4 text-sm font-semibold text-accent-primary transition-colors duration-200 hover:bg-accent-primary hover:text-text-invert"
-                @click="fetchSuggestions(normalizedSearchText)"
-              >
-                ხელახლა ცდა
-              </button>
-            </div>
-
-            <div v-else-if="showSuggestionList" class="space-y-3">
-              <button
-                v-for="(suggestion, index) in suggestions"
-                :key="suggestion.id"
-                type="button"
-                :class="[
-                  'group flex w-full items-center gap-3 rounded-[18px] border p-3 text-left transition-colors duration-200',
-                  index === activeSuggestionIndex
-                    ? 'border-accent-primary bg-header-hover'
-                    : 'border-border-default bg-surface hover:border-accent-primary hover:bg-header-hover/70',
-                ]"
-                @click="goToSuggestion(suggestion)"
-                @mouseenter="activeSuggestionIndex = index"
-              >
-                <div
-                  class="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-border-default bg-surface-2"
+          <HeaderSearchFilters
+            :make="selectedMake" :model="selectedModel" :year="selectedYear"
+            :selected-categories="selectedCategories" :category-options="categoryOptions"
+            :make-options="makeOptions" :model-options="modelOptions" :year-options="yearOptions"
+            :categories-pending="categoriesPending" :makes-pending="makesPending"
+            :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
+            @make="updateMake" @model="updateModel" @year="selectedYear = $event"
+            @categories="selectedCategories = $event" @search="submitSearch"
+            @clear="clearFilters" @retry="ensureFiltersLoaded"
+          />
+          <div v-if="normalizedSearchText" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
+            <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
+            <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
+            <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>
+            <ul v-else-if="showSuggestionList" class="space-y-2" aria-label="ნაპოვნი პროდუქტები">
+              <li v-for="(suggestion, index) in suggestions" :key="suggestion.id">
+                <button
+                  type="button"
+                  class="flex min-h-20 w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                  :class="index === activeSuggestionIndex ? 'border-accent-primary bg-accent-soft' : 'border-border-default bg-surface hover:bg-surface-2'"
+                  @click="goToSuggestion(suggestion)"
                 >
                   <BasePicture
-                    product-image
-                    :data="
-                      suggestion.primary_image.desktop ||
-                      suggestion.primary_image.tablet ||
-                      suggestion.primary_image.mobile
-                        ? suggestion.primary_image
-                        : cardPlaceholderImage
-                    "
-                    :alt="suggestion.primary_image.alt_text || suggestion.name"
-                    preset="search"
-                    class="h-full w-full"
-                    fit="cover"
-                    lazy
+                    :images="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
+                    :alt="suggestion.name" preset="search" fit="contain" lazy
+                    class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2"
                   />
-                </div>
-
-                <div class="min-w-0 flex-1">
-                  <p
-                    class="header-search-result-title text-sm font-semibold text-text-primary"
-                  >
-                    {{ suggestion.name }}
-                  </p>
-                  <p class="mt-1 text-xs text-text-muted">
-                    {{ suggestion.fitment_summary }}
-                  </p>
-                  <p class="mt-2 text-sm font-bold text-accent-primary">
-                    {{ suggestionPriceLabel(suggestion) }} GEL
-                  </p>
-                </div>
-
-                <span
-                  class="inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold"
-                  :class="suggestionStatusClass(suggestion)"
-                >
-                  {{ suggestionStatusLabel(suggestion) }}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                class="flex min-h-[54px] w-full items-center justify-between rounded-[18px] border border-accent-primary/25 bg-accent-primary/6 px-4 text-left transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary/10"
-                @click="submitSearch"
-              >
-                <span>
-                  <span class="block text-sm font-semibold text-text-primary">
-                    ყველა შედეგის ნახვა
+                  <span class="min-w-0 flex-1">
+                    <span class="header-search-result-title block text-sm font-semibold text-text-primary">{{ suggestion.name }}</span>
+                    <span class="mt-1 block text-xs text-text-muted">{{ suggestion.fitment_summary }}</span>
+                    <span class="mt-1 inline-flex rounded-md border px-2 py-0.5 text-xs" :class="suggestionStatusClass(suggestion)">{{ suggestionStatusLabel(suggestion) }}</span>
                   </span>
-                  <span class="mt-1 block text-xs text-text-muted">
-                    მოთხოვნა: “{{ normalizedSearchText }}”
-                  </span>
-                </span>
-                <span class="text-sm font-semibold text-accent-primary">→</span>
-              </button>
-            </div>
-
-            <div
-              v-else-if="showNoResults"
-              class="rounded-[22px] border border-border-default bg-surface p-4"
-            >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary"
-              >
-                შედეგი ვერ მოიძებნა
-              </p>
-              <p class="mt-2 text-base font-semibold text-text-primary">
-                “{{ normalizedSearchText }}” შესაბამის პროდუქტებში ვერ ვიპოვეთ.
-              </p>
-              <p class="mt-2 text-sm leading-6 text-text-secondary">
-                სცადე სხვა სიტყვა, OEM ან SKU, ან აირჩიე კატეგორია ქვემოთ.
-              </p>
-
-              <div class="mt-4 flex flex-wrap gap-2">
-                <button
-                  v-for="category in quickCategories"
-                  :key="category.id"
-                  type="button"
-                  class="inline-flex min-h-[40px] items-center rounded-full border border-border-default px-4 text-sm text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary"
-                  @click="goToCategory(category)"
-                >
-                  {{ category.name }}
+                  <span class="shrink-0 text-right text-sm font-bold text-accent-primary">{{ suggestion.price_available === false ? 'ფასი დასაზუსტებელია' : `${suggestionPriceLabel(suggestion)} GEL` }}</span>
                 </button>
-              </div>
+              </li>
+            </ul>
+            <p v-else-if="showNoResults" class="text-sm text-text-secondary">შედეგი ვერ მოიძებნა. შეცვალე სიტყვა ან არჩეული ფილტრები.</p>
+          </div>
+        </div>
+      </transition>
+    </div>
+
+    <button
+      v-if="!props.hideMobileTrigger && !props.sheetOnly"
+      type="button"
+      class="flex min-h-[52px] w-full items-center gap-3 rounded-[14px] border border-header-border bg-header-surface px-4 text-left text-sm text-text-secondary md:hidden"
+      @click="openMobileSheet"
+    >
+      <BaseIcon name="search" :size="18" />
+      <span class="min-w-0 truncate">{{ mobileTriggerLabel }}</span>
+    </button>
+
+    <Dialog :open="isMobileOpen" class="relative z-50 md:hidden" @close="closeMobileSheet">
+      <div class="fixed inset-0 bg-text-primary/40" aria-hidden="true" />
+      <div class="fixed inset-0 flex">
+        <DialogPanel class="flex h-[100dvh] w-full min-w-0 flex-col bg-surface">
+          <div class="shrink-0 border-b border-header-border px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <DialogTitle class="text-base font-bold text-text-primary">ძებნა</DialogTitle>
+              <BaseButton variant="ghost" aria-label="ძიების დახურვა" @click="closeMobileSheet">
+                <span aria-hidden="true" class="text-2xl leading-none">×</span>
+              </BaseButton>
+            </div>
+            <form role="search" class="flex items-center gap-2 rounded-lg border border-header-border bg-header-surface px-3 focus-within:border-accent-primary" @submit.prevent="submitSearch">
+              <BaseIcon name="search" :size="18" class="shrink-0 text-text-muted" />
+              <input
+                ref="mobileInputRef" v-model="searchText" type="search"
+                :placeholder="searchPlaceholder" :aria-label="searchPlaceholder"
+                autocomplete="off" spellcheck="false" maxlength="255"
+                class="h-12 min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
+                @keydown="handleInputKeydown"
+              />
+            </form>
+          </div>
+          <div class="header-search-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
+            <HeaderSearchFilters
+              :make="selectedMake" :model="selectedModel" :year="selectedYear"
+              :selected-categories="selectedCategories" :category-options="categoryOptions"
+              :make-options="makeOptions" :model-options="modelOptions" :year-options="yearOptions"
+              :categories-pending="categoriesPending" :makes-pending="makesPending"
+              :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
+              @make="updateMake" @model="updateModel" @year="selectedYear = $event"
+              @categories="selectedCategories = $event" @search="submitSearch"
+              @clear="clearFilters" @retry="ensureFiltersLoaded"
+            />
+            <div v-if="normalizedSearchText" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
+              <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
+              <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
+              <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>
+              <ul v-else-if="showSuggestionList" class="space-y-2" aria-label="ნაპოვნი პროდუქტები">
+                <li v-for="(suggestion, index) in suggestions" :key="suggestion.id">
+                  <button
+                    type="button"
+                    class="flex w-full items-start gap-3 rounded-lg border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                    :class="index === activeSuggestionIndex ? 'border-accent-primary bg-accent-soft' : 'border-border-default bg-surface'"
+                    @click="goToSuggestion(suggestion)"
+                  >
+                    <BasePicture
+                      :images="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
+                      :alt="suggestion.name" preset="search" fit="contain" lazy
+                      class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2"
+                    />
+                    <span class="min-w-0 flex-1">
+                      <span class="header-search-result-title block text-sm font-semibold text-text-primary">{{ suggestion.name }}</span>
+                      <span class="mt-1 block text-xs text-text-muted">{{ suggestion.fitment_summary }}</span>
+                      <span class="mt-1 block text-sm font-bold text-accent-primary">{{ suggestion.price_available === false ? 'ფასი დასაზუსტებელია' : `${suggestionPriceLabel(suggestion)} GEL` }}</span>
+                      <span class="mt-1 inline-flex rounded-md border px-2 py-0.5 text-xs" :class="suggestionStatusClass(suggestion)">{{ suggestionStatusLabel(suggestion) }}</span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+              <p v-else-if="showNoResults" class="text-sm text-text-secondary">შედეგი ვერ მოიძებნა. შეცვალე სიტყვა ან არჩეული ფილტრები.</p>
             </div>
           </div>
-        </section>
+        </DialogPanel>
       </div>
-    </transition>
+    </Dialog>
   </div>
 </template>
 
 <style scoped>
-.header-search-result-title {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.header-search-scroll {
-  scrollbar-color: var(--accent-primary) transparent;
-  scrollbar-width: thin;
-}
-
-.header-search-scroll::-webkit-scrollbar {
-  width: 8px;
-}
-
-.header-search-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.header-search-scroll::-webkit-scrollbar-thumb {
-  border: 2px solid var(--surface);
-  border-radius: 999px;
-  background: var(--accent-primary);
-}
-
-.header-search-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover);
-}
-
+.header-search-panel { max-height: min(720px, calc(100dvh - 160px)); }
+.header-search-result-title { overflow-wrap: anywhere; }
+.header-search-scroll { scrollbar-width: thin; scrollbar-color: var(--border-muted) transparent; }
 .header-search-panel-enter-active,
-.header-search-panel-leave-active {
-  transition:
-    opacity 0.18s ease,
-    transform 0.22s ease;
-}
-
+.header-search-panel-leave-active { transition: opacity 150ms ease, transform 150ms ease; }
 .header-search-panel-enter-from,
-.header-search-panel-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.header-search-sheet-enter-active,
-.header-search-sheet-leave-active {
-  transition: opacity 0.22s ease;
-}
-
-.header-search-sheet-enter-active section,
-.header-search-sheet-leave-active section {
-  transition: transform 0.24s ease;
-}
-
-.header-search-sheet-enter-from,
-.header-search-sheet-leave-to {
-  opacity: 0;
-}
-
-.header-search-sheet-enter-from section,
-.header-search-sheet-leave-to section {
-  transform: translateY(-24px);
-}
-
+.header-search-panel-leave-to { opacity: 0; transform: translateY(-4px); }
 @media (prefers-reduced-motion: reduce) {
   .header-search-panel-enter-active,
-  .header-search-panel-leave-active,
-  .header-search-sheet-enter-active,
-  .header-search-sheet-leave-active,
-  .header-search-sheet-enter-active section,
-  .header-search-sheet-leave-active section {
-    transition: none;
-  }
+  .header-search-panel-leave-active { transition: none; }
 }
 </style>

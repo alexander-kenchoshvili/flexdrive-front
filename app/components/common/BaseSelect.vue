@@ -35,6 +35,9 @@ type BaseSelectProps = {
   searchable?: boolean;
   searchPlaceholder?: string;
   searchEmptyText?: string;
+  multiple?: boolean;
+  selectedValues?: Array<string | number>;
+  inlineOptions?: boolean;
 };
 
 const props = withDefaults(defineProps<BaseSelectProps>(), {
@@ -52,10 +55,14 @@ const props = withDefaults(defineProps<BaseSelectProps>(), {
   searchable: false,
   searchPlaceholder: "მოძებნე...",
   searchEmptyText: "შედეგი ვერ მოიძებნა",
+  multiple: false,
+  selectedValues: () => [],
+  inlineOptions: false,
 });
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: string | number | null): void;
+  (e: "update:selectedValues", value: Array<string | number>): void;
 }>();
 
 const attrs = useAttrs();
@@ -80,6 +87,9 @@ const modelValueLabel = computed(() => {
 const displayLabel = computed(
   () =>
     props.displayValue ||
+    (props.multiple
+      ? props.options.filter((option) => props.selectedValues.includes(option.value)).map((option) => option.label).join(", ") || props.placeholder
+      : "") ||
     selectedOption.value?.label ||
     modelValueLabel.value ||
     props.placeholder,
@@ -108,8 +118,9 @@ const controlClasses = computed(() => {
   return `${base} ${props.error ? withError : normal}`;
 });
 
-const optionsPanelClasses =
-  "base-select-options-scroll absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-border-default bg-surface py-1 shadow-[0_22px_48px_-30px_var(--shadow-color)] focus:outline-none";
+const optionsPanelClasses = computed(() =>
+  `base-select-options-scroll ${props.inlineOptions ? 'relative' : 'absolute'} z-30 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-border-default bg-surface py-1 shadow-[0_22px_48px_-30px_var(--shadow-color)] focus:outline-none`,
+);
 
 const optionClasses = (active: boolean, selected: boolean, disabled?: boolean) => {
   const base =
@@ -133,7 +144,12 @@ const optionClasses = (active: boolean, selected: boolean, disabled?: boolean) =
 const optionLabelClasses = (selected: boolean) =>
   selected ? "block truncate font-semibold" : "block truncate font-normal";
 
-const updateValue = (value: string | number) => {
+const updateValue = (value: string | number | Array<string | number>) => {
+  if (props.multiple && Array.isArray(value)) {
+    emit("update:selectedValues", value);
+    return;
+  }
+  if (Array.isArray(value)) return;
   searchQuery.value = "";
   emit("update:modelValue", value);
 };
@@ -146,12 +162,25 @@ const prepareSearch = () => {
   searchQuery.value = "";
   window.setTimeout(() => searchInput.value?.focus(), 100);
 };
+
+const handleSearchKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Escape") return;
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    // Hand navigation back to the listbox; typing stays in the search input.
+    const listbox = searchInput.value?.closest<HTMLElement>('[role="listbox"]');
+    void nextTick(() => listbox?.focus());
+    return;
+  }
+  event.stopPropagation();
+  if (event.key === "Enter") event.preventDefault();
+};
 </script>
 
 <template>
   <div :class="rootClass" :style="rootStyle">
     <Listbox
-      :model-value="modelValue"
+      :model-value="multiple ? selectedValues : modelValue"
+      :multiple="multiple"
       :disabled="disabled"
       @update:model-value="updateValue"
     >
@@ -206,6 +235,7 @@ const prepareSearch = () => {
                   autocomplete="off"
                   class="h-10 w-full rounded-md border border-border-default bg-surface-2 py-2 pl-9 pr-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-accent-primary focus-visible:!outline-none"
                   @click.stop
+                  @keydown="handleSearchKeydown"
                 />
               </div>
             </li>

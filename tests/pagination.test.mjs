@@ -131,12 +131,14 @@ test("actual catalog SSR links retain category path, vehicle/search/price/stock 
     "app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", "catalog");
   assert.equal(calls[0].page, 2);
   assert.equal(calls[0].category, "lights");
+  assert.equal(calls[0].has_image, undefined, "obsolete image filter cannot limit products");
   const links = rawLinks(html).filter((link) => link.attrs.includes("catalog-paginate"));
   assert.ok(links.length > 0, "pagination must be present in actual listing SSR");
   for (const link of links) {
     const url = urlFor(link);
     assert.equal(url.pathname, "/catalog/category/lights");
-    for (const [key, value] of Object.entries(query)) if (key !== "page") assert.equal(url.searchParams.get(key), value, key);
+    for (const [key, value] of Object.entries(query)) if (key !== "page" && key !== "has_image") assert.equal(url.searchParams.get(key), value, key);
+    assert.equal(url.searchParams.has("has_image"), false, "pagination drops the removed image filter");
   }
   assert.equal(urlFor(links.find((link) => /rel="prev"/.test(link.attrs))).searchParams.get("page"), null);
   assert.equal(urlFor(links.find((link) => /rel="next"/.test(link.attrs))).searchParams.get("page"), "3");

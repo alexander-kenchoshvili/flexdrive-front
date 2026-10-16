@@ -48,12 +48,12 @@ const props = withDefaults(
     hasInvalidVehicle?: boolean;
     selectedCategoryId?: number | null;
     selectedCategorySlug?: string | null;
+    selectedCategorySlugs?: string[];
     selectedBrand?: string;
     selectedPlacement?: string;
     selectedSide?: string;
     inStock?: boolean;
     onSale?: boolean;
-    hasImage?: boolean;
     minPrice?: string;
     maxPrice?: string;
     sort?: CatalogSort;
@@ -81,12 +81,12 @@ const props = withDefaults(
     hasInvalidVehicle: false,
     selectedCategoryId: null,
     selectedCategorySlug: null,
+    selectedCategorySlugs: () => [],
     selectedBrand: "",
     selectedPlacement: "",
     selectedSide: "",
     inStock: false,
     onSale: false,
-    hasImage: false,
     minPrice: "",
     maxPrice: "",
     sort: "recommended",
@@ -111,6 +111,7 @@ const emit = defineEmits<{
     e: "apply",
     value: {
       selectedCategoryId: number | null;
+      selectedCategorySlugs: string[];
       minPrice: string;
       maxPrice: string;
       sort: CatalogSort;
@@ -119,7 +120,6 @@ const emit = defineEmits<{
       selectedSide: string;
       inStock: boolean;
       onSale: boolean;
-      hasImage: boolean;
       vehicle: CatalogVehicleSelection;
     },
   ): void;
@@ -127,6 +127,7 @@ const emit = defineEmits<{
 
 const sheetRef = ref<HTMLElement | null>(null);
 const draftSelectedCategoryId = ref<number | null>(props.selectedCategoryId);
+const draftSelectedCategorySlugs = ref<string[]>([...props.selectedCategorySlugs]);
 const draftMinPrice = ref(props.minPrice);
 const draftMaxPrice = ref(props.maxPrice);
 const draftSort = ref<CatalogSort>(props.sort);
@@ -135,7 +136,6 @@ const draftSelectedPlacement = ref(props.selectedPlacement);
 const draftSelectedSide = ref(props.selectedSide);
 const draftInStock = ref(props.inStock);
 const draftOnSale = ref(props.onSale);
-const draftHasImage = ref(props.hasImage);
 
 let previousBodyOverflow = "";
 
@@ -159,37 +159,22 @@ const vehicleYearOptions = computed<SelectOption[]>(() =>
   })),
 );
 const brandOptions = computed<SelectOption[]>(() =>
-  props.brands.length
-    ? prependAllOption(
-        "ყველა ბრენდი",
-        props.brands.map((brand) => ({
-          label: `${brand.name} (${brand.count})`,
-          value: brand.slug,
-        })),
-      )
-    : [],
+  prependAllOption("ყველა ბრენდი", props.brands.map((brand) => ({
+    label: `${brand.name} (${brand.count})`,
+    value: String(brand.id) === props.selectedBrand ? props.selectedBrand : brand.slug,
+  }))),
 );
 const placementOptions = computed<SelectOption[]>(() =>
-  props.placements.length
-    ? prependAllOption(
-        "ყველა მდებარეობა",
-        props.placements.map((option) => ({
-          label: `${option.label} (${option.count})`,
-          value: option.value,
-        })),
-      )
-    : [],
+  prependAllOption("ყველა მდებარეობა", props.placements.map((option) => ({
+    label: `${option.label} (${option.count})`,
+    value: option.value,
+  }))),
 );
 const sideOptions = computed<SelectOption[]>(() =>
-  props.sides.length
-    ? prependAllOption(
-        "ყველა მხარე",
-        props.sides.map((option) => ({
-          label: `${option.label} (${option.count})`,
-          value: option.value,
-        })),
-      )
-    : [],
+  prependAllOption("ყველა მხარე", props.sides.map((option) => ({
+    label: `${option.label} (${option.count})`,
+    value: option.value,
+  }))),
 );
 
 const vehicleMakeModel = computed({
@@ -237,6 +222,7 @@ const sideModel = computed({
 const hasDraftControls = computed(
   () =>
     draftSelectedCategoryId.value !== null ||
+    draftSelectedCategorySlugs.value.length > 0 ||
     Boolean(draftMinPrice.value.trim()) ||
     Boolean(draftMaxPrice.value.trim()) ||
     draftSort.value !== "recommended" ||
@@ -245,7 +231,6 @@ const hasDraftControls = computed(
     Boolean(draftSelectedSide.value) ||
     draftInStock.value ||
     draftOnSale.value ||
-    draftHasImage.value ||
     Boolean(
       props.vehicleMake ||
         props.vehicleModel ||
@@ -278,6 +263,7 @@ const applyFilters = () => {
 
   emit("apply", {
     selectedCategoryId: draftSelectedCategoryId.value,
+    selectedCategorySlugs: draftSelectedCategorySlugs.value,
     minPrice: draftMinPrice.value.trim(),
     maxPrice: draftMaxPrice.value.trim(),
     sort: draftSort.value,
@@ -286,7 +272,6 @@ const applyFilters = () => {
     selectedSide: draftSelectedSide.value,
     inStock: draftInStock.value,
     onSale: draftOnSale.value,
-    hasImage: draftHasImage.value,
     vehicle: {
       make: props.vehicleMake,
       model: props.vehicleModel,
@@ -298,6 +283,7 @@ const applyFilters = () => {
 
 const clearDraftFilters = () => {
   draftSelectedCategoryId.value = null;
+  draftSelectedCategorySlugs.value = [];
   draftMinPrice.value = "";
   draftMaxPrice.value = "";
   draftSort.value = "recommended";
@@ -306,7 +292,6 @@ const clearDraftFilters = () => {
   draftSelectedSide.value = "";
   draftInStock.value = false;
   draftOnSale.value = false;
-  draftHasImage.value = false;
   emit("resetVehicleDraft");
 };
 
@@ -337,6 +322,7 @@ const unlockBodyScroll = () => {
 
 const syncDraftFromProps = () => {
   draftSelectedCategoryId.value = props.selectedCategoryId;
+  draftSelectedCategorySlugs.value = [...props.selectedCategorySlugs];
   draftMinPrice.value = props.minPrice;
   draftMaxPrice.value = props.maxPrice;
   draftSort.value = props.sort;
@@ -345,7 +331,6 @@ const syncDraftFromProps = () => {
   draftSelectedSide.value = props.selectedSide;
   draftInStock.value = props.inStock;
   draftOnSale.value = props.onSale;
-  draftHasImage.value = props.hasImage;
 };
 
 watch(
@@ -475,7 +460,17 @@ onBeforeUnmount(() => {
               <span class="text-xs text-text-muted">{{ categories.length }} არჩევანი</span>
             </div>
 
+            <BaseSelect
+              v-if="selectedCategorySlugs.length || draftSelectedCategorySlugs.length"
+              class="mt-3"
+              :selected-values="draftSelectedCategorySlugs"
+              :options="categories.map((category) => ({ label: category.name, value: category.slug }))"
+              label="არჩეული კატეგორიები"
+              multiple inline-options
+              @update:selected-values="draftSelectedCategorySlugs = $event.map(String)"
+            />
             <div
+              v-else
               class="mt-3 flex flex-wrap gap-2"
               role="radiogroup"
               aria-label="კატეგორიის ფილტრი"
@@ -561,17 +556,6 @@ onBeforeUnmount(() => {
                   class="h-4 w-4 accent-[var(--accent-primary)]"
                 />
                 ფასდაკლება
-              </label>
-              <label
-                class="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-border-default bg-surface px-3 py-2 text-sm font-semibold text-text-secondary"
-              >
-                <input
-                  v-model="draftHasImage"
-                  type="checkbox"
-                  :disabled="disabled"
-                  class="h-4 w-4 accent-[var(--accent-primary)]"
-                />
-                სურათით
               </label>
             </div>
           </section>
