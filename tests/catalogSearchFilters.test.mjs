@@ -9,7 +9,7 @@ const ts = require("typescript");
 const { parse } = require("@vue/compiler-sfc");
 const { createRouter, createMemoryHistory } = require("vue-router");
 
-async function catalog(t, location, facets = {}) {
+async function catalog(t, location, facets = {}, options = {}) {
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/:pathMatch(.*)*", component: { render: () => null } }] });
   await router.push(location);
   const requests = [];
@@ -21,7 +21,7 @@ async function catalog(t, location, facets = {}) {
     getCatalogProductsRaw: async (params) => { requests.push(params); return response; },
     getCatalogCategories: async (includeEmpty = false) => { categoryRequests.push(includeEmpty); return { data: vue.ref(categories), error: vue.ref(null) }; },
     getCatalogCategoriesRaw: async (includeEmpty = false) => { categoryRequests.push(includeEmpty); return categories; },
-    getVehicleMakes: async () => [], getVehicleModels: async () => [], getVehicleYears: async () => [],
+    getVehicleMakes: options.getVehicleMakes ?? (async () => []), getVehicleModels: async () => [], getVehicleYears: async () => [],
   };
   const mocks = {
     "~/utils/pageScrollCoordinator": { markPagePending() {}, markPageReady() {} },
@@ -34,20 +34,21 @@ async function catalog(t, location, facets = {}) {
     "~/utils/cmsCollectionSeo": {}, "~/utils/structuredData": {}, "~/utils/publicPageError": {},
   };
   const stops = [];
+  const unmountCallbacks = [];
   const globals = {
     ...vue, defineProps: () => ({}), useRoute: () => router.currentRoute.value, useRouter: () => router,
     useRuntimeConfig: () => ({ public: {} }), useSiteSettings: () => ({}),
     watch: (...args) => { const stop = vue.watch(...args); stops.push(stop); return stop; },
-    onMounted() {}, useHead() {}, useSeoMeta() {},
+    onMounted() {}, onBeforeUnmount: (callback) => unmountCallbacks.push(callback), useHead() {}, useSeoMeta() {},
   };
   t.after(() => stops.forEach((stop) => stop()));
   const { descriptor } = parse(readFileSync(new URL("../app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", import.meta.url), "utf8"));
-  const output = ts.transpileModule(descriptor.scriptSetup.content.replaceAll("import.meta.client", "false"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const output = ts.transpileModule(descriptor.scriptSetup.content.replaceAll("import.meta.client", String(Boolean(options.client))), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls };`)(
+  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest };`)(
     (name) => mocks[name] ?? (name.endsWith(".vue") ? {} : require(name)), {}, ...Object.values(globals),
   );
-  return { ...controls, requests, categoryRequests, router };
+  return { ...controls, requests, categoryRequests, router, unmount: () => unmountCallbacks.forEach((callback) => callback()) };
 }
 
 test("initial catalog request, pagination and sorting preserve all header filters", async (t) => {
@@ -84,7 +85,7 @@ test("API helpers carry the same category and vehicle conditions to products and
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   const fetch = async (endpoint) => { endpoints.push(endpoint); return []; };
-  const module = new Function("require", "exports", "apiFetch", `${output}\nreturn exports;`)(() => ({ apiFetchRaw: fetch }), exports, fetch);
+  const module = new Function("require", "exports", "apiFetch", `${output}\nreturn exports;`)(() => ({ apiFetchRaw: fetch, useCatalogVehicleMakes: () => ({ getVehicleMakes: () => fetch("/catalog/vehicles/makes/") }) }), exports, fetch);
   const api = module.useCatalogApi();
   const filters = { make: "subaru", model: "forester", year: 2018, categories: "lights,mirrors" };
   await api.getCatalogProductsRaw({ q: "17A 853 651", ...filters });
@@ -101,6 +102,52 @@ test("catalog category lists exclude empty categories on initial load and reload
   const c = await catalog(t, "/catalog");
   await c.loadCategories();
   assert.deepEqual(c.categoryRequests, [false, false]);
+});
+
+test("client catalog products become ready while make options are still loading", async (t) => {
+  let resolve;
+  const pending = new Promise((yes) => { resolve = yes; });
+  const c = await catalog(t, "/catalog", {}, { client: true, getVehicleMakes: () => pending });
+  assert.equal(c.requests.length, 1);
+  assert.equal(c.vehicleMakesPending.value, true);
+  resolve([{ id: 1, name: "Toyota", slug: "toyota" }]);
+  await c.vehicleMakesRequest;
+  assert.equal(c.vehicleMakesPending.value, false);
+  assert.equal(c.vehicleMakesResponse.value[0].slug, "toyota");
+});
+
+test("SSR waits for make options and returns a complete initial filter", async (t) => {
+  let resolve, finished = false;
+  const pending = new Promise((yes) => { resolve = yes; });
+  const setup = catalog(t, "/catalog", {}, { getVehicleMakes: () => pending }).then((c) => { finished = true; return c; });
+  for (let i = 0; i < 5; i++) await vue.nextTick();
+  assert.equal(finished, false);
+  resolve([{ id: 1, name: "Toyota", slug: "toyota" }]);
+  const c = await setup;
+  assert.equal(c.vehicleMakesResponse.value[0].slug, "toyota");
+  assert.equal(c.vehicleMakesPending.value, false);
+});
+
+for (const fail of [false, true]) {
+  test(`late make ${fail ? "failure" : "response"} cannot update a departed catalog`, async (t) => {
+    let resolve, reject;
+    const pending = new Promise((yes, no) => { resolve = yes; reject = no; });
+    const c = await catalog(t, "/catalog", {}, { client: true, getVehicleMakes: () => pending });
+    c.unmount();
+    if (fail) reject(new Error("offline"));
+    else resolve([{ id: 1, name: "Toyota", slug: "toyota" }]);
+    await c.vehicleMakesRequest;
+    assert.deepEqual(c.vehicleMakesResponse.value, []);
+    assert.equal(c.vehicleMakesError.value, null);
+  });
+}
+
+test("make loading failure does not prevent client catalog products from rendering", async (t) => {
+  const c = await catalog(t, "/catalog", {}, { client: true, getVehicleMakes: async () => { throw new Error("offline"); } });
+  await c.vehicleMakesRequest;
+  assert.equal(c.requests.length, 1);
+  assert.equal(c.vehicleMakesPending.value, false);
+  assert.match(c.vehicleMakesError.value.message, /offline/);
 });
 
 for (const legacyValue of ["true", "false"]) {

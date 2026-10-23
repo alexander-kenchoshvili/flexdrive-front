@@ -34,6 +34,7 @@ const props = withDefaults(
     placements?: CatalogFacetOption[];
     sides?: CatalogFacetOption[];
     vehicleMakes?: CatalogVehicleMake[];
+    vehicleMakesPending?: boolean;
     vehicleModels?: CatalogVehicleModel[];
     vehicleYears?: CatalogVehicleYear[];
     vehicleEngines?: CatalogVehicleEngine[];
@@ -67,6 +68,7 @@ const props = withDefaults(
     placements: () => [],
     sides: () => [],
     vehicleMakes: () => [],
+    vehicleMakesPending: false,
     vehicleModels: () => [],
     vehicleYears: () => [],
     vehicleEngines: () => [],
@@ -373,15 +375,15 @@ onBeforeUnmount(() => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="catalog-mobile-filter-title"
-        class="absolute inset-x-0 bottom-0 flex max-h-[88dvh] min-h-[min(72dvh,680px)] flex-col rounded-t-[22px] border-t border-border-default bg-surface shadow-[0_-18px_48px_rgba(2,6,23,0.38)] outline-none"
+        class="absolute inset-x-0 bottom-0 flex h-[88dvh] flex-col overflow-hidden rounded-t-[22px] border-t border-border-default bg-surface shadow-[0_-18px_48px_rgba(2,6,23,0.38)] outline-none"
         @click.stop
       >
-        <div class="flex justify-center px-4 pb-2 pt-3">
+        <div class="flex shrink-0 justify-center px-4 pb-2 pt-3">
           <span class="h-1.5 w-12 rounded-full bg-border-default" aria-hidden="true" />
         </div>
 
         <div
-          class="flex items-start justify-between gap-3 border-b border-border-default px-4 pb-4 pt-2 sm:px-5"
+          class="flex shrink-0 items-start justify-between gap-3 border-b border-border-default px-4 pb-4 pt-2 sm:px-5"
         >
           <div>
             <h2
@@ -405,16 +407,17 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
           <section class="rounded-lg border border-border-default bg-surface-2/55 p-4">
             <h3 class="text-sm font-bold text-text-primary">მანქანით ძებნა</h3>
             <div class="mt-3 grid gap-3 min-[520px]:grid-cols-2">
               <BaseSelect
                 v-model="vehicleMakeModel"
                 :options="vehicleMakeOptions"
-                placeholder="მარკა"
+                :placeholder="vehicleMakesPending ? 'მარკები იტვირთება...' : 'მარკა'"
                 empty-text="მარკები ჯერ არ არის დამატებული"
-                :disabled="disabled"
+                :disabled="disabled || vehicleMakesPending"
+                :aria-busy="vehicleMakesPending"
               />
               <BaseSelect
                 v-model="vehicleModelModel"
@@ -586,11 +589,11 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex flex-col gap-3 border-t border-border-default bg-surface px-4 py-4 sm:px-5"
+          class="flex shrink-0 items-center gap-3 border-t border-border-default bg-surface px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5"
         >
           <button
             type="button"
-            class="self-start text-sm font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            class="min-h-11 shrink-0 text-sm font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="disabled || !hasDraftControls"
             @click="clearDraftFilters"
           >
@@ -599,12 +602,13 @@ onBeforeUnmount(() => {
 
           <BaseButton
             type="button"
+            class="min-w-0 flex-1"
             :full-width="true"
             :loading="vehicleOptionsPending"
             :disabled="!canApplyFilters"
             @click="applyFilters"
           >
-            ფილტრების გამოყენება
+            ძებნა
           </BaseButton>
         </div>
       </section>

@@ -26,6 +26,7 @@ const props = withDefaults(
     placements?: CatalogFacetOption[];
     sides?: CatalogFacetOption[];
     vehicleMakes?: CatalogVehicleMake[];
+    vehicleMakesPending?: boolean;
     vehicleModels?: CatalogVehicleModel[];
     vehicleYears?: CatalogVehicleYear[];
     vehicleEngines?: CatalogVehicleEngine[];
@@ -57,6 +58,7 @@ const props = withDefaults(
     placements: () => [],
     sides: () => [],
     vehicleMakes: () => [],
+    vehicleMakesPending: false,
     vehicleModels: () => [],
     vehicleYears: () => [],
     vehicleEngines: () => [],
@@ -286,9 +288,10 @@ watch([minPriceModel, maxPriceModel], () => {
         <BaseSelect
           v-model="vehicleMakeModel"
           :options="vehicleMakeOptions"
-          placeholder="მარკა"
+          :placeholder="vehicleMakesPending ? 'მარკები იტვირთება...' : 'მარკა'"
           empty-text="მარკები ჯერ არ არის დამატებული"
-          :disabled="disabled"
+          :disabled="disabled || vehicleMakesPending"
+          :aria-busy="vehicleMakesPending"
         />
         <BaseSelect
           v-model="vehicleModelModel"

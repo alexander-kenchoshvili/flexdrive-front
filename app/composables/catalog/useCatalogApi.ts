@@ -5,11 +5,11 @@ import type {
   CatalogProductDetail,
   CatalogProductSuggestion,
   CatalogVehicleEngine,
-  CatalogVehicleMake,
   CatalogVehicleModel,
   CatalogVehicleYear,
 } from "~/types/catalog";
 import { apiFetchRaw } from "~/composables/apiFetch";
+import { useCatalogVehicleMakes } from "~/composables/catalog/useCatalogVehicleMakes";
 
 const BOOL_PARAM_KEYS: Array<keyof CatalogListParams> = [
   "is_new",
@@ -61,6 +61,7 @@ const buildQuery = (
 };
 
 export const useCatalogApi = () => {
+  const { getVehicleMakes } = useCatalogVehicleMakes();
   const getCatalogProducts = async (params: CatalogListParams = {}) => {
     const query = buildListQuery(params);
     const endpoint = query ? `/catalog/products/?${query}` : "/catalog/products/";
@@ -84,10 +85,6 @@ export const useCatalogApi = () => {
 
   const getCatalogCategoriesRaw = async (includeEmpty = false) => {
     return apiFetchRaw<CatalogCategoryItem[]>(includeEmpty ? "/catalog/categories/?include_empty=true" : "/catalog/categories/");
-  };
-
-  const getVehicleMakes = async () => {
-    return apiFetchRaw<CatalogVehicleMake[]>("/catalog/vehicles/makes/");
   };
 
   const getVehicleModels = async (make: string | number) => {

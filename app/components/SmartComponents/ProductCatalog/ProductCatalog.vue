@@ -122,6 +122,10 @@ const vehicleEnginesResponse = ref<CatalogVehicleEngine[]>([]);
 const productsPending = ref(false);
 const categoriesPending = ref(false);
 const vehicleOptionsPending = ref(false);
+const vehicleMakesPending = ref(false);
+const vehicleMakesError = ref<unknown>(null);
+let catalogDisposed = false;
+onBeforeUnmount(() => { catalogDisposed = true; });
 
 const productsError = ref<unknown>(null);
 const categoriesError = ref<unknown>(null);
@@ -310,7 +314,7 @@ const draftVehicleEngineDisplayValue = computed(() =>
   !hasHydrated.value && draftVehicleEngine.value ? draftVehicleEngine.value : "",
 );
 const showVehicleOptionsError = computed(
-  () => hasHydrated.value && Boolean(vehicleOptionsError.value),
+  () => hasHydrated.value && Boolean(vehicleOptionsError.value || vehicleMakesError.value),
 );
 
 const selectedCategory = computed(
@@ -1095,10 +1099,15 @@ const loadRouteCategory = async () => {
 };
 
 const loadVehicleMakes = async () => {
+  vehicleMakesPending.value = true;
+  vehicleMakesError.value = null;
   try {
-    vehicleMakesResponse.value = await getVehicleMakes();
+    const makes = await getVehicleMakes();
+    if (!catalogDisposed) vehicleMakesResponse.value = makes;
   } catch (error) {
-    vehicleOptionsError.value = error;
+    if (!catalogDisposed) vehicleMakesError.value = error;
+  } finally {
+    if (!catalogDisposed) vehicleMakesPending.value = false;
   }
 };
 
@@ -1349,9 +1358,11 @@ const retryLoad = async () => {
 };
 
 syncControlsFromRoute(route.query, { syncVehicleDraft: true });
+// Keep SSR complete; client navigation can show products while makes load.
+const vehicleMakesRequest = loadVehicleMakes();
 await Promise.all([
   loadCategories(),
-  loadVehicleMakes(),
+  ...(import.meta.client ? [] : [vehicleMakesRequest]),
   loadVehicleOptionsForDraft(),
   loadProducts(),
   loadRouteCategory(),
@@ -1515,6 +1526,7 @@ useSeoMeta({
             :placements="mappedPlacementOptions"
             :sides="mappedSideOptions"
             :vehicle-makes="vehicleMakesResponse"
+            :vehicle-makes-pending="vehicleMakesPending"
             :vehicle-models="vehicleModelsResponse"
             :vehicle-years="vehicleYearsResponse"
             :vehicle-engines="vehicleEnginesResponse"
@@ -1622,6 +1634,7 @@ useSeoMeta({
         :placements="mappedPlacementOptions"
         :sides="mappedSideOptions"
         :vehicle-makes="vehicleMakesResponse"
+        :vehicle-makes-pending="vehicleMakesPending"
         :vehicle-models="vehicleModelsResponse"
         :vehicle-years="vehicleYearsResponse"
         :vehicle-engines="vehicleEnginesResponse"
