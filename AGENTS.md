@@ -1,5 +1,26 @@
 # Project Instructions
 
+## Compact Product Fitments In Specifications - 2026-10-28
+
+- User authorized removing the separate large fitment-card section and showing
+  a compact model/year table inside the existing Specifications tab. It renders
+  when that tab is selected; the default description view has no separate block.
+  Existing SEO meta/JSON-LD and backend fitment/search data remain unchanged.
+- Hide generated მანქანა/თაობა spec rows only when structured fitments/universal
+  state are available; preserve these legacy rows otherwise. Keep OEM, maker,
+  placement and all other specs. Notes repeating just the model/year are omitted;
+  engine details, meaningful restrictions and punctuation-bearing notes remain.
+- Follow-up: user requested adjacent columns on mobile too. Spec rows use
+  112px/140px first columns and fitments use132px/160px at mobile/640px+,
+  accounting for padding so values/years align closely. Both stay side by side
+  with wrapping at every size. Existing theme tokens and natural row heights stay.
+- Nine component/actual-page SSR tests, Nuxt typecheck, scoped ESLint and
+  whitespace checks pass. User explicitly declined server/browser checks and
+  will verify real viewports; do not claim browser-proven responsiveness.
+  No server/browser start, business data/provider/env change or push/deployment.
+  This visual change requires frontend deployment; backend code unchanged here.
+
+
 ## Header Dropdown Compact Expansion - 2026-10-16
 
 - User requested one primary search action: atmd768px+ keep only the top submit;

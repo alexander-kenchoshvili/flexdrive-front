@@ -53,10 +53,10 @@ test("all real model/year/engine rows and public notes render in initial visible
     fitment({ id: 2, year_from: 2021, year_to: 2024 }),
     fitment({ id: 3, model: { id: 2, name: "XV", slug: "xv" }, year_from: 2015, year_to: 2015 }),
   ] });
-  assert.match(html, /მანქანასთან შესაბამისობა/);
+  assert.match(html, /თავსებადობა/);
   for (const expected of ["Subaru Forester", "2012–2018", "2021–2024", "2.0 ბენზინი", "მხოლოდ facelift ვერსია", "Subaru XV", "2015"]) assert.ok(html.includes(expected), expected);
-  assert.doesNotMatch(html, /2012–2024|ყველა ძრავი|display:\s*none|hidden|<details/);
-  assert.equal((html.match(/<li\b/g) || []).length, 3);
+  assert.doesNotMatch(html, /2012–2024|ყველა ძრავი|display:\s*none|<details/);
+  assert.equal((html.match(/<tr\b/g) || []).length, 4);
 });
 
 test("missing fitments omit the section and universal state never invents model/year compatibility", async () => {
@@ -70,13 +70,13 @@ test("fitment text is escaped and complete lists are not cut down to the first m
   const entries = Array.from({ length: 31 }, (_, index) => fitment({ id: index + 1, notes: `ვარიანტი ${index + 1}` }));
   entries[0].notes = '<img src=x onerror="alert(1)"> & ქართული';
   const html = await htmlFitments({ fitments: entries });
-  assert.equal((html.match(/<li\b/g) || []).length, 31);
+  assert.equal((html.match(/<tr\b/g) || []).length, 32);
   assert.ok(html.includes("ვარიანტი 31"));
   assert.doesNotMatch(html, /<img/);
   assert.match(html, /&lt;img/);
 });
 
-async function page(overrides = {}) {
+async function page(overrides = {}, initialTab = "description") {
   const head = createHead({ disableDefaults: true });
   const router = createRouter({ history: createMemoryHistory(), routes: [
     { path: "/catalog/:slug", component: stub }, { path: "/:pathMatch(.*)*", component: stub },
@@ -93,6 +93,7 @@ async function page(overrides = {}) {
   };
   let requests = 0;
   const globals = {
+    ref: (initial) => vue.ref(initial === "description" ? initialTab : initial),
     useRoute: () => router.currentRoute.value, useRuntimeConfig: () => ({ public: { siteUrl: "https://flexdrive.ge" } }),
     useGlobalStore: () => ({ setCurrentMenu() {} }), useSiteSettings: () => ({ settings: vue.ref({ site_name: "FlexDrive" }) }),
     useCartStore: () => ({ items: [], itemCount: 0, totalPrice: 0 }), useEcommerceAnalytics: () => ({ trackAddToCart() {}, trackViewItem() {} }),
@@ -124,13 +125,13 @@ async function page(overrides = {}) {
   return { html, headTags, productSchema };
 }
 
-test("actual product default-description SSR omits the header OEM row and visibly contains fitments", async () => {
+test("actual default-description SSR has no separate fitment block and preserves SEO metadata", async () => {
   const { html, headTags, productSchema } = await page();
   assert.doesNotMatch(html, /OEM \/ ნაწილის ნომერი:/);
   assert.doesNotMatch(html, /91059-SG000/);
-  assert.match(html, /მანქანასთან შესაბამისობა/);
+  assert.doesNotMatch(html, /product-fitments-title/);
   assert.match(html, /Subaru Forester/);
-  assert.match(html, /2012–2018/);
+  assert.match(headTags, /2012–2018/);
   assert.match(html, /მარჯვენა სარკის ხუფი/);
   assert.doesNotMatch(html, /<span[^>]*>\s*OEM\s*<\/span>/); // The specifications tab is still closed.
   assert.equal(productSchema.mpn, "91059-SG000");
@@ -156,4 +157,45 @@ test("part number stays out of the visible header and retains its safely seriali
   assert.doesNotMatch(html, /<img src=x/);
   assert.equal(productSchema.mpn, number);
   assert.doesNotMatch(headTags, /<img src=x/);
+});
+
+test("compact fitments omit duplicate model/year notes but retain engine restrictions", async () => {
+  const html = await htmlFitments({ fitments: [
+    fitment({ notes: "Forester - 2012-2018" }),
+    fitment({ id: 2, notes: "Subaru Forester 12–18", engine: { id: 2, name: "2.0", slug: "2-0" } }),
+    fitment({ id: 3, notes: "მხოლოდ facelift ვერსია" }),
+    fitment({ id: 4, notes: "Forester 2012/2018" }),
+  ] });
+  assert.match(html, /<table/);
+  assert.doesNotMatch(html, /Forester - 2012-2018|Subaru Forester 12–18/);
+  assert.match(html, /ძრავი: 2.0/);
+  assert.match(html, /მხოლოდ facelift ვერსია/);
+  assert.match(html, /Forester 2012\/2018/);
+  assert.equal((html.match(/2012–2018/g) || []).length, 4);
+});
+
+test("specifications contain one compact compatibility table instead of repeated vehicle/generation rows", async () => {
+  const { html, productSchema } = await page({
+    specs: [
+      { key: "OEM", value: "91059-SG000", sort_order: 0 },
+      { key: "მწარმოებელი", value: "JPN Parts", sort_order: 1 },
+      { key: "მანქანა", value: "legacy joined vehicles", sort_order: 2 },
+      { key: "თაობა", value: "legacy joined generations", sort_order: 3 },
+    ],
+    fitments: [fitment(), fitment({ id: 2, model: { id: 2, name: "Crosstrek", slug: "crosstrek" }, year_from: 2018, year_to: 2023 })],
+  }, "specs");
+  assert.equal((html.match(/id="product-fitments-title"/g) || []).length, 1);
+  for (const text of ["JPN Parts", "91059-SG000", "Subaru Forester", "2012–2018", "Subaru Crosstrek", "2018–2023"]) assert.ok(html.includes(text), text);
+  assert.doesNotMatch(html, /legacy joined vehicles|legacy joined generations|მანქანასთან შესაბამისობა/);
+  assert.equal(productSchema.mpn, "91059-SG000");
+});
+
+test("legacy vehicle specs remain available when structured fitments are missing", async () => {
+  const { html } = await page({ fitments: [], specs: [
+    { key: "მანქანა", value: "Legacy vehicle", sort_order: 0 },
+    { key: "თაობა", value: "Legacy generation", sort_order: 1 },
+  ] }, "specs");
+  assert.match(html, /Legacy vehicle/);
+  assert.match(html, /Legacy generation/);
+  assert.doesNotMatch(html, /product-fitments-title/);
 });

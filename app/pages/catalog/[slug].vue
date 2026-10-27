@@ -180,6 +180,15 @@ const productLead = computed(() =>
 const productDescription = computed(() =>
   sanitizeText(product.value?.description),
 );
+const hasProductFitments = computed(() =>
+  Boolean(product.value?.is_universal_fitment || product.value?.fitments?.length),
+);
+const visibleProductSpecs = computed(() => {
+  const specs = product.value?.specs ?? [];
+  return hasProductFitments.value
+    ? specs.filter((spec) => !["მანქანა", "თაობა"].includes(sanitizeText(spec.key).toLowerCase()))
+    : specs;
+});
 const productSku = computed(() =>
   sanitizeText(product.value?.sku),
 );
@@ -1291,35 +1300,35 @@ const handleBuyNow = async () => {
                 </p>
               </div>
 
-              <div v-else class="pt-5">
+              <div v-else class="space-y-4 pt-5">
                 <div
-                  v-if="product.specs.length"
+                  v-if="visibleProductSpecs.length"
                   class="overflow-hidden rounded-[18px] border border-border-default"
                 >
                   <div
-                    v-for="spec in product.specs"
+                    v-for="spec in visibleProductSpecs"
                     :key="`${spec.key}-${spec.sort_order}`"
-                    class="grid grid-cols-[minmax(0,180px)_minmax(0,1fr)] gap-4 border-b border-border-default px-4 py-3 last:border-b-0"
+                    class="grid min-w-0 grid-cols-[minmax(0,112px)_minmax(0,1fr)] gap-3 border-b border-border-default px-4 py-3 last:border-b-0 sm:grid-cols-[minmax(0,140px)_minmax(0,1fr)] sm:gap-4"
                   >
-                    <span class="text-sm font-medium text-text-muted">
+                    <span class="text-sm font-medium text-text-muted [overflow-wrap:anywhere]">
                       {{ spec.key }}
                     </span>
-                    <span class="text-sm font-semibold text-text-primary">
+                    <span class="min-w-0 text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">
                       {{ spec.value }}
                     </span>
                   </div>
                 </div>
 
-                <p v-else class="text-sm leading-7 text-text-secondary">
+                <ProductFitments
+                  :fitments="product.fitments"
+                  :universal="product.is_universal_fitment"
+                />
+
+                <p v-if="!visibleProductSpecs.length && !hasProductFitments" class="text-sm leading-7 text-text-secondary">
                   მახასიათებლები მალე დაემატება.
                 </p>
               </div>
             </div>
-
-            <ProductFitments
-              :fitments="product.fitments"
-              :universal="product.is_universal_fitment"
-            />
           </div>
         </div>
 
