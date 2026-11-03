@@ -166,7 +166,7 @@ export interface CommerceDeliveryCityList {
   results: CommerceDeliveryCity[];
 }
 
-export type CommerceDeliveryProvider = "internal" | "easyway";
+export type CommerceDeliveryProvider = "redcap" | "internal" | "easyway";
 
 export interface CommerceDeliveryQuote {
   version: number;
@@ -179,11 +179,13 @@ export interface CommerceDeliveryQuote {
   carrier_delivery_cost: string;
   delivery_margin: string;
   customer_delivery_price: string;
-  package_id: number;
+  package_id: number | null;
+  service_slug?: string;
+  tariff_revision?: string;
   measurements: {
-    length: string;
-    width: string;
-    height: string;
+    length: string | null;
+    width: string | null;
+    height: string | null;
     weight: string;
   };
   quote_token: string;

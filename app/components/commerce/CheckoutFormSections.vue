@@ -13,7 +13,6 @@ import {
 import type {
   CheckoutBuyerType,
   CheckoutPaymentMethod,
-  CommerceDeliveryRegion,
 } from "~/types/commerce";
 
 const props = defineProps<{
@@ -27,11 +26,10 @@ const props = defineProps<{
   lastNameAttrs?: Record<string, unknown>;
   emailAttrs?: Record<string, unknown>;
   phoneAttrs?: Record<string, unknown>;
+  cityAttrs?: Record<string, unknown>;
   addressLineAttrs?: Record<string, unknown>;
   noteAttrs?: Record<string, unknown>;
   deliveryRegionOptions: BaseSelectOption[];
-  deliveryCityOptions: BaseSelectOption[];
-  selectedDeliveryRegion?: CommerceDeliveryRegion | null;
   deliveryRegionsPending?: boolean;
   deliveryCitiesPending?: boolean;
   deliveryLocationsError?: string | null;
@@ -53,9 +51,7 @@ const phone = defineModel<string>("phone", { required: true });
 const deliveryRegionId = defineModel<number | null>("deliveryRegionId", {
   required: true,
 });
-const deliveryCityId = defineModel<number | null>("deliveryCityId", {
-  required: true,
-});
+const city = defineModel<string>("city", { required: true });
 const addressLine = defineModel<string>("addressLine", { required: true });
 const note = defineModel<string>("note", { required: true });
 const termsAccepted = defineModel<boolean>("termsAccepted", { required: true });
@@ -93,24 +89,14 @@ const lastNameLabel = computed(() =>
   isLegalBuyer.value ? "საკონტაქტო პირის გვარი *" : "გვარი *",
 );
 
-const deliveryCityLabel = computed(() =>
-  props.selectedDeliveryRegion?.is_internal_delivery
-    ? "უბანი / დასახლება *"
-    : "ქალაქი / დასახლება *",
-);
-
 const deliveryHint = computed(() => {
-  if (!deliveryRegionId.value) {
-    return "ჯერ აირჩიე რეგიონი, შემდეგ ქალაქი ან დასახლება.";
+  if (!deliveryRegionId.value) return "აირჩიე მიწოდების მიმართულება და მიუთითე სრული მისამართი.";
+  if (props.deliveryCitiesPending) return "მიწოდების მიმართულება მოწმდება.";
+  if (deliveryRegionId.value === 1 || deliveryRegionId.value === 6) {
+    return "მიწოდებას RedCap ასრულებს — იმავე ან მომდევნო დღეს. ზუსტი ვადა შეკვეთის დამუშავებისას დაზუსტდება.";
   }
-
-  if (props.deliveryCitiesPending) {
-    return "ქალაქებისა და დასახლებების ჩამონათვალი იტვირთება.";
-  }
-
-  return props.selectedDeliveryRegion?.is_internal_delivery
-    ? "თბილისში მიწოდებას FlexDrive-ის გუნდი ასრულებს."
-    : "რეგიონულ მიწოდებას პარტნიორი საკურიერო სერვისი ასრულებს.";
+  if (deliveryRegionId.value === 7) return "მაღალმთიან დასახლებებში მიწოდების ვადა მიმართულების მიხედვით დაზუსტდება.";
+  return "მიწოდებას RedCap ასრულებს. სავარაუდო ვადა: 3–4 დღე.";
 });
 </script>
 
@@ -292,7 +278,7 @@ const deliveryHint = computed(() => {
   >
     <CheckoutSectionHeader :step="2" title="მიწოდების მისამართი" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      აირჩიე მიწოდების რეგიონი და დასახლება, შემდეგ მიუთითე ზუსტი მისამართი.
+      აირჩიე მიწოდების მიმართულება და მიუთითე ქალაქის ან სოფლის სრული მისამართი.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
@@ -300,39 +286,29 @@ const deliveryHint = computed(() => {
         <BaseSelect
           v-model="deliveryRegionId"
           name="delivery_region_id"
-          label="რეგიონი *"
+          label="მიწოდების მიმართულება *"
           :options="deliveryRegionOptions"
-          :placeholder="deliveryRegionsPending ? 'იტვირთება...' : 'აირჩიე რეგიონი'"
-          :empty-text="deliveryRegionsPending ? 'იტვირთება...' : 'რეგიონები ვერ მოიძებნა'"
-          :error="errors.delivery_region_id"
+          :placeholder="deliveryRegionsPending ? 'იტვირთება...' : 'აირჩიე მიმართულება'"
+          :empty-text="deliveryRegionsPending ? 'იტვირთება...' : 'მიმართულებები ვერ მოიძებნა'"
+          :error="errors.delivery_region_id || errors.delivery_city_id"
           :disabled="disabled || deliveryRegionsPending"
           searchable
-          search-placeholder="მოძებნე რეგიონი"
+          search-placeholder="მოძებნე მიმართულება"
         />
       </div>
 
-      <div data-checkout-field="delivery_city_id">
-        <BaseSelect
-          v-model="deliveryCityId"
-          name="delivery_city_id"
-          :label="deliveryCityLabel"
-          :options="deliveryCityOptions"
-          :placeholder="
-            !deliveryRegionId
-              ? 'ჯერ აირჩიე რეგიონი'
-              : deliveryCitiesPending
-                ? 'იტვირთება...'
-                : 'აირჩიე ქალაქი ან დასახლება'
-          "
-          :empty-text="deliveryCitiesPending ? 'იტვირთება...' : 'ჩამონათვალი ცარიელია'"
-          :error="
-            deliveryRegionId ? errors.delivery_city_id || errors.city : ''
-          "
-          :disabled="disabled || !deliveryRegionId || deliveryCitiesPending"
-          searchable
-          search-placeholder="მოძებნე ქალაქი ან დასახლება"
-        />
-      </div>
+      <BaseInput
+        v-model="city"
+        v-bind="cityAttrs"
+        name="city"
+        data-checkout-field="city"
+        label="ქალაქი / სოფელი *"
+        autocomplete="address-level2"
+        placeholder="ქალაქის ან სოფლის სახელი"
+        :error="errors.city"
+        :disabled="disabled"
+        required
+      />
 
       <BaseInput
         v-model="addressLine"

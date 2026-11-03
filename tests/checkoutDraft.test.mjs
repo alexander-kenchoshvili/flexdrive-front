@@ -42,8 +42,8 @@ function mountForm({ source = "cart", owner = null, ready = vue.ref(true) } = {}
   const quotes = [];
   const profile = vue.ref(null);
   const api = {
-    getDeliveryRegions: async () => ({ results: [{ id: 1, name: "აჭარა" }] }),
-    getDeliveryCities: async () => ({ results: [{ id: 2, name: "ბათუმი" }] }),
+    getDeliveryRegions: async () => ({ results: [{ id: 4, name: "რეგიონი (ქალაქები)" }] }),
+    getDeliveryCities: async () => ({ results: [{ id: 4, name: "რეგიონი (ქალაქები)" }] }),
     getDeliveryQuote: async (payload) => {
       quotes.push(payload);
       return { customer_delivery_price: "49.00" };
@@ -84,9 +84,9 @@ test("refresh restores legal/individual drafts and recalculates delivery after c
   current.form.setFieldValue("company_is_vat_registered", false, false);
   current.form.setFieldValue("phone", "555123456", false);
   current.form.setFieldValue("address_line", "მისამართი 1", false);
-  current.form.setFieldValue("delivery_region_id", 1, false);
+  current.form.setFieldValue("delivery_region_id", 4, false);
   await flush();
-  current.form.setFieldValue("delivery_city_id", 2, false);
+  current.form.setFieldValue("city", "ბათუმი", false);
   await flush();
   current.app.unmount();
 
@@ -98,12 +98,12 @@ test("refresh restores legal/individual drafts and recalculates delivery after c
   assert.equal(current.form.companyIsVatRegistered.value, false);
   assert.equal(current.form.phone.value, "555123456");
   assert.equal(current.form.addressLine.value, "მისამართი 1");
-  assert.equal(current.form.deliveryCityId.value, 2);
+  assert.equal(current.form.deliveryCityId.value, 4);
   assert.equal(current.form.values.city, "ბათუმი");
   assert.equal(current.quotes.length, 0);
   ready.value = true;
   await flush();
-  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 1, delivery_city_id: 2 }]);
+  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 4, delivery_city_id: 4 }]);
   assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "49.00");
   assert.deepEqual(Object.keys(current.form.errors.value), []);
 
@@ -154,7 +154,7 @@ test("company VAT choice requires an explicit answer only for legal buyers", () 
   const values = {
     buyer_type: "legal_entity", company_name: "Test LLC", company_identification_code: "123456789",
     company_is_vat_registered: null, first_name: "Test", last_name: "Buyer", email: "",
-    phone: "555123456", delivery_region_id: 1, delivery_city_id: 2, city: "ბათუმი",
+    phone: "555123456", delivery_region_id: 4, delivery_city_id: 4, city: "ბათუმი",
     address_line: "Address 1", note: "", terms_accepted: true, payment_method: "card",
   };
   const missing = checkoutSchema.safeParse(values);

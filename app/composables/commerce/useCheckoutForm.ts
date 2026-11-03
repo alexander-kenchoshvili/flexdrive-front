@@ -74,8 +74,8 @@ export const checkoutFieldSelectors: Record<CheckoutFieldName, string> = {
   email: '[data-checkout-field="email"]',
   phone: '[data-checkout-field="phone"]',
   delivery_region_id: '[data-checkout-field="delivery_region_id"]',
-  delivery_city_id: '[data-checkout-field="delivery_city_id"]',
-  city: '[data-checkout-field="delivery_city_id"]',
+  delivery_city_id: '[data-checkout-field="delivery_region_id"]',
+  city: '[data-checkout-field="city"]',
   address_line: '[data-checkout-field="address_line"]',
   terms_accepted: '[data-checkout-field="terms_accepted"]',
   payment_method: '[data-checkout-field="payment_method"]',
@@ -134,6 +134,7 @@ export const useCheckoutForm = (options?: {
   const [phone, phoneAttrs] = defineField("phone");
   const [deliveryRegionId] = defineField("delivery_region_id");
   const [deliveryCityId] = defineField("delivery_city_id");
+  const [city, cityAttrs] = defineField("city");
   const [addressLine, addressLineAttrs] = defineField("address_line");
   const [note, noteAttrs] = defineField("note");
   const [termsAccepted] = defineField("terms_accepted");
@@ -207,6 +208,9 @@ export const useCheckoutForm = (options?: {
       const response = await getDeliveryCities(regionId);
       if (requestId === deliveryCitiesRequestId) {
         deliveryCities.value = response.results;
+        if (response.results.length === 1) {
+          setFieldValue("delivery_city_id", response.results[0]!.id, false);
+        }
       }
     } catch {
       if (requestId === deliveryCitiesRequestId) {
@@ -475,7 +479,8 @@ export const useCheckoutForm = (options?: {
     deliveryQuotePending.value = false;
     deliveryQuoteError.value = null;
     setFieldValue("delivery_city_id", null, false);
-    setFieldValue("city", "", false);
+    if (nextRegionId === 1) setFieldValue("city", "თბილისი", false);
+    else if (values.city === "თბილისი") setFieldValue("city", "", false);
     setFieldError("delivery_city_id", undefined);
     setFieldError("city", undefined);
 
@@ -489,7 +494,6 @@ export const useCheckoutForm = (options?: {
     const selectedCity = deliveryCities.value.find(
       (cityOption) => cityOption.id === nextCityId,
     );
-    setFieldValue("city", selectedCity?.name || "");
     deliveryQuoteRequestId += 1;
     deliveryQuote.value = null;
     deliveryQuotePending.value = false;
@@ -567,6 +571,8 @@ export const useCheckoutForm = (options?: {
     emailAttrs,
     phone,
     phoneAttrs,
+    city,
+    cityAttrs,
     deliveryRegionId,
     deliveryCityId,
     deliveryRegionOptions,
@@ -576,7 +582,7 @@ export const useCheckoutForm = (options?: {
     deliveryCitiesPending,
     deliveryLocationsError: computed(() =>
       deliveryRegionsError.value
-        ? "რეგიონების ჩამონათვალი ვერ ჩაიტვირთა."
+        ? "მიწოდების მიმართულებები ვერ ჩაიტვირთა."
         : deliveryCitiesError.value,
     ),
     retryDeliveryLocations,
