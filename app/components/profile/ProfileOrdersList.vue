@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OrderRefundSummary from "~/components/commerce/OrderRefundSummary.vue";
 import {
   BanknotesIcon,
   CalendarDaysIcon,
@@ -187,6 +188,7 @@ const goToPage = (page: number | null) => {
               <span>{{ getOrderUnits(order) }} ცალი</span>
               <span>{{ getPaymentMethodLabel(order.payment_method) }}</span>
               <span>{{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}</span>
+          <OrderRefundSummary :refund="order.refund_summary" />
             </div>
           </div>
 

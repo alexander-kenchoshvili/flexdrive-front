@@ -25,6 +25,7 @@ const paymentStatusLabels: Record<CommercePaymentStatus, string> = {
   cancelled: "გადახდა გაუქმებულია",
   refund_pending: "თანხის დაბრუნება მუშავდება",
   refunded: "თანხა დაბრუნებულია",
+  partially_refunded: "თანხა ნაწილობრივ დაბრუნებულია",
 };
 
 const paymentStatusBadgeClasses: Record<CommercePaymentStatus, string> = {
@@ -35,6 +36,7 @@ const paymentStatusBadgeClasses: Record<CommercePaymentStatus, string> = {
   cancelled: "border-error/30 bg-error/10 text-error",
   refund_pending: "border-warning/30 bg-warning/10 text-warning",
   refunded: "border-success/30 bg-success/10 text-success",
+  partially_refunded: "border-success/30 bg-success/10 text-success",
 };
 
 const statusLabels: Record<CommerceOrderStatus, string> = {

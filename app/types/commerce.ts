@@ -242,7 +242,14 @@ export type CommercePaymentStatus =
   | "failed"
   | "cancelled"
   | "refund_pending"
-  | "refunded";
+  | "refunded"
+  | "partially_refunded";
+
+export interface CommerceRefundSummary {
+  status: "refunded" | "refund_pending" | "failed";
+  amount: string;
+  retained_return_fee: string | null;
+}
 
 export type CommerceOrderStatus =
   | "new"
@@ -309,6 +316,7 @@ export interface CommerceOrderSummary extends CommerceReceiptAccess {
   company_is_vat_registered: boolean | null;
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
+  refund_summary?: CommerceRefundSummary | null;
   status: CommerceOrderStatus;
   subtotal: string;
   delivery_price: string;
@@ -333,6 +341,7 @@ export interface CommerceOrderLookupSummary extends CommerceReceiptAccess {
   order_number: string;
   status: CommerceOrderStatus;
   payment_status: CommercePaymentStatus;
+  refund_summary?: CommerceRefundSummary | null;
   payment_method: CheckoutPaymentMethod;
   checkout_source: "cart" | "buy_now";
   total: string;
@@ -348,6 +357,7 @@ export interface OwnedOrderListItem {
   status: CommerceOrderStatus;
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
+  refund_summary?: CommerceRefundSummary | null;
   total: string;
   created_at: string;
   item_count: number;

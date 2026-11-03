@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OrderRefundSummary from "~/components/commerce/OrderRefundSummary.vue";
 import type { Component } from "vue";
 import type { CommerceOrderStatus, OwnedOrderDetail } from "~/types/commerce";
 import {
@@ -267,6 +268,7 @@ const getTrackingStateLabel = (state: string) => {
         <p class="mt-2 text-base font-semibold text-text-primary">
           {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
         </p>
+          <OrderRefundSummary :refund="order.refund_summary" />
       </article>
 
       <article

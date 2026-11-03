@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ArrowPathIcon, CircleStackIcon, InformationCircleIcon, ChartBarIcon, TruckIcon, BanknotesIcon, CubeIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import BusinessCourierFinance from "./BusinessCourierFinance.vue";
+import { ArrowPathIcon, CircleStackIcon, InformationCircleIcon, ChartBarIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { BUSINESS_SECTIONS } from "~/utils/businessRouting";
 import { buildBusinessInsights } from "~/utils/businessInsights";
 import { REPORT_METRICS, businessPreset, reportMoney, reportNumber, reportDate, type BusinessPeriod, type ReportSection } from "~/utils/businessReport";
@@ -47,7 +48,7 @@ const change = (key: string) => {
 const updated = computed(() => report.value ? new Intl.DateTimeFormat("ka-GE", { timeZone: "Asia/Tbilisi", hour: "2-digit", minute: "2-digit" }).format(new Date(report.value.generated_at)) : "");
 const hasIncompleteData = computed(() => Number(report.value?.summary.unallocated_events)
   || props.section !== "sales" && Number(report.value?.summary.unknown_cost_lines)
-  || props.section === "finance" && Number(report.value?.summary.unknown_loss_lines));
+  || props.section === "finance" && (Number(report.value?.summary.unknown_loss_lines) || Number(report.value?.summary.unknown_return_cost_events)));
 const chartTitle = computed(() => ({ overview: "მიღებული და დაბრუნებული თანხები", sales: "შეკვეთები და გაყიდული ერთეულები", finance: "პროდუქტების მოგება დროში" })[props.section]);
 const hasChart = computed(() => report.value?.daily.some((day) => {
   if (props.section === "finance") return day.product_profit_net !== null && Number(day.product_profit_net) !== 0;
@@ -56,7 +57,7 @@ const hasChart = computed(() => report.value?.daily.some((day) => {
 }));
 const details = [
   { key: "product_received", label: "პროდუქტებში მიღებული თანხა", note: "დღგ-ით, მიტანის გარეშე" },
-  { key: "product_refunded", label: "პროდუქტებზე დაბრუნებული თანხა", note: "დადასტურებული დაბრუნებები, დღგ-ით" },
+  { key: "product_refunded", label: "დაბრუნებული პროდუქტების ღირებულება", note: "სრულად დაბრუნებული ნივთების საწყისი ღირებულება, უკუმიტანის დაქვითვამდე" },
   { key: "net_product_received", label: "პროდუქტების თანხა დაბრუნებების შემდეგ", note: "დღგ-ით, მიტანის გარეშე" },
   { key: "net_delivery_received", label: "მიტანის თანხა დაბრუნებების შემდეგ", note: "მომხმარებლებისგან მიღებული საფასური, დღგ-ით" },
 ];
@@ -166,14 +167,11 @@ const profitSteps = computed(() => [
         <BaseButton as="nuxt-link" variant="secondary" :to="{ path: '/business/finance', query: report.period }">ფინანსების დეტალები</BaseButton>
       </div>
 
-      <section v-if="section === 'finance'" class="mb-6" aria-labelledby="business-delivery-title">
-        <h2 id="business-delivery-title" class="mb-4 text-base font-bold">მიტანა და დაბრუნებული ნივთები</h2>
-        <div class="grid gap-4 sm:grid-cols-2 min-[1200px]:grid-cols-4">
-          <article class="rounded-xl border border-border-default bg-surface p-5"><TruckIcon class="mb-3 h-5 w-5 text-accent-primary" aria-hidden="true" /><h3 class="text-[13px] font-semibold text-text-secondary">საკურიეროსთვის გადასახდელი</h3><p class="mt-3 text-xl font-bold">{{ format('courier_payable') }}</p><p class="mt-2 text-xs text-text-muted">{{ format('regional_orders', false) }} შეკვეთა · შენახული საკურიერო ფასების ჯამი</p></article>
-          <article class="rounded-xl border border-border-default bg-surface p-5"><BanknotesIcon class="mb-3 h-5 w-5 text-accent-primary" aria-hidden="true" /><h3 class="text-[13px] font-semibold text-text-secondary">საკურიერო ბუფერი</h3><p class="mt-3 text-xl font-bold">{{ format('buffer_received') }}</p><p class="mt-2 text-xs text-text-muted">{{ format('buffer_orders', false) }} ბუფერი · მიღებული თანხა დღგ-ით</p><p class="mt-2 text-[11px] text-text-muted">დაბრუნების შემდეგ: {{ format('net_buffer') }}</p></article>
-          <article class="rounded-xl border border-border-default bg-surface p-5"><TruckIcon class="mb-3 h-5 w-5 text-accent-primary" aria-hidden="true" /><h3 class="text-[13px] font-semibold text-text-secondary">თბილისში მიტანის საფასური</h3><p class="mt-3 text-xl font-bold">{{ format('internal_delivery_received') }}</p><p class="mt-2 text-xs text-text-muted">{{ format('internal_orders', false) }} შეკვეთა · მიღებული თანხა დღგ-ით</p><p class="mt-2 text-[11px] text-text-muted">დაბრუნების შემდეგ: {{ format('net_internal_delivery') }}</p></article>
-          <article class="rounded-xl border border-border-default bg-surface p-5"><CubeIcon class="mb-3 h-5 w-5 text-text-muted" aria-hidden="true" /><h3 class="text-[13px] font-semibold text-text-secondary">უვარგისი დაბრუნებული ნივთები</h3><p class="mt-3 text-xl font-bold">{{ format('unsaleable_cost_net') }}</p><p class="mt-2 text-xs text-text-muted">{{ format('unsaleable_units', false) }} ერთეული · შეძენის ღირებულება დღგ-ის გარეშე</p><p class="mt-2 text-[11px] text-text-muted">შემოწმების თარიღით; პროდუქტების მოგებისგან ცალკეა</p></article>
-        </div>
+      <BusinessCourierFinance v-if="section === 'finance'" :report="report" />
+      <section v-if="section === 'finance'" class="mb-6 rounded-xl border border-border-default bg-surface p-5">
+        <h2 class="text-sm font-semibold">უვარგისი დაბრუნებული ნივთები</h2>
+        <p class="mt-3 text-xl font-bold">{{ format('unsaleable_cost_net') }}</p>
+        <p class="mt-2 text-xs text-text-muted">{{ format('unsaleable_units', false) }} ერთეული · შეძენის ღირებულება დღგ-ის გარეშე · შემოწმების თარიღით</p>
       </section>
 
         <section v-if="section === 'sales'" class="min-w-0 overflow-hidden rounded-xl border border-border-default bg-surface">
@@ -206,10 +204,7 @@ const profitSteps = computed(() => [
         </section>
 
       <template v-if="section === 'finance'">
-        <section class="mt-6 min-w-0 overflow-hidden rounded-xl border border-border-default bg-surface">
-          <header class="p-5"><h2 class="text-base font-bold">საკურიერო მიწოდების შეკვეთები</h2><p class="mt-1 text-xs text-text-muted">სულ {{ reportNumber(report.delivery_rows_total) }} · ნაჩვენებია ბოლო {{ report.deliveries.length }} · თანხა ერთხელ თითო შეკვეთაზე</p></header>
-          <div class="overflow-x-auto"><table v-if="report.deliveries.length" class="w-full text-left text-xs"><thead class="bg-surface-2 text-text-muted"><tr><th class="p-3 pl-5">შეკვეთა</th><th class="p-3">გადახდის თარიღი</th><th class="p-3 text-right">საკურიერო</th><th class="p-3 text-right">ბუფერი</th><th class="p-3 pr-5 text-right">მიტანის სრული საფასური</th></tr></thead><tbody><tr v-for="delivery in report.deliveries" :key="delivery.order_number" class="border-t border-border-default"><td class="whitespace-nowrap p-3 pl-5 font-semibold">{{ delivery.order_number }}</td><td class="whitespace-nowrap p-3 text-text-muted">{{ reportDate(delivery.date) }}</td><td class="whitespace-nowrap p-3 text-right">{{ reportMoney(delivery.carrier) }}</td><td class="whitespace-nowrap p-3 text-right">{{ reportMoney(delivery.buffer) }}</td><td class="whitespace-nowrap p-3 pr-5 text-right">{{ reportMoney(delivery.delivery) }}</td></tr></tbody></table><p v-else class="p-5 pb-8 text-sm text-text-muted">არჩეულ პერიოდში საკურიერო მიწოდების შესაბამისი შეკვეთა არ არის.</p></div>
-        </section>
+
         <section class="mt-6 min-w-0 overflow-hidden rounded-xl border border-border-default bg-surface">
           <header class="p-5"><h2 class="text-base font-bold">გასაყიდად უვარგისი დაბრუნებული ნივთები</h2><p class="mt-1 text-xs text-text-muted">სულ {{ reportNumber(report.loss_rows_total) }} ჩანაწერი · ნაჩვენებია ბოლო {{ report.losses.length }}</p></header>
           <div class="overflow-x-auto"><table v-if="report.losses.length" class="w-full text-left text-xs"><thead class="bg-surface-2 text-text-muted"><tr><th class="p-3 pl-5">პროდუქტი / შეკვეთა</th><th class="p-3">შემოწმების თარიღი</th><th class="p-3 text-right">ერთეულები</th><th class="p-3 pr-5 text-right">ღირებულება დღგ-ის გარეშე</th></tr></thead><tbody><tr v-for="(loss, index) in report.losses" :key="`${loss.order_number}:${loss.sku}:${index}`" class="border-t border-border-default"><td class="min-w-[180px] p-3 pl-5"><p class="font-semibold">{{ loss.name }}</p><p class="mt-1 text-text-muted">{{ loss.sku }} · {{ loss.order_number }}</p></td><td class="whitespace-nowrap p-3 text-text-muted">{{ reportDate(loss.date) }}</td><td class="p-3 text-right">{{ loss.quantity }}</td><td class="whitespace-nowrap p-3 pr-5 text-right">{{ reportMoney(loss.cost_net) }}</td></tr></tbody></table><p v-else class="p-5 pb-8 text-sm text-text-muted">არჩეულ პერიოდში უვარგისი დაბრუნებული ნივთი არ არის დაფიქსირებული.</p></div>

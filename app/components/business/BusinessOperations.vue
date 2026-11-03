@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BusinessShipments from "./BusinessShipments.vue";
 import { ArrowPathIcon, ArrowUturnLeftIcon, CubeIcon, ClockIcon, ExclamationCircleIcon, InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { operationsDate, operationsMoney, operationsQuery, type ReturnFilter, type PaymentFilter } from "~/utils/businessOperations";
 import { reportMoney, reportNumber } from "~/utils/businessReport";
@@ -8,6 +9,7 @@ const query = reactive(operationsQuery());
 const refresh = async () => {
   await load({ ...query });
   if (report.value) {
+    query.shipments_page = report.value.shipments.page;
     query.returns_page = report.value.returns.page;
     query.stock_page = report.value.stock.page;
     query.payments_page = report.value.payments.page;
@@ -70,6 +72,7 @@ const age = (value: number | null) => value === null ? "—" : `${reportNumber(v
         <article class="rounded-xl border border-border-default bg-surface p-5"><ExclamationCircleIcon class="mb-3 h-5 w-5 text-text-muted" aria-hidden="true" /><h2 class="text-[13px] font-semibold text-text-secondary">წარუმატებელი გადახდის მოქმედებები</h2><p class="mt-3 text-2xl font-bold tabular-nums">{{ reportNumber(report.payments.summary.failed) }}</p><p class="mt-2 text-xs leading-5 text-text-muted">მთელი შენახული ისტორია · ერთ შეკვეთას შეიძლება რამდენიმე მცდელობა ჰქონდეს</p></article>
       </div>
 
+      <BusinessShipments :shipments="report.shipments" @filter="query.shipments = $event; query.shipments_page = 1; refresh()" @page="query.shipments_page = $event; refresh()" />
       <section class="relative mb-6 rounded-xl border border-border-default bg-surface" aria-labelledby="operations-returns-title">
         <header class="flex flex-col gap-4 p-5 md:flex-row md:items-end md:justify-between">
           <div><h2 id="operations-returns-title" class="text-base font-bold">დაბრუნებული და დასაბრუნებელი ნივთები</h2><p class="mt-2 text-xs leading-5 text-text-muted">ნივთის მიღება და თანხის დაბრუნება სხვადასხვა პროცესია. მიღების მოლოდინში ჯერ ძველი ჩანაწერები ჩანს.</p></div>
@@ -78,7 +81,14 @@ const age = (value: number | null) => value === null ? "—" : `${reportNumber(v
         <div class="overflow-x-auto"><table v-if="report.returns.items.length" class="w-full text-left text-xs"><thead class="bg-surface-2 text-text-muted"><tr><th class="p-3 pl-5">შეკვეთა / პროდუქტები</th><th class="p-3">ნივთების მდგომარეობა</th><th class="p-3">გადახდის შენახული მდგომარეობა</th><th class="p-3 pr-5">თარიღები</th></tr></thead><tbody><tr v-for="item in report.returns.items" :key="item.id" class="border-t border-border-default align-top">
           <td class="min-w-[240px] p-3 pl-5"><p class="font-bold">{{ item.order_number }}</p><ul class="mt-2 space-y-2 text-text-secondary"><li v-for="(product, index) in item.products" :key="index"><p>{{ product.name }} × {{ product.quantity }}</p><p v-if="product.sku" class="mt-1 text-[11px] text-text-muted">{{ product.sku }}</p></li></ul><p v-if="item.product_count > item.products.length" class="mt-2 text-text-muted">კიდევ {{ item.product_count - item.products.length }} პროდუქტი</p><p class="mt-2 text-text-muted">სულ {{ item.expected_units }} ერთეული</p></td>
           <td class="min-w-[190px] p-3"><p class="font-semibold" :class="item.receipt_status === 'awaiting' ? 'text-accent-primary' : 'text-text-secondary'">{{ item.receipt_label }}</p><p v-if="item.receipt_status === 'awaiting'" class="mt-2 text-text-muted">მოლოდინი: {{ age(item.waiting_days) }}</p><p v-else-if="item.receipt_status === 'received'" class="mt-2 leading-5 text-text-muted">ვარგისი: {{ item.saleable_units }} · უვარგისი: {{ item.unsaleable_units }}</p><p class="mt-2 text-[11px] leading-5 text-text-muted">{{ item.disposition_label }}</p></td>
-          <td class="min-w-[160px] p-3 text-text-secondary">{{ item.payment_label }}</td><td class="min-w-[180px] p-3 pr-5 text-text-muted"><p>დაფიქსირდა:<br>{{ operationsDate(item.requested_at) }}</p><p v-if="item.received_at" class="mt-3">მიღებულია:<br>{{ operationsDate(item.received_at) }}</p></td>
+          <td class="min-w-[240px] p-3 text-text-secondary"><p>{{ item.payment_label }}</p>
+            <div class="mt-3 space-y-2 text-xs text-text-muted">
+              <div>თავდაპირველი თანხა: {{ reportMoney(item.paid_total) }}</div>
+              <div>დაბრუნებულია: {{ reportMoney(item.refunded_amount) }}</div>
+              <div>{{ item.refund_status_label }}<span v-if="item.requested_refund"> · {{ reportMoney(item.requested_refund) }}</span></div>
+              <div v-if="item.retained_return_fee !== null">უკუმიტანის დაქვითვა: {{ reportMoney(item.retained_return_fee) }} · {{ item.refund_confirmed ? 'დადასტურებული' : 'მოთხოვნილი' }}</div>
+              <div>უკუმიტანის ხარჯი: {{ reportMoney(item.return_delivery_cost) }}<span v-if="item.return_delivery_payer"> · იხდის {{ item.return_delivery_payer }}</span></div>
+            </div></td><td class="min-w-[180px] p-3 pr-5 text-text-muted"><p>დაფიქსირდა:<br>{{ operationsDate(item.requested_at) }}</p><p v-if="item.received_at" class="mt-3">მიღებულია:<br>{{ operationsDate(item.received_at) }}</p></td>
         </tr></tbody></table><p v-else class="px-5 py-10 text-center text-sm text-text-muted">ამ ფილტრით დაბრუნების ჩანაწერი არ არის.</p></div>
         <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-border-default px-5 py-4"><p class="text-xs text-text-muted">სულ {{ reportNumber(report.returns.total) }} ჩანაწერი · გვერდი {{ report.returns.page }} / {{ report.returns.pages }}</p><div v-if="report.returns.pages > 1" class="flex gap-2"><BaseButton variant="secondary" :disabled="report.returns.page === 1" aria-label="დაბრუნებების წინა გვერდი" @click="turnPage('returns', -1)">წინა</BaseButton><BaseButton variant="secondary" :disabled="report.returns.page === report.returns.pages" aria-label="დაბრუნებების შემდეგი გვერდი" @click="turnPage('returns', 1)">შემდეგი</BaseButton></div></footer>
       </section>

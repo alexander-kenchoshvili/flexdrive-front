@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OrderRefundSummary from "~/components/commerce/OrderRefundSummary.vue";
 import { BanknotesIcon, CheckBadgeIcon } from "@heroicons/vue/24/outline";
 import BaseButton from "~/components/common/BaseButton.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
@@ -139,6 +140,7 @@ const miniItemMeta = (item: CommerceOrderItem) =>
               <span class="h-2.5 w-2.5 rounded-full bg-current" />
               {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
             </div>
+          <OrderRefundSummary :refund="order.refund_summary" />
           </div>
         </div>
 

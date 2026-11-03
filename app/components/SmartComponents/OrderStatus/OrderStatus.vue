@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OrderRefundSummary from "~/components/commerce/OrderRefundSummary.vue";
 import {
   ClipboardDocumentCheckIcon,
   MagnifyingGlassIcon,
@@ -25,6 +26,7 @@ type StoredOrderLookup = {
   order_number: string;
   phone: string;
   result: CommerceOrderLookupSummary | null;
+  checked_at: string | null;
 };
 
 const ORDER_LOOKUP_STORAGE_KEY = "flexdrive:order-status:last-lookup";
@@ -73,12 +75,28 @@ const loading = ref(false);
 const errorMessage = ref("");
 const order = ref<CommerceOrderLookupSummary | null>(null);
 const showGuestLookup = ref(false);
+const checkedAt = ref<string | null>(null);
+const restoredResult = ref(false);
+const formattedCheckedAt = computed(() => {
+  if (!checkedAt.value) return "";
+  const date = new Date(checkedAt.value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ka-GE", {
+    dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tbilisi",
+  }).format(date);
+});
 
 const isAuthenticated = computed(
   () => globalStore.authResolved && Boolean(globalStore.currentUser),
 );
 const trimmedOrderNumber = computed(() => form.order_number.trim());
 const trimmedPhone = computed(() => form.phone.trim());
+
+watch([trimmedOrderNumber, trimmedPhone], () => {
+  order.value = null;
+  checkedAt.value = null;
+  restoredResult.value = false;
+}, { flush: "sync" });
 
 const showLookupForm = computed(
   () => !isAuthenticated.value || showGuestLookup.value,
@@ -168,6 +186,8 @@ const readStoredLookup = (): StoredOrderLookup | null => {
       order_number: parsed.order_number.trim(),
       phone: parsed.phone.trim(),
       result,
+      checked_at: typeof parsed.checked_at === "string" && Number.isFinite(Date.parse(parsed.checked_at))
+        ? parsed.checked_at : null,
     };
   } catch {
     return null;
@@ -177,22 +197,33 @@ const readStoredLookup = (): StoredOrderLookup | null => {
 const storeLookup = (
   payload: Pick<StoredOrderLookup, "order_number" | "phone">,
   result: CommerceOrderLookupSummary,
+  checkedAt: string,
 ) => {
   if (!import.meta.client) return;
 
-  window.sessionStorage.setItem(
-    ORDER_LOOKUP_STORAGE_KEY,
-    JSON.stringify({ ...payload, result }),
-  );
+  try {
+    window.sessionStorage.setItem(
+      ORDER_LOOKUP_STORAGE_KEY,
+      JSON.stringify({ ...payload, result, checked_at: checkedAt }),
+    );
+  } catch {
+    // Storage is optional; a successful lookup must still be displayed.
+  }
 };
 
 const clearStoredLookup = () => {
   if (!import.meta.client) return;
-  window.sessionStorage.removeItem(ORDER_LOOKUP_STORAGE_KEY);
+  try {
+    window.sessionStorage.removeItem(ORDER_LOOKUP_STORAGE_KEY);
+  } catch {
+    // The lookup remains usable when browser storage is unavailable.
+  }
 };
 
 const submitLookup = async () => {
   if (loading.value) return;
+  checkedAt.value = null;
+  restoredResult.value = false;
 
   if (!validateForm()) {
     order.value = null;
@@ -214,7 +245,9 @@ const submitLookup = async () => {
       recaptcha_token: recaptchaToken,
     });
     order.value = lookupResult;
-    storeLookup(lookupPayload, lookupResult);
+    const timestamp = new Date().toISOString();
+    checkedAt.value = timestamp;
+    storeLookup(lookupPayload, lookupResult, timestamp);
   } catch (error: any) {
     const payload = error?.data ?? {};
     applyFieldErrors(payload);
@@ -238,6 +271,8 @@ onMounted(async () => {
   form.order_number = storedLookup.order_number;
   form.phone = storedLookup.phone;
   order.value = storedLookup.result;
+  checkedAt.value = storedLookup.result ? storedLookup.checked_at : null;
+  restoredResult.value = Boolean(storedLookup.result);
 
   if (isAuthenticated.value) {
     showGuestLookup.value = true;
@@ -380,6 +415,26 @@ onMounted(async () => {
               </div>
             </div>
 
+            <div
+              class="flex min-w-0 flex-col gap-3 rounded-[16px] border border-border-default bg-surface-2 p-4 sm:flex-row sm:items-center sm:justify-between"
+              role="status"
+            >
+              <div class="min-w-0 text-sm leading-6 text-text-secondary">
+                <p v-if="formattedCheckedAt">
+                  ბოლო შემოწმება:
+                  <time :datetime="checkedAt || undefined" class="font-semibold text-text-primary">{{ formattedCheckedAt }}</time>
+                  <span class="text-xs text-text-muted"> (თბილისის დროით)</span>
+                </p>
+                <p v-else-if="restoredResult">წინა შემოწმების დრო შენახული არ არის.</p>
+                <p v-if="restoredResult" class="mt-1">
+                  ეს წინა შემოწმების შენახული შედეგია. მიმდინარე სტატუსის სანახავად დააჭირე „სტატუსის განახლებას“.
+                </p>
+              </div>
+              <BaseButton type="button" variant="secondary" :loading="loading" :disabled="loading" @click="submitLookup">
+                სტატუსის განახლება
+              </BaseButton>
+            </div>
+
             <div class="grid min-w-0 gap-3 sm:grid-cols-2">
               <div
                 :class="[
@@ -405,6 +460,7 @@ onMounted(async () => {
                 <p class="mt-1">
                   {{ getPaymentStatusLabel(order.payment_status, order.payment_method) }}
                 </p>
+                <OrderRefundSummary :refund="order.refund_summary" />
               </div>
             </div>
 

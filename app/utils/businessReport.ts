@@ -2,6 +2,11 @@ export type ReportSection = "overview" | "sales" | "finance";
 export type BusinessPeriod = { start: string; end: string };
 export type ReportSummary = Record<string, string | number | null>;
 export type ReportDay = { date: string; received: string; refunded: string; net_received: string; product_profit_net: string | null; paid_orders: number; sold_units: number | null };
+export type BusinessDelivery = {
+  order_number: string; date: string; cancelled: boolean; stage: string; stage_label: string;
+  tracking_number: string | null; customer_delivery: string; quoted_price: string;
+  buffer: string; booked_price: string | null; difference: string | null; issues: string[];
+};
 export type BusinessReport = {
   period: BusinessPeriod;
   previous_period: BusinessPeriod;
@@ -10,7 +15,7 @@ export type BusinessReport = {
   comparisons: Record<string, { delta: string | null; percent: string | null }>;
   daily: ReportDay[];
   products: { sku: string; name: string; sold_units: number; returned_units: number; net_units: number; net_sales: string; profit_net: string | null }[];
-  deliveries: { order_number: string; date: string; carrier: string; buffer: string; delivery: string }[];
+  deliveries: BusinessDelivery[];
   delivery_rows_total: number;
   losses: { order_number: string; date: string; sku: string; name: string; quantity: number; cost_net: string | null }[];
   loss_rows_total: number;
