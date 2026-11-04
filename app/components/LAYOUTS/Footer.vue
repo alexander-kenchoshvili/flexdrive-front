@@ -138,6 +138,21 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
           >
             {{ brandDescription }}
           </p>
+
+          <div v-if="socials.length" class="mt-5 flex flex-wrap items-center gap-3">
+            <a
+              v-for="item in socials"
+              :key="`${item.type}-${item.label}`"
+              :href="item.url"
+              :target="resolveSocialTarget(item)"
+              :rel="resolveSocialRel(item)"
+              :aria-label="item.label"
+              :title="item.label"
+              class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-footer-border bg-footer-surface text-footer-text-primary transition-colors duration-200 hover:border-footer-text-muted hover:bg-footer-hover hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
+            >
+              <BaseIcon :name="item.icon" :size="24" />
+            </a>
+          </div>
         </section>
 
         <nav
@@ -239,21 +254,6 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
               </span>
             </li>
           </ul>
-
-          <div v-if="socials.length" class="mt-5 flex flex-wrap items-center gap-3">
-            <a
-              v-for="item in socials"
-              :key="`${item.type}-${item.label}`"
-              :href="item.url"
-              :target="resolveSocialTarget(item)"
-              :rel="resolveSocialRel(item)"
-              :aria-label="item.label"
-              :title="item.label"
-              class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-footer-border bg-footer-surface text-footer-text-primary transition-colors duration-200 hover:border-footer-text-muted hover:bg-footer-hover hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
-            >
-              <BaseIcon :name="item.icon" :size="24" />
-            </a>
-          </div>
         </section>
       </div>
 
