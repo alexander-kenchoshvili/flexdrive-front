@@ -138,6 +138,9 @@ const makeOptions = computed(() => [{ label: "ყველა მარკა", 
 const modelOptions = computed(() => [{ label: "ყველა მოდელი", value: "" }, ...models.value.map((model) => ({ label: model.name, value: model.slug }))]);
 const yearOptions = computed(() => [{ label: "ყველა წელი", value: "" }, ...[...years.value].reverse().map(({ year }) => ({ label: String(year), value: String(year) }))]);
 const canSubmit = computed(() => normalizedSearchText.value.length !== 1 && normalizedSearchText.value.length <= 255);
+const canClear = computed(() => Boolean(
+  normalizedSearchText.value || selectedMake.value || selectedModel.value || selectedYear.value || selectedCategories.value.length,
+));
 const filterParams = computed(() => ({
   ...(selectedMake.value ? { make: selectedMake.value } : {}),
   ...(selectedMake.value && selectedModel.value ? { model: selectedModel.value } : {}),
@@ -522,6 +525,7 @@ defineExpose({
             :make-options="makeOptions" :model-options="modelOptions" :year-options="yearOptions"
             :categories-pending="categoriesPending" :makes-pending="makesPending"
             :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
+            :can-clear="canClear"
             @make="updateMake" @model="updateModel" @year="selectedYear = $event"
             @categories="selectedCategories = $event" @search="submitSearch"
             @clear="clearFilters" @retry="ensureFiltersLoaded"
@@ -603,6 +607,7 @@ defineExpose({
               :make-options="makeOptions" :model-options="modelOptions" :year-options="yearOptions"
               :categories-pending="categoriesPending" :makes-pending="makesPending"
               :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
+              :can-clear="canClear"
               @make="updateMake" @model="updateModel" @year="selectedYear = $event"
               @categories="selectedCategories = $event" @search="submitSearch"
               @clear="clearFilters" @retry="ensureFiltersLoaded"

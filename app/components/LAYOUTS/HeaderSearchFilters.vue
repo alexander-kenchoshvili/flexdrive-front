@@ -17,6 +17,7 @@ const props = defineProps<{
   vehiclePending: boolean;
   error: string;
   canSubmit: boolean;
+  canClear: boolean;
 }>();
 const emit = defineEmits<{
   (e: "make", value: string): void;
@@ -77,26 +78,28 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
         @update:selected-values="emit('categories', $event.map(String))"
       />
     </div>
-    <ul v-if="selectedOptions.length" class="mt-3 flex flex-wrap gap-2" aria-label="არჩეული კატეგორიები">
-      <li v-for="option in selectedOptions" :key="option.value" class="min-w-0 max-w-full">
-        <button
-          type="button"
-          class="inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg border border-accent-primary/30 bg-accent-soft px-3 py-2 text-left text-xs font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-          :aria-label="`${option.label} — მოხსნა`"
-          @click="emit('categories', selectedCategories.filter((value) => value !== option.value))"
-        >
-          <span class="min-w-0 break-words">{{ option.label }}</span>
-          <span class="shrink-0 text-lg text-accent-primary" aria-hidden="true">×</span>
-        </button>
-      </li>
-    </ul>
+    <div v-if="selectedOptions.length || canClear" class="mt-3 flex min-w-0 items-center justify-between gap-3">
+      <ul v-if="selectedOptions.length" class="flex min-w-0 flex-1 flex-wrap gap-2" aria-label="არჩეული კატეგორიები">
+        <li v-for="option in selectedOptions" :key="option.value" class="min-w-0 max-w-full">
+          <button
+            type="button"
+            class="inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg border border-accent-primary/30 bg-accent-soft px-3 py-2 text-left text-xs font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+            :aria-label="`${option.label} — მოხსნა`"
+            @click="emit('categories', selectedCategories.filter((value) => value !== option.value))"
+          >
+            <span class="min-w-0 break-words">{{ option.label }}</span>
+            <span class="shrink-0 text-lg text-accent-primary" aria-hidden="true">×</span>
+          </button>
+        </li>
+      </ul>
+      <BaseButton v-if="canClear" class="ml-auto shrink-0" variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
+    </div>
     <div v-if="error" class="mt-3 flex flex-wrap items-center gap-2 text-sm text-warning" role="status">
       <p>{{ error }}</p>
       <button type="button" class="min-h-11 font-semibold underline" @click="emit('retry')">ხელახლა ცდა</button>
     </div>
-    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border-default pt-4 md:mt-1 md:border-t-0 md:pt-0">
-      <BaseButton variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
-      <BaseButton class="md:hidden" :disabled="!canSubmit" @click="emit('search')">ძებნა</BaseButton>
+    <div class="mt-4 flex justify-end border-t border-border-default pt-4 md:hidden">
+      <BaseButton :disabled="!canSubmit" @click="emit('search')">ძებნა</BaseButton>
     </div>
   </section>
 </template>
