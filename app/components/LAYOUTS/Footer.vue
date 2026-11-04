@@ -35,11 +35,20 @@ const legalLinks = computed(() =>
 const toPhoneHref = (value: string) => `tel:${value.replace(/[^\d+]/g, "")}`;
 
 const contactItems = computed(() => {
+  const email = sanitizeText(footer.value?.contact?.email);
   const phone = sanitizeText(footer.value?.contact?.phone);
   const workingHours = sanitizeText(footer.value?.contact?.working_hours);
   const city = sanitizeText(footer.value?.contact?.city);
 
   return [
+    email
+      ? {
+          key: "email",
+          icon: "mail",
+          label: email,
+          href: `mailto:${email}`,
+        }
+      : null,
     phone
       ? {
           key: "phone",
@@ -76,6 +85,7 @@ const socialIconMap: Record<string, string> = {
   email: "mail",
   instagram: "instagram",
   facebook: "facebook",
+  linkedin: "linkedin",
 };
 
 const socials = computed(() =>
@@ -86,7 +96,7 @@ const socials = computed(() =>
       url: sanitizeText(item.url),
       icon: socialIconMap[item.type?.toLowerCase?.() || ""] || "mail",
     }))
-    .filter((item) => item.label && item.url),
+    .filter((item) => item.type?.toLowerCase() !== "email" && item.label && item.url),
 );
 
 const copyrightText = computed(
@@ -206,9 +216,10 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
               v-for="item in contactItems"
               :key="item.key"
               class="flex items-center gap-3"
+              :class="{ 'site-contact-phone': item.key === 'phone' }"
             >
               <span
-                class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-footer-border bg-footer-surface text-accent-primary"
+                class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-footer-border bg-footer-surface text-accent-primary"
               >
                 <BaseIcon :name="item.icon" :size="15" />
               </span>
@@ -216,7 +227,7 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
               <a
                 v-if="item.href"
                 :href="item.href"
-                class="min-w-0 text-[14px] leading-6 text-footer-text-secondary transition-colors duration-200 hover:text-accent-primary"
+                class="min-w-0 break-words text-[14px] leading-6 text-footer-text-secondary transition-colors duration-200 hover:text-accent-primary"
               >
                 {{ item.label }}
               </a>
@@ -228,24 +239,39 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
               </span>
             </li>
           </ul>
+
+          <div v-if="socials.length" class="mt-5 flex flex-wrap items-center gap-3">
+            <a
+              v-for="item in socials"
+              :key="`${item.type}-${item.label}`"
+              :href="item.url"
+              :target="resolveSocialTarget(item)"
+              :rel="resolveSocialRel(item)"
+              :aria-label="item.label"
+              :title="item.label"
+              class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-footer-border bg-footer-surface text-footer-text-primary transition-colors duration-200 hover:border-footer-text-muted hover:bg-footer-hover hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
+            >
+              <BaseIcon :name="item.icon" :size="24" />
+            </a>
+          </div>
         </section>
       </div>
 
       <div class="border-t border-footer-border py-5 sm:py-6">
-        <div class="flex flex-col gap-5">
+        <div class="flex min-w-0 flex-col gap-3">
           <div
-            class="grid gap-4 sm:grid-cols-2 sm:gap-x-8 xl:grid-cols-[minmax(0,1fr)_auto_auto] xl:items-center"
+            class="flex min-w-0 flex-wrap items-center justify-between gap-x-8 gap-y-3"
           >
             <p
               v-if="copyrightText"
-              class="text-[12px] leading-5 text-footer-text-muted"
+              class="order-2 min-w-0 max-w-full break-words text-[12px] leading-5 text-footer-text-muted lg:order-1"
             >
               {{ copyrightText }}
             </p>
 
             <nav
               aria-label="Footer legal links"
-              class="flex flex-wrap items-center gap-x-5 gap-y-2 sm:justify-end xl:justify-center"
+              class="order-1 flex w-full min-w-0 flex-wrap items-center gap-x-5 lg:order-2 lg:ml-auto lg:w-auto"
             >
               <template v-for="link in legalLinks" :key="link.id">
                 <a
@@ -253,14 +279,14 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
                   :href="link.url"
                   :target="isHttpUrl(link.url) ? '_blank' : undefined"
                   :rel="isHttpUrl(link.url) ? 'noopener noreferrer' : undefined"
-                  class="text-[12px] leading-5 text-footer-text-muted transition-colors duration-200 hover:text-footer-text-secondary"
+                  class="inline-flex min-h-11 max-w-full items-center rounded-sm py-2 text-left text-[12px] leading-5 text-footer-text-secondary transition-colors duration-200 hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
                 >
                   {{ link.label }}
                 </a>
                 <NuxtLink
                   v-else
                   :to="link.url"
-                  class="text-[12px] leading-5 text-footer-text-muted transition-colors duration-200 hover:text-footer-text-secondary"
+                  class="inline-flex min-h-11 max-w-full items-center rounded-sm py-2 text-left text-[12px] leading-5 text-footer-text-secondary transition-colors duration-200 hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
                 >
                   {{ link.label }}
                 </NuxtLink>
@@ -268,56 +294,35 @@ const resolveSocialTarget = (item: FooterSocialItem) =>
 
               <button
                 type="button"
-                class="text-[12px] leading-5 text-footer-text-muted transition-colors duration-200 hover:text-footer-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
+                class="inline-flex min-h-11 max-w-full items-center rounded-sm py-2 text-left text-[12px] leading-5 text-footer-text-secondary transition-colors duration-200 hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
                 @click="openCookiePreferences"
               >
                 ქუქიების პარამეტრები
               </button>
             </nav>
+          </div>
 
-            <div
-              v-if="socials.length"
-              class="flex flex-wrap items-center gap-2 sm:col-span-2 xl:col-span-1 xl:justify-end"
+          <p class="min-w-0 max-w-full break-words text-[11px] leading-5 text-footer-text-muted">
+            This site is protected by reCAPTCHA and the Google
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="rounded-sm text-footer-text-secondary underline decoration-footer-text-muted/60 underline-offset-4 transition-colors duration-200 hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
             >
-              <a
-                v-for="item in socials"
-                :key="`${item.type}-${item.label}`"
-                :href="item.url"
-                :target="resolveSocialTarget(item)"
-                :rel="resolveSocialRel(item)"
-                class="inline-flex items-center gap-2 rounded-full border border-footer-border bg-footer-surface px-3 py-2 text-[12px] font-medium leading-none text-footer-text-muted transition-colors duration-200 hover:border-accent-primary hover:bg-footer-hover hover:text-footer-text-primary"
-              >
-                <BaseIcon :name="item.icon" :size="14" />
-                <span>{{ item.label }}</span>
-              </a>
-            </div>
-          </div>
-
-          <div
-            class="rounded-[18px] border border-footer-border bg-footer-surface px-4 py-3"
-          >
-            <p class="text-[11px] leading-5 text-footer-text-muted">
-              This site is protected by reCAPTCHA and the Google
-              <a
-                href="https://policies.google.com/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-footer-text-secondary underline decoration-footer-border underline-offset-4 transition-colors duration-200 hover:text-accent-primary"
-              >
-                Privacy Policy
-              </a>
-              and
-              <a
-                href="https://policies.google.com/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-footer-text-secondary underline decoration-footer-border underline-offset-4 transition-colors duration-200 hover:text-accent-primary"
-              >
-                Terms of Service
-              </a>
-              apply.
-            </p>
-          </div>
+              Privacy Policy
+            </a>
+            and
+            <a
+              href="https://policies.google.com/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="rounded-sm text-footer-text-secondary underline decoration-footer-text-muted/60 underline-offset-4 transition-colors duration-200 hover:text-footer-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--footer-text-secondary)] focus-visible:ring-offset-2 focus-visible:ring-offset-footer-bg"
+            >
+              Terms of Service
+            </a>
+            apply.
+          </p>
         </div>
       </div>
     </div>

@@ -42,7 +42,7 @@ const formatMoney = (value: string | number | null | undefined) =>
         <p class="text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary">
           შეკვეთა
         </p>
-        <h2 class="mt-2 text-[28px] font-extrabold leading-tight text-text-primary">
+        <h2 class="mt-2 text-[18px] font-extrabold leading-tight text-text-primary">
           შეკვეთის შეჯამება
         </h2>
       </div>

@@ -501,6 +501,7 @@ const submitContactForm = handleSubmit(
                 v-for="row in supportRows"
                 :key="`support-${row.key}`"
                 class="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+                :class="{ 'site-contact-phone': row.key === 'phone' }"
               >
                 <span
                   class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border-default bg-surface-2 text-accent-primary"

@@ -96,7 +96,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
         <p class="text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary">
           შეკვეთა
         </p>
-        <h2 class="mt-1.5 break-words text-[22px] font-extrabold leading-tight text-text-primary sm:mt-2 sm:text-[28px]">
+        <h2 class="mt-1.5 break-words text-[22px] font-extrabold leading-tight text-text-primary sm:mt-2 sm:text-[18px]">
           შეკვეთის დეტალები
         </h2>
       </div>

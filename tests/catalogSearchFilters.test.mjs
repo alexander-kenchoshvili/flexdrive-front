@@ -18,10 +18,13 @@ async function catalog(t, location, facets = {}, options = {}) {
   const categories = [{ id: 1, slug: "lights", name: "ფარები", product_count: 3 }, { id: 2, slug: "mirrors", name: "სარკეები", product_count: 4 }];
   const api = {
     getCatalogProducts: async (params) => { requests.push(params); return { data: vue.ref(response), error: vue.ref(null) }; },
-    getCatalogProductsRaw: async (params) => { requests.push(params); return response; },
+    getCatalogProductsRaw: async (params) => { requests.push(params); return options.getCatalogProductsRaw ? options.getCatalogProductsRaw(params) : response; },
     getCatalogCategories: async (includeEmpty = false) => { categoryRequests.push(includeEmpty); return { data: vue.ref(categories), error: vue.ref(null) }; },
     getCatalogCategoriesRaw: async (includeEmpty = false) => { categoryRequests.push(includeEmpty); return categories; },
-    getVehicleMakes: options.getVehicleMakes ?? (async () => []), getVehicleModels: async () => [], getVehicleYears: async () => [],
+    getVehicleMakes: options.getVehicleMakes ?? (async () => []),
+    getVehicleModels: options.getVehicleModels ?? (async () => []),
+    getVehicleYears: options.getVehicleYears ?? (async () => []),
+    getVehicleEngines: options.getVehicleEngines ?? (async () => []),
   };
   const mocks = {
     "~/utils/pageScrollCoordinator": { markPagePending() {}, markPageReady() {} },
@@ -36,7 +39,7 @@ async function catalog(t, location, facets = {}, options = {}) {
   const stops = [];
   const unmountCallbacks = [];
   const globals = {
-    ...vue, defineProps: () => ({}), useRoute: () => router.currentRoute.value, useRouter: () => router,
+    ...vue, defineProps: () => ({}), useRoute: () => new Proxy({}, { get: (_, key) => router.currentRoute.value[key] }), useRouter: () => router,
     useRuntimeConfig: () => ({ public: {} }), useSiteSettings: () => ({}),
     watch: (...args) => { const stop = vue.watch(...args); stops.push(stop); return stop; },
     onMounted() {}, onBeforeUnmount: (callback) => unmountCallbacks.push(callback), useHead() {}, useSeoMeta() {},
@@ -45,7 +48,7 @@ async function catalog(t, location, facets = {}, options = {}) {
   const { descriptor } = parse(readFileSync(new URL("../app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", import.meta.url), "utf8"));
   const output = ts.transpileModule(descriptor.scriptSetup.content.replaceAll("import.meta.client", String(Boolean(options.client))), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest };`)(
+  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest, handleDesktopVehicleMakeUpdate, handleDesktopVehicleModelUpdate, handleDesktopVehicleYearUpdate, handleDraftVehicleMakeUpdate, loadVehicleOptionsForDraft, vehicleModelsResponse, vehicleYearsResponse, vehicleOptionsError, desktopFiltersDisabled };`)(
     (name) => mocks[name] ?? (name.endsWith(".vue") ? {} : require(name)), {}, ...Object.values(globals),
   );
   return { ...controls, requests, categoryRequests, router, unmount: () => unmountCallbacks.forEach((callback) => callback()) };
@@ -177,4 +180,106 @@ test("zero-result selected brands retain their real chip label for slug and ID l
     assert.equal(c.activeFilterChips.value.find((chip) => chip.key === "brand").value, "TYC");
     assert.equal(c.activeFilterChips.value.find((chip) => chip.key === "side").value, "მარცხენა");
   }
+});
+
+const flushCatalog = () => new Promise((resolve) => setImmediate(resolve));
+const deferred = () => {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+};
+
+test("vehicle steps reuse models and years while products filter once per selection", async (t) => {
+  const calls = [];
+  const c = await catalog(t, "/catalog", {}, {
+    getVehicleModels: async (make) => { calls.push(["models", make]); return []; },
+    getVehicleYears: async (make, model) => { calls.push(["years", make, model]); return []; },
+    getVehicleEngines: async (...args) => { calls.push(["engines", ...args]); return []; },
+  });
+  await c.handleDesktopVehicleMakeUpdate("subaru");
+  await flushCatalog();
+  await c.handleDesktopVehicleModelUpdate("ascent");
+  await flushCatalog();
+  await c.handleDesktopVehicleYearUpdate("2020");
+  await flushCatalog();
+  await c.handleDesktopVehicleYearUpdate("2021");
+  await flushCatalog();
+  await c.loadVehicleOptionsForDraft();
+  assert.deepEqual(calls, [
+    ["models", "subaru"], ["years", "subaru", undefined],
+    ["years", "subaru", "ascent"],
+    ["engines", "subaru", "ascent", 2020],
+    ["engines", "subaru", "ascent", 2021],
+  ]);
+  assert.equal(c.requests.length, 5);
+  assert.deepEqual(c.requests.at(-1), { page: 1, page_size: 15, make: "subaru", model: "ascent", year: 2021 });
+  await c.handleDesktopVehicleMakeUpdate("toyota");
+  await flushCatalog();
+  assert.deepEqual(calls.slice(-2), [["models", "toyota"], ["years", "toyota", undefined]]);
+  assert.deepEqual(c.requests.at(-1), { page: 1, page_size: 15, make: "toyota" });
+});
+
+test("desktop filters stay continuously disabled from option loading through product completion", async (t) => {
+  const models = deferred(), years = deferred(), products = deferred();
+  const c = await catalog(t, "/catalog", {}, {
+    getVehicleModels: () => models.promise,
+    getVehicleYears: () => years.promise,
+    getCatalogProductsRaw: () => products.promise,
+  });
+  const transitions = [];
+  const stop = vue.watch(c.desktopFiltersDisabled, (value) => transitions.push(value), { flush: "sync" });
+  t.after(stop);
+  const updating = c.handleDesktopVehicleMakeUpdate("subaru");
+  assert.equal(c.desktopFiltersDisabled.value, true);
+  models.resolve([]);
+  await flushCatalog();
+  assert.equal(c.requests.length, 1);
+  years.resolve([]);
+  await updating;
+  assert.equal(c.requests.length, 2);
+  assert.equal(c.desktopFiltersDisabled.value, true);
+  assert.deepEqual(transitions, [true]);
+  products.resolve({ count: 0, results: [], total_pages: 1, page_size: 15, facets: {} });
+  await flushCatalog();
+  assert.deepEqual(transitions, [true, false]);
+});
+
+test("failed vehicle options remain retryable and product errors release desktop filters", async (t) => {
+  let fail = true, modelCalls = 0;
+  const c = await catalog(t, "/catalog", {}, {
+    getVehicleModels: async () => { modelCalls++; if (fail) throw new Error("offline"); return []; },
+    getCatalogProductsRaw: async () => { throw new Error("products offline"); },
+  });
+  await c.handleDesktopVehicleMakeUpdate("subaru");
+  await flushCatalog();
+  assert.equal(c.desktopFiltersDisabled.value, false);
+  assert.match(c.vehicleOptionsError.value.message, /offline/);
+  fail = false;
+  await c.handleDesktopVehicleMakeUpdate("subaru");
+  await flushCatalog();
+  assert.equal(modelCalls, 2);
+  assert.equal(c.vehicleOptionsError.value, null);
+  assert.equal(c.desktopFiltersDisabled.value, false);
+});
+
+test("late vehicle responses cannot replace the latest draft or populate a departed catalog", async (t) => {
+  const oldModels = deferred();
+  const c = await catalog(t, "/catalog", {}, {
+    getVehicleModels: async (make) => make === "subaru" ? oldModels.promise : [{ slug: "camry", name: "Camry" }],
+    getVehicleYears: async (make) => [{ year: make === "subaru" ? 2019 : 2020 }],
+  });
+  const first = c.handleDraftVehicleMakeUpdate("subaru");
+  await c.handleDraftVehicleMakeUpdate("toyota");
+  oldModels.resolve([{ slug: "ascent", name: "Ascent" }]);
+  await first;
+  assert.equal(c.vehicleModelsResponse.value[0].slug, "camry");
+  assert.equal(c.vehicleYearsResponse.value[0].year, 2020);
+
+  const late = deferred();
+  const departed = await catalog(t, "/catalog", {}, { getVehicleModels: () => late.promise });
+  const loading = departed.handleDraftVehicleMakeUpdate("subaru");
+  departed.unmount();
+  late.resolve([{ slug: "ascent", name: "Ascent" }]);
+  await loading;
+  assert.deepEqual(departed.vehicleModelsResponse.value, []);
 });

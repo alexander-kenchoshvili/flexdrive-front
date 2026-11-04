@@ -363,7 +363,7 @@ onBeforeUnmount(() => {
         class="mt-3 hidden border-t border-header-border/80 pt-2 lg:block"
         aria-label="მთავარი ნავიგაცია"
       >
-        <ul class="flex min-h-10 items-center gap-1 overflow-x-auto">
+        <ul class="flex min-h-10 items-center gap-[16px] overflow-x-auto">
           <li v-for="item in navigationMenuItems" :key="item.id" class="shrink-0">
             <NuxtLink
               :to="item.final_url"

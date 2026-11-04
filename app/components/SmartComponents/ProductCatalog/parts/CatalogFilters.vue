@@ -265,16 +265,16 @@ watch([minPriceModel, maxPriceModel], () => {
 
     <section class="mt-4 border-t border-border-default pt-4">
       <div class="flex items-start justify-between gap-3">
-        <div>
+        <div class="min-w-0 flex-1">
           <h3 class="text-sm font-bold text-text-primary">მანქანით ძებნა</h3>
           <p class="mt-1 text-xs leading-5 text-text-muted">
             ფილტრი ავტომატურად ზუსტდება ყოველ არჩეულ საფეხურზე.
           </p>
         </div>
         <button
-          v-if="hasVehicleDraft || hasAppliedVehicle"
           type="button"
           class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-default bg-surface-2/70 text-text-muted transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary disabled:cursor-not-allowed disabled:opacity-60"
+          :class="{ invisible: !hasVehicleDraft && !hasAppliedVehicle }"
           :disabled="disabled || vehicleOptionsPending"
           aria-label="მანქანის ფილტრის გასუფთავება"
           title="მანქანის ფილტრის გასუფთავება"

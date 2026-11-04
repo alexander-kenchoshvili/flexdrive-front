@@ -7,6 +7,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Remove the two rules below to show the contact phone again. Data stays intact. */
+.site-contact-phone,
+a[href^="tel:" i] {
+  display: none !important;
+}
+
+/* Keep the first visible contact row flush when the phone row is hidden. */
+.site-contact-phone + * {
+  border-top-width: 0 !important;
+  padding-top: 0;
+}
+
 @font-face {
   font-family: "Noto Sans Georgian";
   src: url("../fonts/NotoSansGeorgian-Regular.woff2") format("woff2");

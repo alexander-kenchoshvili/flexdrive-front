@@ -122,6 +122,11 @@ const vehicleEnginesResponse = ref<CatalogVehicleEngine[]>([]);
 const productsPending = ref(false);
 const categoriesPending = ref(false);
 const vehicleOptionsPending = ref(false);
+const desktopVehicleUpdatePending = ref(false);
+const catalogRoutePending = ref(false);
+const desktopFiltersDisabled = computed(() =>
+  productsPending.value || desktopVehicleUpdatePending.value || catalogRoutePending.value,
+);
 const vehicleMakesPending = ref(false);
 const vehicleMakesError = ref<unknown>(null);
 let catalogDisposed = false;
@@ -1111,54 +1116,69 @@ const loadVehicleMakes = async () => {
   }
 };
 
+let loadedVehicleModelsMake: string | null = null;
+let loadedVehicleYearsKey: string | null = null;
+let loadedVehicleEnginesKey: string | null = null;
+
 const loadVehicleOptionsForDraft = async () => {
   const requestId = ++latestVehicleOptionsRequestId.value;
+  const make = draftVehicleMake.value;
+  const model = draftVehicleModel.value;
+  const year = draftVehicleYear.value;
   vehicleOptionsPending.value = true;
   vehicleOptionsError.value = null;
 
   try {
-    if (!draftVehicleMake.value) {
+    if (!make) {
       vehicleModelsResponse.value = [];
       vehicleYearsResponse.value = [];
       vehicleEnginesResponse.value = [];
+      loadedVehicleModelsMake = null;
+      loadedVehicleYearsKey = null;
+      loadedVehicleEnginesKey = null;
       return;
     }
 
-    const models = await getVehicleModels(draftVehicleMake.value);
-    if (requestId !== latestVehicleOptionsRequestId.value) return;
+    const yearsKey = JSON.stringify([make, model]);
+    const [models, years] = await Promise.all([
+      loadedVehicleModelsMake === make
+        ? vehicleModelsResponse.value
+        : getVehicleModels(make),
+      loadedVehicleYearsKey === yearsKey
+        ? vehicleYearsResponse.value
+        : getVehicleYears(make, model || undefined),
+    ]);
+    if (catalogDisposed || requestId !== latestVehicleOptionsRequestId.value) return;
     vehicleModelsResponse.value = models;
-
-    const years = await getVehicleYears(
-      draftVehicleMake.value,
-      draftVehicleModel.value || undefined,
-    );
-    if (requestId !== latestVehicleOptionsRequestId.value) return;
     vehicleYearsResponse.value = years;
+    loadedVehicleModelsMake = make;
+    loadedVehicleYearsKey = yearsKey;
 
-    if (!draftVehicleModel.value || !draftVehicleYear.value) {
+    if (!model || !year) {
       vehicleEnginesResponse.value = [];
+      loadedVehicleEnginesKey = null;
       return;
     }
 
-    const parsedYear = Number(draftVehicleYear.value);
+    const parsedYear = Number(year);
     if (!Number.isInteger(parsedYear)) {
       vehicleEnginesResponse.value = [];
+      loadedVehicleEnginesKey = null;
       return;
     }
 
-    const engines = await getVehicleEngines(
-      draftVehicleMake.value,
-      draftVehicleModel.value,
-      parsedYear,
-    );
-    if (requestId !== latestVehicleOptionsRequestId.value) return;
+    const enginesKey = JSON.stringify([make, model, parsedYear]);
+    if (loadedVehicleEnginesKey === enginesKey) return;
+    const engines = await getVehicleEngines(make, model, parsedYear);
+    if (catalogDisposed || requestId !== latestVehicleOptionsRequestId.value) return;
     vehicleEnginesResponse.value = engines;
+    loadedVehicleEnginesKey = enginesKey;
   } catch (error) {
-    if (requestId === latestVehicleOptionsRequestId.value) {
+    if (!catalogDisposed && requestId === latestVehicleOptionsRequestId.value) {
       vehicleOptionsError.value = error;
     }
   } finally {
-    if (requestId === latestVehicleOptionsRequestId.value) {
+    if (!catalogDisposed && requestId === latestVehicleOptionsRequestId.value) {
       vehicleOptionsPending.value = false;
     }
   }
@@ -1213,25 +1233,28 @@ const applyDraftVehicleFilter = async () => {
   await pushQueryAndScrollToResults({ resetPage: true });
 };
 
-const handleDesktopVehicleMakeUpdate = async (value: string) => {
-  await handleDraftVehicleMakeUpdate(value);
-  await applyDraftVehicleFilter();
+const updateDesktopVehicle = async (updateDraft: () => void | Promise<void>) => {
+  if (desktopFiltersDisabled.value) return;
+  desktopVehicleUpdatePending.value = true;
+  try {
+    await updateDraft();
+    if (!catalogDisposed) await applyDraftVehicleFilter();
+  } finally {
+    desktopVehicleUpdatePending.value = false;
+  }
 };
 
-const handleDesktopVehicleModelUpdate = async (value: string) => {
-  await handleDraftVehicleModelUpdate(value);
-  await applyDraftVehicleFilter();
-};
+const handleDesktopVehicleMakeUpdate = (value: string) =>
+  updateDesktopVehicle(() => handleDraftVehicleMakeUpdate(value));
 
-const handleDesktopVehicleYearUpdate = async (value: string) => {
-  await handleDraftVehicleYearUpdate(value);
-  await applyDraftVehicleFilter();
-};
+const handleDesktopVehicleModelUpdate = (value: string) =>
+  updateDesktopVehicle(() => handleDraftVehicleModelUpdate(value));
 
-const handleDesktopVehicleEngineUpdate = async (value: string) => {
-  handleDraftVehicleEngineUpdate(value);
-  await applyDraftVehicleFilter();
-};
+const handleDesktopVehicleYearUpdate = (value: string) =>
+  updateDesktopVehicle(() => handleDraftVehicleYearUpdate(value));
+
+const handleDesktopVehicleEngineUpdate = (value: string) =>
+  updateDesktopVehicle(() => handleDraftVehicleEngineUpdate(value));
 
 const handleResetVehicleDraft = async () => {
   clearDraftVehicleFilter();
@@ -1378,30 +1401,35 @@ watch(
   async (path, _previousPath, onCleanup) => {
     let cancelled = false;
     onCleanup(() => { cancelled = true; });
-    markPagePending(path);
-    const shouldSyncVehicleDraft = hasVehicleRouteChanged(route.query);
-    closeMobileFilterSheet();
-    syncControlsFromRoute(route.query, {
-      syncVehicleDraft: shouldSyncVehicleDraft,
-    });
-    if (shouldSyncVehicleDraft) {
-      await loadVehicleOptionsForDraft();
-    }
-    if (cancelled) return;
+    catalogRoutePending.value = true;
     try {
-      await loadRouteCategory();
-    } catch (error) {
+      markPagePending(path);
+      const shouldSyncVehicleDraft = hasVehicleRouteChanged(route.query);
+      closeMobileFilterSheet();
+      syncControlsFromRoute(route.query, {
+        syncVehicleDraft: shouldSyncVehicleDraft,
+      });
+      if (shouldSyncVehicleDraft) {
+        await loadVehicleOptionsForDraft();
+      }
+      if (cancelled) return;
+      try {
+        await loadRouteCategory();
+      } catch (error) {
+        if (!cancelled) {
+          showError(createError(publicPageError(error, "კატეგორიის ჩატვირთვა დროებით ვერ მოხერხდა")));
+          markPageReady(path);
+        }
+        return;
+      }
+      if (cancelled) return;
+      await loadProducts();
+      await nextTick();
       if (!cancelled) {
-        showError(createError(publicPageError(error, "კატეგორიის ჩატვირთვა დროებით ვერ მოხერხდა")));
         markPageReady(path);
       }
-      return;
-    }
-    if (cancelled) return;
-    await loadProducts();
-    await nextTick();
-    if (!cancelled) {
-      markPageReady(path);
+    } finally {
+      if (!cancelled) catalogRoutePending.value = false;
     }
   },
 );
@@ -1550,7 +1578,7 @@ useSeoMeta({
             :on-sale="selectedOnSale"
             :min-price="minPrice"
             :max-price="maxPrice"
-            :disabled="productsPending"
+            :disabled="desktopFiltersDisabled"
             @update:vehicle-make="handleDesktopVehicleMakeUpdate"
             @update:vehicle-model="handleDesktopVehicleModelUpdate"
             @update:vehicle-year="handleDesktopVehicleYearUpdate"

@@ -15,7 +15,7 @@ import type {
   CheckoutPaymentMethod,
 } from "~/types/commerce";
 
-const props = defineProps<{
+defineProps<{
   disabled?: boolean;
   cardPaymentEnabled?: boolean;
   cardPaymentLoading?: boolean;
@@ -89,15 +89,6 @@ const lastNameLabel = computed(() =>
   isLegalBuyer.value ? "საკონტაქტო პირის გვარი *" : "გვარი *",
 );
 
-const deliveryHint = computed(() => {
-  if (!deliveryRegionId.value) return "აირჩიე მიწოდების მიმართულება და მიუთითე სრული მისამართი.";
-  if (props.deliveryCitiesPending) return "მიწოდების მიმართულება მოწმდება.";
-  if (deliveryRegionId.value === 1 || deliveryRegionId.value === 6) {
-    return "მიწოდებას RedCap ასრულებს — იმავე ან მომდევნო დღეს. ზუსტი ვადა შეკვეთის დამუშავებისას დაზუსტდება.";
-  }
-  if (deliveryRegionId.value === 7) return "მაღალმთიან დასახლებებში მიწოდების ვადა მიმართულების მიხედვით დაზუსტდება.";
-  return "მიწოდებას RedCap ასრულებს. სავარაუდო ვადა: 3–4 დღე.";
-});
 </script>
 
 <template>
@@ -341,9 +332,6 @@ const deliveryHint = computed(() => {
       </button>
     </div>
 
-    <p v-else class="mt-3 text-xs leading-5 text-text-muted">
-      {{ deliveryHint }}
-    </p>
   </section>
 
   <section
