@@ -86,6 +86,7 @@ const age = (value: number | null) => value === null ? "—" : `${reportNumber(v
               <div>თავდაპირველი თანხა: {{ reportMoney(item.paid_total) }}</div>
               <div>დაბრუნებულია: {{ reportMoney(item.refunded_amount) }}</div>
               <div>{{ item.refund_status_label }}<span v-if="item.requested_refund"> · {{ reportMoney(item.requested_refund) }}</span></div>
+              <div v-if="item.retained_delivery_fee != null">პირველი მიტანის დაქვითვა: {{ reportMoney(item.retained_delivery_fee) }} · {{ item.refund_confirmed ? 'დადასტურებული' : 'მოთხოვნილი' }}</div>
               <div v-if="item.retained_return_fee !== null">უკუმიტანის დაქვითვა: {{ reportMoney(item.retained_return_fee) }} · {{ item.refund_confirmed ? 'დადასტურებული' : 'მოთხოვნილი' }}</div>
               <div>უკუმიტანის ხარჯი: {{ reportMoney(item.return_delivery_cost) }}<span v-if="item.return_delivery_payer"> · იხდის {{ item.return_delivery_payer }}</span></div>
             </div></td><td class="min-w-[180px] p-3 pr-5 text-text-muted"><p>დაფიქსირდა:<br>{{ operationsDate(item.requested_at) }}</p><p v-if="item.received_at" class="mt-3">მიღებულია:<br>{{ operationsDate(item.received_at) }}</p></td>

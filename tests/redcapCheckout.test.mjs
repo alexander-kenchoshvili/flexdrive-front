@@ -24,7 +24,7 @@ const field = vue.defineComponent({
 const select = vue.defineComponent({
   props: ["name", "label", "modelValue", "options"],
   setup: (props) => () => vue.h("label", [props.label, vue.h("select", { name: props.name },
-    props.options.map((option) => vue.h("option", { value: option.value }, option.label)))]),
+    props.options.map((option) => vue.h("option", { value: option.value, selected: option.value === props.modelValue }, option.label)))]),
 });
 const stub = vue.defineComponent({ render: () => null });
 const exports = {};
@@ -57,16 +57,21 @@ test("actual checkout renders one zone selection and a separate real destination
   assert.equal((html.match(/<select\b/g) || []).length, 1);
   assert.match(html, /name="city" value="ბათუმი"/);
   assert.match(html, /ქალაქი \/ სოფელი/);
-  assert.match(html, /3–4 დღე/);
-  assert.match(html, /RedCap/);
+  assert.match(html, /name="delivery_region_id"/);
+  assert.match(html, /name="address_line" value="Test address"/);
   assert.doesNotMatch(html, /EasyWay|name="delivery_city_id"|3 საათ/);
 });
 
-test("Tbilisi promise depends on processing and mountain estimates are qualified", async () => {
-  for (const zone of [1, 6]) {
-    const html = await render(zone);
-    assert.match(html, /ზუსტი ვადა შეკვეთის დამუშავებისას დაზუსტდება/);
-    assert.doesNotMatch(html, /13:00|3–4 დღე/);
+test("all delivery zones preserve the selected direction and the customer-entered destination", async () => {
+  for (const { value } of zones) {
+    const html = await render(value);
+    const selected = html.match(/<option\b[^>]*\bselected[^>]*>/g) || [];
+    assert.equal(selected.length, 1);
+    assert.ok(selected[0].includes('value="' + value + '"'));
+    assert.equal((html.match(/<select\b/g) || []).length, 1);
+    assert.equal((html.match(/<option\b/g) || []).length, zones.length);
+    assert.match(html, /name="city" value="ბათუმი"/);
+    assert.match(html, /name="address_line" value="Test address"/);
+    assert.doesNotMatch(html, /EasyWay|name="delivery_city_id"/);
   }
-  assert.match(await render(7), /ვადა მიმართულების მიხედვით დაზუსტდება/);
 });

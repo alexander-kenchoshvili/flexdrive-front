@@ -32,10 +32,34 @@ after checking that it has no linked content, and adds the homepage FAQ. Migrati
 `pages.0081_position_faq_after_vehicle_brands` places it immediately after "parts by make".
 It preserves other homepage positions and does not seed any questions or answers.
 
-The migration is applied to the local SQLite database. Three explicitly labeled local preview
-items (`faq-preview-1` through `faq-preview-3`) remain for user review. These are separate from
-the migration and are not production content. Replace them with approved questions/answers.
-Production deployment/migration is not performed as part of this implementation.
+The local SQLite collection now contains nine user-approved question/answer pairs. The first
+three items reused the original preview rows; their titles and answers are final content.
+Questions cover compatibility, guest checkout, card payments, delivery, order status,
+cancellation, returns/refunds, price/stock updates and personal data.
+
+Migration `pages.0082_regional_delivery_3_5_days` updates regional delivery copy to 3–5 working
+days in CMS content and component headings, preserving other text and fields.
+
+## Production rollout — 2026-11-04
+
+After the user deployed both repositories, the production database had exactly three pending
+migrations: pages 0080–0082. These were applied with the nine approved local FAQ entries in
+one guarded PostgreSQL transaction. The FAQ is enabled at position 41, immediately after
+VehicleBrandSwiper at position 40. Other homepage positions are unchanged; the unused FAQ
+page is removed. Existing LinkedIn configuration already matched local and was preserved.
+
+All other CMS records/fields were compared with their pre-change values; only the intended
+FAQ additions, unused-page removal and delivery-window replacements changed. A fresh DB
+connection verified the committed FAQ content, ordering and migration state.
+
+Backup of public CMS records and migration history:
+`%TEMP%/flexdrive-faq-backups/production-before-faq-20261104-150144-104423.json`.
+Credentials were entered through hidden input only; no environment or secret file changed.
+
+The actual production storefront is `https://flexdrive-prod-front-pdzcv.ondigitalocean.app/`.
+Its homepage HTTP response contains all nine FAQ controls in the intended position; public
+homepage/delivery/terms API responses contain the new 3–5-day text and no old 4–5-day text.
+The historical Vercel address points to a different environment and was not migrated.
 
 ## Validation
 
@@ -46,5 +70,6 @@ Production deployment/migration is not performed as part of this implementation.
 - Computer Use checked the user's existing localhost Chrome at 375px, 780px and 1440px,
   plus its ordinary desktop window. Long-answer switching retained the clicked question's
   visible position on mobile and desktop. Enter/Space, light/dark styling and wrapping checked.
-- Existing browser window size, responsive width setting and dark theme restored; FAQ left
-  visible for review. No orders, account data, providers, environment files or production changed.
+- During the initial local interaction review, existing browser window size, responsive width
+  setting and dark theme were restored; FAQ was left visible for review. No orders, account
+  data, providers or environment files changed. Production data rollout is recorded above.

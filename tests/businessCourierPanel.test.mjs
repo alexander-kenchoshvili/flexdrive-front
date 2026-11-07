@@ -107,3 +107,14 @@ test("cancelled booking keeps its quoted price visible and warns that billing ne
   assert.match(text(current.root), /შესაძლო საკურიერო ხარჯი გადაამოწმეთ/);
   current.close();
 });
+
+test("outbound deduction is distinct from return cost and included in the delivery balance", () => {
+  const current = mount(finance, { report: report({ retained_delivery_fee: "10.00", net_delivery_received: "10.00" }) });
+  const card = find(current.root, (node) => node.type === "article" && text(node).includes("პირველი მიტანისთვის დაქვითული თანხა"));
+  assert.ok(card);
+  assert.ok(text(card).includes(reports.reportMoney("10.00")));
+  assert.match(text(card), /მიტანის ნაშთში უკვე შედის/);
+  assert.match(text(card), /ცალკე შემოსავალს ან ხარჯს არ ემატება/);
+  assert.match(text(current.root), /უკუმიტანისთვის დაქვითული თანხა/);
+  current.close();
+});

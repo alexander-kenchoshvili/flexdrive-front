@@ -12,7 +12,7 @@ export type OperationsPage<T> = { items: T[]; total: number; page: number; pages
 export type OperationReturn = {
   id: number; order_number: string; receipt_status: string; receipt_label: string; disposition_label: string;
   paid_total: string; refunded_amount: string; requested_refund: string | null;
-  refund_confirmed: boolean; refund_status_label: string; retained_return_fee: string | null; return_delivery_cost: string | null;
+  refund_confirmed: boolean; refund_status_label: string; retained_return_fee: string | null; retained_delivery_fee: string | null; return_delivery_cost: string | null;
   return_delivery_payer: string | null;
   payment_label: string; requested_at: string; received_at: string | null; waiting_days: number | null;
   expected_units: number; saleable_units: number; unsaleable_units: number; product_count: number;
