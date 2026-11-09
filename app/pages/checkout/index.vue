@@ -77,10 +77,10 @@ const {
   phone,
   phoneAttrs,
   city,
-  cityAttrs,
   deliveryRegionId,
   deliveryCityId,
   deliveryRegionOptions,
+  deliveryCityOptions,
   deliveryRegionsPending,
   deliveryCitiesPending,
   deliveryLocationsError,
@@ -698,7 +698,7 @@ useNoindexPage({
                 v-model:email="email"
                 v-model:phone="phone"
                 v-model:delivery-region-id="deliveryRegionId"
-                v-model:city="city"
+                v-model:delivery-city-id="deliveryCityId"
                 v-model:address-line="addressLine"
                 v-model:note="note"
                 v-model:terms-accepted="termsAccepted"
@@ -711,8 +711,8 @@ useNoindexPage({
                 :last-name-attrs="lastNameAttrs"
                 :email-attrs="emailAttrs"
                 :phone-attrs="phoneAttrs"
-                :city-attrs="cityAttrs"
                 :delivery-region-options="deliveryRegionOptions"
+                :delivery-city-options="deliveryCityOptions"
                 :delivery-regions-pending="deliveryRegionsPending"
                 :delivery-cities-pending="deliveryCitiesPending"
                 :delivery-locations-error="deliveryLocationsError"

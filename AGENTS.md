@@ -1,5 +1,28 @@
 # Project Instructions
 
+## Wingo Standard Checkout - 2026-11-10
+
+- User authorized backend first, then this frontend. Active quotes use only Wingo
+  standard type1; region/locality selection uses the existing searchable BaseSelect
+  and BaseInput/Tailwind layout in the shared component for both checkout pages.
+  No fast service chooser or delivery calendar added; delivery timing copy unchanged.
+- Numeric local IDs are stable backend mappings. City text is derived from the
+  selected locality. Region changes synchronously invalidate locality/price; late
+  old API results cannot overwrite the current selection. Single locality auto-selects.
+- Drafts carry a Wingo marker. Legacy courier contacts/street survive but location
+  IDs are cleared to prevent numeric-ID overlap. Restore verifies returned cities.
+  Wingo provider/type/location response checks reject mismatched quotes.
+- 14 checkout/draft tests +38 existing shared-select/business/status tests pass.
+  Nuxt typecheck, scoped ESLint and whitespace pass. Context7 tools were unavailable;
+  official Vue watcher docs verified flush semantics. No browser/server start.
+- Paired backend migration0041 is applied locally only; backend has52 Wingo and337
+  prior passing regressions. Backend API +0041 must precede or accompany this frontend.
+  Production key/ref data is configured later by user. No env, real bank/provider
+  actions, commits, pushes or deployments. User handles both pushes/deployments.
+  Booking/status/cancel/returns and Wingo finance are later stages. See paired backend
+  docs/WINGO_CHECKOUT.md.
+
+
 ## Compact Product Fitments In Specifications - 2026-10-28
 
 - User authorized removing the separate large fitment-card section and showing

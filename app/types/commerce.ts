@@ -158,15 +158,17 @@ export interface CommerceDeliveryCity {
 }
 
 export interface CommerceDeliveryRegionList {
+  provider: "wingo";
   results: CommerceDeliveryRegion[];
 }
 
 export interface CommerceDeliveryCityList {
+  provider: "wingo";
   region: CommerceDeliveryRegion;
   results: CommerceDeliveryCity[];
 }
 
-export type CommerceDeliveryProvider = "redcap" | "internal" | "easyway";
+export type CommerceDeliveryProvider = "wingo" | "redcap" | "internal" | "easyway";
 
 export interface CommerceDeliveryQuote {
   version: number;
@@ -180,6 +182,8 @@ export interface CommerceDeliveryQuote {
   delivery_margin: string;
   customer_delivery_price: string;
   package_id: number | null;
+  delivery_type_id?: number;
+  weight_range_id?: number;
   service_slug?: string;
   tariff_revision?: string;
   measurements: {

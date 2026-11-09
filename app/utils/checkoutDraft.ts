@@ -43,7 +43,14 @@ export const readCheckoutDraft = (source: CheckoutDraftSource, owner: string) =>
       clearCheckoutDraft(source);
       return null;
     }
-    return sanitizeCheckoutDraft(draft.values);
+    const values = sanitizeCheckoutDraft(draft.values);
+    if (draft.delivery_provider !== "wingo") {
+      // Old courier IDs may overlap Wingo IDs; preserve contacts, reselect delivery.
+      values.delivery_region_id = null;
+      values.delivery_city_id = null;
+      values.city = "";
+    }
+    return values;
   } catch {
     return null;
   }
@@ -54,7 +61,7 @@ export const writeCheckoutDraft = (
 ) => {
   try {
     sessionStorage.setItem(keyFor(source), JSON.stringify({
-      owner, values: sanitizeCheckoutDraft(values),
+      owner, delivery_provider: "wingo", values: sanitizeCheckoutDraft(values),
     }));
   } catch {
     // Storage may be unavailable; checkout must remain usable.

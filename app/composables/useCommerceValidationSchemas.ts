@@ -32,9 +32,9 @@ const checkoutSchema = z
       message: "ელფოსტის ფორმატი არასწორია.",
     }),
     phone: georgianMobile,
-    delivery_region_id: requiredSelectionId("აირჩიე მიწოდების მიმართულება."),
-    delivery_city_id: requiredSelectionId("აირჩიე მიწოდების მიმართულება."),
-    city: requiredText("შეიყვანე ქალაქი ან სოფელი."),
+    delivery_region_id: requiredSelectionId("აირჩიე რეგიონი."),
+    delivery_city_id: requiredSelectionId("აირჩიე ქალაქი ან სოფელი."),
+    city: requiredText("აირჩიე ქალაქი ან სოფელი."),
     address_line: requiredText("შეიყვანე მისამართი."),
     note: z.string(),
     terms_accepted: z.boolean().refine((value) => value, {

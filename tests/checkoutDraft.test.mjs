@@ -37,16 +37,19 @@ const flush = async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
-function mountForm({ source = "cart", owner = null, ready = vue.ref(true) } = {}) {
+function mountForm({ source = "cart", owner = null, ready = vue.ref(true),
+  regions = [{ id: 4, name: "აჭარა" }], citiesFor, quoteFor } = {}) {
   const store = vue.reactive({ currentUser: owner, authResolved: true });
   const quotes = [];
   const profile = vue.ref(null);
   const api = {
-    getDeliveryRegions: async () => ({ results: [{ id: 4, name: "რეგიონი (ქალაქები)" }] }),
-    getDeliveryCities: async () => ({ results: [{ id: 4, name: "რეგიონი (ქალაქები)" }] }),
+    getDeliveryRegions: async () => ({ provider: "wingo", results: regions }),
+    getDeliveryCities: async (regionId) => ({ provider: "wingo", region: { id: regionId },
+      results: citiesFor ? await citiesFor(regionId) : [{ id: 4, name: "ბათუმი" }] }),
     getDeliveryQuote: async (payload) => {
       quotes.push(payload);
-      return { customer_delivery_price: "49.00" };
+      return quoteFor ? await quoteFor(payload) : { provider: "wingo", delivery_type_id: 1,
+        region_id: payload.delivery_region_id, city_id: payload.delivery_city_id, customer_delivery_price: "49.00" };
     },
   };
   const { useCheckoutForm } = loadTs("../app/composables/commerce/useCheckoutForm.ts", {
@@ -60,7 +63,7 @@ function mountForm({ source = "cart", owner = null, ready = vue.ref(true) } = {}
     ...vue,
     useGlobalStore: () => store,
     useAsyncData: (key) => ({
-      data: key.endsWith("delivery-regions") ? vue.ref({ results: [] }) : profile,
+      data: key.endsWith("delivery-regions") ? vue.ref({ provider: "wingo", results: regions }) : profile,
       pending: vue.ref(false), error: vue.ref(null), refresh: async () => {},
     }),
   });
@@ -166,4 +169,171 @@ test("company VAT choice requires an explicit answer only for legal buyers", () 
   }
   assert.equal(checkoutSchema.safeParse({ ...values, buyer_type: "individual" }).success, true);
   assert.equal(checkoutSchema.safeParse({ ...values, company_is_vat_registered: "false" }).success, false);
+});
+
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((done) => { resolve = done; });
+  return { promise, resolve };
+}
+const standardQuote = (payload, amount = "49.00") => ({
+  provider: "wingo", delivery_type_id: 1, customer_delivery_price: amount,
+  region_id: payload.delivery_region_id, city_id: payload.delivery_city_id,
+});
+const twoRegions = [{ id: 4, name: "აჭარა" }, { id: 11, name: "თბილისი" }];
+
+test("late localities from a previous region cannot replace the current selection", async () => {
+  storage.clear();
+  const old = deferred();
+  const current = mountForm({ regions: twoRegions,
+    citiesFor: (id) => id === 4 ? old.promise : [{ id: 1100, name: "თბილისი" }],
+  });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 4, false);
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  await flush();
+  old.resolve([{ id: 400, name: "ბათუმი" }]);
+  await flush();
+  assert.deepEqual(current.form.deliveryCityOptions.value, [{ value: 1100, label: "თბილისი" }]);
+  assert.equal(current.form.deliveryCityId.value, 1100);
+  assert.equal(current.form.city.value, "თბილისი");
+  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 11, delivery_city_id: 1100 }]);
+  current.app.unmount();
+});
+
+test("late price for an old region cannot replace the new standard quote", async () => {
+  storage.clear();
+  const old = deferred();
+  let oldPayload;
+  const current = mountForm({ regions: twoRegions,
+    citiesFor: (id) => [{ id: id * 100, name: id === 4 ? "ბათუმი" : "თბილისი" }],
+    quoteFor: (payload) => {
+      if (payload.delivery_region_id === 4) { oldPayload = payload; return old.promise; }
+      return standardQuote(payload, "46.00");
+    },
+  });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 4, false);
+  await flush();
+  assert.equal(current.form.deliveryQuotePending.value, true);
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  assert.equal(current.form.deliveryQuote.value, null);
+  await flush();
+  old.resolve(standardQuote(oldPayload, "55.00"));
+  await flush();
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "46.00");
+  assert.equal(current.form.deliveryQuote.value.city_id, 1100);
+  assert.equal(current.form.deliveryQuotePending.value, false);
+  current.app.unmount();
+});
+
+test("clearing a region invalidates an outstanding locality response", async () => {
+  storage.clear();
+  const pending = deferred();
+  const current = mountForm({ citiesFor: () => pending.promise });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 4, false);
+  await flush();
+  current.form.setFieldValue("delivery_region_id", null, false);
+  pending.resolve([{ id: 400, name: "ბათუმი" }]);
+  await flush();
+  assert.equal(current.form.deliveryCityId.value, null);
+  assert.equal(current.form.city.value, "");
+  assert.deepEqual(current.form.deliveryCityOptions.value, []);
+  assert.equal(current.quotes.length, 0);
+  assert.equal(current.form.deliveryQuote.value, null);
+  current.app.unmount();
+});
+
+test("multiple localities require selection and a previous city's late price is ignored", async () => {
+  storage.clear();
+  const old = deferred();
+  let oldPayload;
+  const current = mountForm({
+    citiesFor: () => [{ id: 400, name: "ბათუმი" }, { id: 401, name: "ქობულეთი" }],
+    quoteFor: (payload) => {
+      if (payload.delivery_city_id === 400) { oldPayload = payload; return old.promise; }
+      return standardQuote(payload, "55.00");
+    },
+  });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 4, false);
+  await flush();
+  assert.equal(current.form.deliveryCityId.value, null);
+  assert.equal(current.quotes.length, 0);
+  current.form.setFieldValue("delivery_city_id", 400, false);
+  await flush();
+  current.form.setFieldValue("delivery_city_id", 401, false);
+  assert.equal(current.form.deliveryQuote.value, null);
+  await flush();
+  old.resolve(standardQuote(oldPayload, "99.00"));
+  await flush();
+  assert.equal(current.form.city.value, "ქობულეთი");
+  assert.equal(current.form.deliveryQuote.value.city_id, 401);
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "55.00");
+  current.app.unmount();
+});
+
+test("legacy courier draft keeps contacts but never reuses overlapping delivery IDs", async () => {
+  storage.clear();
+  storage.set("flexdrive:checkout-draft:v1:cart", JSON.stringify({ owner: "guest", values: {
+    delivery_region_id: 4, delivery_city_id: 4, city: "თბილისი", phone: "555123456", address_line: "Street 1",
+  } }));
+  const current = mountForm();
+  await flush();
+  assert.equal(current.form.phone.value, "555123456");
+  assert.equal(current.form.addressLine.value, "Street 1");
+  assert.equal(current.form.deliveryRegionId.value, null);
+  assert.equal(current.form.deliveryCityId.value, null);
+  assert.equal(current.form.city.value, "");
+  assert.equal(current.quotes.length, 0);
+  current.app.unmount();
+});
+
+test("a removed locality in a Wingo draft requires a new selection", async () => {
+  storage.clear();
+  draft.writeCheckoutDraft("cart", "guest", { delivery_region_id: 4, delivery_city_id: 999, city: "Old place" });
+  const current = mountForm({ citiesFor: () => [{ id: 400, name: "ბათუმი" }, { id: 401, name: "ქობულეთი" }] });
+  await flush();
+  assert.equal(current.form.deliveryRegionId.value, 4);
+  assert.equal(current.form.deliveryCityId.value, null);
+  assert.equal(current.form.city.value, "");
+  assert.equal(current.quotes.length, 0);
+  current.app.unmount();
+});
+
+test("a fast-service or mismatched quote cannot become the checkout price", async () => {
+  for (const change of [{ delivery_type_id: 2 }, { provider: "redcap" }, { city_id: 999 }]) {
+    storage.clear();
+    const current = mountForm({ quoteFor: (payload) => ({ ...standardQuote(payload), ...change }) });
+    await flush();
+    current.form.setFieldValue("delivery_region_id", 4, false);
+    await flush();
+    assert.equal(current.form.deliveryQuote.value, null);
+    assert.ok(current.form.deliveryQuoteError.value);
+    assert.equal(current.form.deliveryQuotePending.value, false);
+    current.app.unmount();
+  }
+});
+
+test("failed locality loading can be retried without preserving an old price", async () => {
+  storage.clear();
+  let attempts = 0;
+  const current = mountForm({ citiesFor: () => {
+    if (++attempts === 1) throw new Error("temporary test failure");
+    return [{ id: 400, name: "ბათუმი" }];
+  } });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 4, false);
+  await flush();
+  assert.ok(current.form.deliveryLocationsError.value);
+  assert.equal(current.form.deliveryQuote.value, null);
+  await current.form.retryDeliveryLocations();
+  await flush();
+  assert.equal(current.form.deliveryLocationsError.value, null);
+  assert.equal(current.form.deliveryCityId.value, 400);
+  assert.equal(current.form.deliveryQuote.value.delivery_type_id, 1);
+  current.app.unmount();
 });

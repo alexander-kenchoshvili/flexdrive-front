@@ -26,10 +26,10 @@ defineProps<{
   lastNameAttrs?: Record<string, unknown>;
   emailAttrs?: Record<string, unknown>;
   phoneAttrs?: Record<string, unknown>;
-  cityAttrs?: Record<string, unknown>;
   addressLineAttrs?: Record<string, unknown>;
   noteAttrs?: Record<string, unknown>;
   deliveryRegionOptions: BaseSelectOption[];
+  deliveryCityOptions: BaseSelectOption[];
   deliveryRegionsPending?: boolean;
   deliveryCitiesPending?: boolean;
   deliveryLocationsError?: string | null;
@@ -51,7 +51,7 @@ const phone = defineModel<string>("phone", { required: true });
 const deliveryRegionId = defineModel<number | null>("deliveryRegionId", {
   required: true,
 });
-const city = defineModel<string>("city", { required: true });
+const deliveryCityId = defineModel<number | null>("deliveryCityId", { required: true });
 const addressLine = defineModel<string>("addressLine", { required: true });
 const note = defineModel<string>("note", { required: true });
 const termsAccepted = defineModel<boolean>("termsAccepted", { required: true });
@@ -269,7 +269,7 @@ const lastNameLabel = computed(() =>
   >
     <CheckoutSectionHeader :step="2" title="მიწოდების მისამართი" />
     <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
-      აირჩიე მიწოდების მიმართულება და მიუთითე ქალაქის ან სოფლის სრული მისამართი.
+      აირჩიე რეგიონი და ქალაქი ან სოფელი, შემდეგ მიუთითე სრული მისამართი.
     </p>
 
     <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
@@ -277,29 +277,31 @@ const lastNameLabel = computed(() =>
         <BaseSelect
           v-model="deliveryRegionId"
           name="delivery_region_id"
-          label="მიწოდების მიმართულება *"
+          label="რეგიონი *"
           :options="deliveryRegionOptions"
-          :placeholder="deliveryRegionsPending ? 'იტვირთება...' : 'აირჩიე მიმართულება'"
-          :empty-text="deliveryRegionsPending ? 'იტვირთება...' : 'მიმართულებები ვერ მოიძებნა'"
-          :error="errors.delivery_region_id || errors.delivery_city_id"
+          :placeholder="deliveryRegionsPending ? 'იტვირთება...' : 'აირჩიე რეგიონი'"
+          :empty-text="deliveryRegionsPending ? 'იტვირთება...' : 'რეგიონები ვერ მოიძებნა'"
+          :error="errors.delivery_region_id"
           :disabled="disabled || deliveryRegionsPending"
           searchable
-          search-placeholder="მოძებნე მიმართულება"
+          search-placeholder="მოძებნე რეგიონი"
         />
       </div>
 
-      <BaseInput
-        v-model="city"
-        v-bind="cityAttrs"
-        name="city"
-        data-checkout-field="city"
-        label="ქალაქი / სოფელი *"
-        autocomplete="address-level2"
-        placeholder="ქალაქის ან სოფლის სახელი"
-        :error="errors.city"
-        :disabled="disabled"
-        required
-      />
+      <div data-checkout-field="delivery_city_id" class="min-w-0">
+        <BaseSelect
+          v-model="deliveryCityId"
+          name="delivery_city_id"
+          label="ქალაქი / სოფელი *"
+          :options="deliveryCityOptions"
+          :placeholder="!deliveryRegionId ? 'ჯერ აირჩიე რეგიონი' : deliveryCitiesPending ? 'იტვირთება...' : 'აირჩიე ქალაქი ან სოფელი'"
+          :empty-text="deliveryCitiesPending ? 'იტვირთება...' : 'დასახლებები ვერ მოიძებნა'"
+          :error="errors.delivery_city_id || errors.city"
+          :disabled="disabled || !deliveryRegionId || deliveryCitiesPending"
+          searchable
+          search-placeholder="მოძებნე ქალაქი ან სოფელი"
+        />
+      </div>
 
       <BaseInput
         v-model="addressLine"
