@@ -1,5 +1,16 @@
 # Project Instructions
 
+## Wingo Courier Reporting Cleanup - 2026-11-10
+
+- User authorized replacing retired courier reporting. Business finance/shipments
+  use Wingo labels and backend stored Wingo facts; optional reverse number is visible.
+  Wingo uses webhook/manual checks, not scheduled polling. Removed obsolete carrier
+  sync-report explanation; supplier sync remains. Reusable layout/Tailwind unchanged.
+- Backend pairs this with reporting conversion and commerce0045 retirement after0044.
+  Historical provider string types remain for already frozen order DTOs only.
+  53 business tests, Nuxt typecheck and scoped ESLint pass; no live viewport.
+  User owns push/deploy; no browser/server/env/provider/bank operation.
+
 ## Wingo Fast After Cutoff And Concise Estimates - 2026-11-10
 
 - User subsequently approved plain card sentences: standard before12:30 next

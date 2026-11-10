@@ -48,15 +48,15 @@ const mount = (component, props) => {
 };
 const delivery = { order_number: "ORDER-1", date: "2026-11-03", cancelled: false, stage: "created", stage_label: "შექმნილია",
   tracking_number: "RC-1", customer_delivery: "12.00", quoted_price: "12.00", buffer: "0.00", booked_price: "15.00", difference: "3.00",
-  issues: ["RedCap-ის ფასი ჩექაუთის ტარიფს არ ემთხვევა."] };
+  issues: ["Wingo-ს ფასი ჩექაუთის ტარიფს არ ემთხვევა."] };
 const report = (changes = {}) => ({ summary: { delivery_received: "12.00", net_delivery_received: "12.00", courier_payable: "15.00",
   return_delivery_cost: "10.00", retained_return_fee: "10.00", buffer_received: "0.00", courier_booked_orders: 1,
   courier_cancelled_orders: 0, courier_unknown_price_orders: 0, unknown_return_cost_events: 0, ...changes }, deliveries: [delivery], delivery_rows_total: 1 });
 
-test("actual finance component separates checkout price, RedCap price, difference and return costs", () => {
+test("actual finance component separates checkout price, Wingo price, difference and return costs", () => {
   const current = mount(finance, { report: report() });
   const value = text(current.root);
-  for (const label of ["ჩექაუთის ტარიფი", "RedCap-ის ფასი", "ფასთა სხვაობა", "დაფიქსირებული უკუმიტანის ხარჯი", "უკუმიტანისთვის დაქვითული თანხა"]) assert.ok(value.includes(label));
+  for (const label of ["ჩექაუთის ტარიფი", "Wingo-ს ფასი", "ფასთა სხვაობა", "დაფიქსირებული უკუმიტანის ხარჯი", "უკუმიტანისთვის დაქვითული თანხა"]) assert.ok(value.includes(label));
   assert.doesNotMatch(value, /თბილისში მიტანის საფასური|საკურიეროსთვის გადასახდელი|დადგენილი ბუფერი/);
   const table = find(current.root, (node) => node.type === "table");
   for (const amount of [12, 15, 3]) assert.ok(text(table).includes(reports.reportMoney(`${amount}.00`)));
@@ -66,7 +66,7 @@ test("actual finance component separates checkout price, RedCap price, differenc
 
 test("future buffer appears separately; unknown prices are not converted to zero", () => {
   const data = report({ courier_payable: null, courier_unknown_price_orders: 1, buffer_received: "3.00" });
-  data.deliveries = [{ ...delivery, customer_delivery: "15.00", buffer: "3.00", booked_price: null, difference: null, issues: ["RedCap-ის ფასი უცნობია."] }];
+  data.deliveries = [{ ...delivery, customer_delivery: "15.00", buffer: "3.00", booked_price: null, difference: null, issues: ["Wingo-ს ფასი უცნობია."] }];
   const current = mount(finance, { report: data });
   assert.match(text(current.root), /დადგენილი ბუფერი/);
   assert.match(text(current.root), /არასრული ჯამი „—“-ითაა ნაჩვენები/);
@@ -78,7 +78,7 @@ test("future buffer appears separately; unknown prices are not converted to zero
 test("actual shipment filter and pagination emit independent query changes", () => {
   const selected = [], pages = [];
   const data = { filter: "all", summary: { review: 1 }, total: 21, page: 1, pages: 2,
-    items: [{ ...delivery, carrier_status_label: "გზავნილი შექმნილია", submitted_at: "2026-11-03T10:00:00Z", checked_at: null }] };
+    items: [{ ...delivery, return_tracking_number: "999-RETURN-1", carrier_status_label: "გზავნილი შექმნილია", submitted_at: "2026-11-03T10:00:00Z", checked_at: null }] };
   const current = mount(shipments, { shipments: data, onFilter: (value) => selected.push(value), onPage: (page) => pages.push(page) });
   const select = find(current.root, (node) => node.type === "select");
   select.props.onChange({ target: { value: "review" } });
@@ -87,7 +87,8 @@ test("actual shipment filter and pagination emit independent query changes", () 
   next.props.onClick();
   assert.deepEqual(pages, [2]);
   assert.ok(text(current.root).includes("RC-1"));
-  assert.match(text(current.root), /განახლება RedCap-ში მოთხოვნას არ აგზავნის/);
+  assert.ok(text(current.root).includes("უკუგზავნილი: 999-RETURN-1"));
+  assert.match(text(current.root), /განახლება Wingo-ში მოთხოვნას არ აგზავნის/);
   current.close();
 });
 

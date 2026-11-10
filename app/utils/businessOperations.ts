@@ -34,7 +34,7 @@ export type OperationSync = {
 };
 export type OperationShipment = {
   order_number: string; stage: string; stage_label: string; tracking_number: string | null;
-  carrier_status_label: string; submitted_at: string | null; checked_at: string | null;
+  return_tracking_number?: string | null; carrier_status_label: string; submitted_at: string | null; checked_at: string | null;
   customer_delivery: string; quoted_price: string; buffer: string; booked_price: string | null;
   difference: string | null; issues: string[];
 };

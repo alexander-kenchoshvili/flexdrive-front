@@ -64,7 +64,7 @@ export const buildBusinessInsights = (report: InsightReport) => {
   }
 
   const facts: Fact[] = [];
-  if (positive(summary, "courier_mismatch_orders")) facts.push({ key: "courier-price", title: "საკურიერო ფასის სხვაობა", text: "შექმნილ გზავნილებზე RedCap-ის ფასი შენახულ ტარიფს განსხვავდება. გადაამოწმეთ ფინანსებში.", path: "/business/finance" });
+  if (positive(summary, "courier_mismatch_orders")) facts.push({ key: "courier-price", title: "საკურიერო ფასის სხვაობა", text: "შექმნილ გზავნილებზე Wingo-ს ფასი შენახული ტარიფისგან განსხვავდება. გადაამოწმეთ ფინანსებში.", path: "/business/finance" });
   if (positive(summary, "refunded")) facts.push({ key: "refunds", title: "თანხის დაბრუნებები დაფიქსირდა", text: "ამ პერიოდში მომხმარებლებისთვის თანხის დაბრუნება დადასტურდა. მიღებული და დაბრუნებული თანხები ფინანსებში ცალ-ცალკე ჩანს.", path: "/business/finance" });
   if (positive(summary, "unsaleable_units")) facts.push({ key: "unsaleable", title: "უვარგისი დაბრუნებული ნივთები", text: `შემოწმებისას გასაყიდად უვარგისად დაფიქსირდა ${reportNumber(summary.unsaleable_units)} ერთეული. მათი ღირებულება ცალკე აღირიცხება.`, path: "/business/finance", hash: "#business-delivery-title" });
   if (positive(summary, "unallocated_events") || positive(summary, "unknown_cost_lines") || positive(summary, "unknown_loss_lines") || positive(summary, "unknown_return_cost_events") || positive(summary, "courier_unknown_price_orders")) {
