@@ -21,6 +21,9 @@ export const sanitizeCheckoutDraft = (input: unknown): Partial<CheckoutFormValue
   if (data.buyer_type === "individual" || data.buyer_type === "legal_entity") {
     result.buyer_type = data.buyer_type;
   }
+  if (data.delivery_service_slug === "standard" || data.delivery_service_slug === "fast") {
+    result.delivery_service_slug = data.delivery_service_slug;
+  }
   for (const field of ["delivery_region_id", "delivery_city_id"] as const) {
     const value = data[field];
     if (value === null || (typeof value === "number" && Number.isSafeInteger(value) && value > 0)) {
@@ -49,6 +52,7 @@ export const readCheckoutDraft = (source: CheckoutDraftSource, owner: string) =>
       values.delivery_region_id = null;
       values.delivery_city_id = null;
       values.city = "";
+      values.delivery_service_slug = "standard";
     }
     return values;
   } catch {

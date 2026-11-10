@@ -16,6 +16,8 @@ import type {
   CheckoutBuyerType,
   CheckoutPaymentMethod,
   CommerceDeliveryCity,
+  CommerceDeliveryOption,
+  DeliveryServiceSlug,
   CommerceDeliveryQuote,
   CommerceDeliveryRegion,
 } from "~/types/commerce";
@@ -31,6 +33,7 @@ export type CheckoutFormValues = {
   phone: string;
   delivery_region_id: number | null;
   delivery_city_id: number | null;
+  delivery_service_slug: DeliveryServiceSlug;
   city: string;
   address_line: string;
   note: string;
@@ -56,6 +59,7 @@ export const checkoutFieldOrder: CheckoutFieldName[] = [
   "phone",
   "delivery_region_id",
   "delivery_city_id",
+  "delivery_service_slug",
   "city",
   "address_line",
   "terms_accepted",
@@ -75,6 +79,7 @@ export const checkoutFieldSelectors: Record<CheckoutFieldName, string> = {
   phone: '[data-checkout-field="phone"]',
   delivery_region_id: '[data-checkout-field="delivery_region_id"]',
   delivery_city_id: '[data-checkout-field="delivery_city_id"]',
+  delivery_service_slug: '[data-checkout-field="delivery_service_slug"]',
   city: '[data-checkout-field="delivery_city_id"]',
   address_line: '[data-checkout-field="address_line"]',
   terms_accepted: '[data-checkout-field="terms_accepted"]',
@@ -115,6 +120,7 @@ export const useCheckoutForm = (options?: {
       phone: "",
       delivery_region_id: null,
       delivery_city_id: null,
+      delivery_service_slug: "standard",
       city: "",
       address_line: "",
       note: "",
@@ -134,6 +140,7 @@ export const useCheckoutForm = (options?: {
   const [phone, phoneAttrs] = defineField("phone");
   const [deliveryRegionId] = defineField("delivery_region_id");
   const [deliveryCityId] = defineField("delivery_city_id");
+  const [deliveryServiceSlug] = defineField("delivery_service_slug");
   const [city] = defineField("city");
   const [addressLine, addressLineAttrs] = defineField("address_line");
   const [note, noteAttrs] = defineField("note");
@@ -162,6 +169,7 @@ export const useCheckoutForm = (options?: {
   const deliveryCitiesError = ref<string | null>(null);
   let deliveryCitiesRequestId = 0;
   const deliveryQuote = ref<CommerceDeliveryQuote | null>(null);
+  const deliveryOptions = ref<CommerceDeliveryOption[]>([]);
   const deliveryQuotePending = ref(false);
   const deliveryQuoteError = ref<string | null>(null);
   let deliveryQuoteRequestId = 0;
@@ -244,42 +252,76 @@ export const useCheckoutForm = (options?: {
     }
   };
 
+  let deliveryExpiryTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearDeliveryExpiry = () => {
+    if (deliveryExpiryTimer !== null) clearTimeout(deliveryExpiryTimer);
+    deliveryExpiryTimer = null;
+  };
+  onScopeDispose(clearDeliveryExpiry);
+
+  const optionsFromQuote = (quote: CommerceDeliveryQuote): CommerceDeliveryOption[] => quote.options || [{
+    service_slug: "standard", delivery_type_id: 1, label: "სტანდარტული მიტანა",
+    price: quote.customer_delivery_price, available: true, unavailable_reason: "",
+    estimated_delivery_date: null, estimate_label: "", booking_deadline_at: null, checkout_deadline_at: null,
+  }];
+
   const loadDeliveryQuote = async (regionId: number, cityId: number) => {
     const requestId = ++deliveryQuoteRequestId;
+    const service = deliveryServiceSlug.value;
+    const started = Date.now();
+    const isCurrent = () => requestId === deliveryQuoteRequestId && deliveryRegionId.value === regionId &&
+      deliveryCityId.value === cityId && deliveryServiceSlug.value === service;
+    clearDeliveryExpiry();
     deliveryQuote.value = null;
     deliveryQuotePending.value = true;
     deliveryQuoteError.value = null;
-
+    const payload = { source: draftSource, delivery_region_id: regionId,
+      delivery_city_id: cityId, delivery_service_slug: service };
     try {
-      const quote = await getDeliveryQuote({
-        source: options?.source || "cart",
-        delivery_region_id: regionId,
-        delivery_city_id: cityId,
-      });
-      if (requestId === deliveryQuoteRequestId && deliveryRegionId.value === regionId && deliveryCityId.value === cityId) {
-        if (quote.provider !== "wingo" || quote.delivery_type_id !== 1 || quote.region_id !== regionId || quote.city_id !== cityId) {
-          throw new Error("მიწოდების ფასი განახლდა. გამოთვალეთ თავიდან.");
-        }
-        deliveryQuote.value = quote;
+      const quote = await getDeliveryQuote(payload);
+      if (!isCurrent()) return;
+      if (quote.provider !== "wingo" || quote.delivery_type_id !== (service === "fast" ? 2 : 1) ||
+          (quote.service_slug ?? "standard") !== service || quote.region_id !== regionId || quote.city_id !== cityId) {
+        throw new Error("მიწოდების არჩევანი განახლდა. გამოთვალეთ თავიდან.");
+      }
+      const remaining = quote.expires_at && quote.server_time
+        ? Date.parse(quote.expires_at) - Date.parse(quote.server_time) - Math.max(0, Date.now() - started) : null;
+      if (remaining !== null && (!Number.isFinite(remaining) || remaining <= 0)) {
+        throw new Error("მიწოდების შეთავაზებას ვადა გაუვიდა. განაახლეთ არჩევანი.");
+      }
+      deliveryOptions.value = optionsFromQuote(quote);
+      deliveryQuote.value = quote;
+      if (remaining !== null) {
+        deliveryExpiryTimer = setTimeout(() => {
+          if (!isCurrent()) return;
+          deliveryQuote.value = null;
+          deliveryQuoteError.value = "მიწოდების შეთავაზება ახლდება…";
+          void retryDeliveryQuote();
+        }, remaining);
       }
     } catch (error) {
-      if (requestId === deliveryQuoteRequestId) {
-        deliveryQuoteError.value = normalizeApiErrorMessage(
-          error,
-          "მიწოდების ფასი ვერ დაითვალა. სცადეთ ხელახლა.",
-        );
+      if (isCurrent()) {
+        deliveryQuoteError.value = normalizeApiErrorMessage(error, "მიწოდების ფასი ვერ დაითვალა. სცადეთ ხელახლა.");
+        if (service === "fast") {
+          // Refresh alternatives after cutoff; the selected paid service is never silently changed.
+          try {
+            const standard = await getDeliveryQuote({ ...payload, delivery_service_slug: "standard" });
+            if (isCurrent() && standard.provider === "wingo" && standard.delivery_type_id === 1 &&
+                standard.region_id === regionId && standard.city_id === cityId) {
+              deliveryOptions.value = optionsFromQuote(standard);
+            }
+          } catch { /* The original error remains visible; no stale quote becomes payable. */ }
+        }
       }
     } finally {
-      if (requestId === deliveryQuoteRequestId) {
-        deliveryQuotePending.value = false;
-      }
+      if (isCurrent()) deliveryQuotePending.value = false;
     }
   };
 
   const retryDeliveryQuote = async () => {
     if (
       typeof deliveryRegionId.value === "number" &&
-      typeof deliveryCityId.value === "number"
+      typeof deliveryCityId.value === "number" && (options?.deliveryReady?.() ?? true)
     ) {
       await loadDeliveryQuote(
         deliveryRegionId.value,
@@ -486,10 +528,13 @@ export const useCheckoutForm = (options?: {
     deliveryCitiesPending.value = false;
     deliveryCitiesError.value = null;
     deliveryQuoteRequestId += 1;
+    clearDeliveryExpiry();
     deliveryQuote.value = null;
     deliveryQuotePending.value = false;
     deliveryQuoteError.value = null;
+    deliveryOptions.value = [];
     setFieldValue("delivery_city_id", null, false);
+    setFieldValue("delivery_service_slug", "standard", false);
     setFieldValue("city", "", false);
     setFieldError("delivery_city_id", undefined);
     setFieldError("city", undefined);
@@ -506,7 +551,7 @@ export const useCheckoutForm = (options?: {
     }
   });
 
-  watch([deliveryCityId, deliveryCities, () => options?.deliveryReady?.() ?? true], ([nextCityId, , ready]) => {
+  watch([deliveryCityId, deliveryCities, () => options?.deliveryReady?.() ?? true], ([nextCityId, , ready], [previousCityId]) => {
     if (restoringDraft) return;
     const selectedCity = deliveryCities.value.find(
       (cityOption) => cityOption.id === nextCityId,
@@ -515,16 +560,38 @@ export const useCheckoutForm = (options?: {
     setFieldError("delivery_city_id", undefined);
     setFieldError("city", undefined);
     deliveryQuoteRequestId += 1;
+    clearDeliveryExpiry();
     deliveryQuote.value = null;
     deliveryQuotePending.value = false;
     deliveryQuoteError.value = null;
 
+    if (nextCityId !== previousCityId) {
+      deliveryOptions.value = [];
+      if (deliveryServiceSlug.value !== "standard") {
+        setFieldValue("delivery_service_slug", "standard", false);
+        return;
+      }
+    }
     if (
       typeof deliveryRegionId.value === "number" &&
       typeof nextCityId === "number" &&
       selectedCity && ready
     ) {
       void loadDeliveryQuote(deliveryRegionId.value, nextCityId);
+    }
+  }, { flush: "sync" });
+
+  watch(deliveryServiceSlug, () => {
+    if (restoringDraft) return;
+    deliveryQuoteRequestId += 1;
+    clearDeliveryExpiry();
+    deliveryQuote.value = null;
+    deliveryQuotePending.value = false;
+    deliveryQuoteError.value = null;
+    setFieldError("delivery_service_slug", undefined);
+    if (typeof deliveryRegionId.value === "number" && typeof deliveryCityId.value === "number" &&
+        deliveryCities.value.some((entry) => entry.id === deliveryCityId.value) && (options?.deliveryReady?.() ?? true)) {
+      void loadDeliveryQuote(deliveryRegionId.value, deliveryCityId.value);
     }
   }, { flush: "sync" });
 
@@ -594,6 +661,8 @@ export const useCheckoutForm = (options?: {
     city,
     deliveryRegionId,
     deliveryCityId,
+    deliveryServiceSlug,
+    deliveryOptions,
     deliveryRegionOptions,
     deliveryCityOptions,
     selectedDeliveryRegion,

@@ -1,5 +1,46 @@
 # Project Instructions
 
+## Wingo Fast After Cutoff And Concise Estimates - 2026-11-10
+
+- User subsequently approved plain card sentences: standard before12:30 next
+  working day/after two working days; fast before12:30 same day/after next working
+  day. Cutoff comes from server metadata. Removed "სავარაუდო"/dated card copy and
+  redundant fast note; one shared working-days/weekend footer. Regional3–5 wording
+  remains. Presentation only; signed schedules/prices/paid history unchanged.
+- User authorized keeping fast selectable after12:30 for next working day, including
+  weekend->Monday, using paired backend schedule and frozen deliveryDate at booking.
+  Standard card now says1–2 working days; fast card shows today/next working day.
+  Its cutoff note explicitly applies only to SAME-DAY payment, not service availability.
+- Removed duplicate estimate prop/markup from checkout summary and both page bindings;
+  summary keeps service/price. Existing shared choice component/Tailwind unchanged.
+  39 component/composable/select/guest tests pass, including same-day expiry refresh
+  to next-day fast without service/price switch. Typecheck/scoped lint/whitespace pass.
+- Backend public CMS descriptions/editors/intros/FAQ/subtitle corrected by pages0084,
+  applied locally only; prior0083 alone missed compact old13:00 copy. Production
+  pages0083/0084 await user's deployment/request. No browser/server/production/env,
+  provider/bank mutation, commit/push/deploy. Earlier disabled-fast notes are historical.
+
+## Wingo Standard And Fast Choices - 2026-11-10
+
+- User authorized backend-first then this frontend; fast checkout cutoff12:30,
+  preparation30min, carrier booking13:00. Paired backendv4 quotes provide both
+  Tbilisi services, stored prices, estimates/options/expiry; regions standard only.
+- Shared BaseChoiceCard native radio wrapper uses existing Tailwind/theme tokens
+  for delivery and payment cards. Shared CheckoutDeliveryOptions sits under address
+  on both pages; defaultstandard, service/date/price visible, disabled fast explains
+  cutoff. Client clock does not define policy; server metadata drives expiry.
+- Service binds quote/payment payload/draft. Destination/service changes invalidate
+  synchronously; late responses cannot win. Expired fast refreshes alternatives but
+  does not silently switch or permit paying old quote. Legacy standard fallback kept.
+- Summary/success/profile display saved service/estimate and actual paid delivery;
+  corrected preexisting hardcoded free delivery on success/profile. No fee/buffer
+  calculation moved into UI; backend remains authoritative.
+- 37 relevant actual component/composable/select/guest tests pass; Nuxt typecheck,
+  scoped ESLint and whitespace checked. Browser/server/viewport not launched;
+  user will review actual design. No env/bank/provider/production write, commit,
+  push/deploy. Paired backend deploy and pages0083 migration required; local0083 done.
+  Backend docs/WINGO_DELIVERY_CHOICES.md records schedule/paid-history/rollout limits.
+
 ## Wingo Standard Checkout - 2026-11-10
 
 - User authorized backend first, then this frontend. Active quotes use only Wingo

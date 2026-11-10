@@ -85,6 +85,7 @@ export const useCommerceApi = () => {
     source: "cart" | "buy_now";
     delivery_region_id: number;
     delivery_city_id: number;
+    delivery_service_slug?: "standard" | "fast";
   }) => {
     return apiFetchRaw<CommerceDeliveryQuote>("/commerce/delivery/quote/", {
       method: "POST",

@@ -4,16 +4,17 @@ import BaseSelect, {
   type BaseSelectOption,
 } from "~/components/common/BaseSelect.vue";
 import BaseTextarea from "~/components/common/BaseTextarea.vue";
+import CheckoutDeliveryOptions from "~/components/commerce/CheckoutDeliveryOptions.vue";
+import type { CommerceDeliveryOption, DeliveryServiceSlug,
+  CheckoutBuyerType,
+  CheckoutPaymentMethod } from "~/types/commerce";
 import CheckoutPaymentMethodCard from "~/components/commerce/CheckoutPaymentMethodCard.vue";
 import CheckoutSectionHeader from "~/components/commerce/CheckoutSectionHeader.vue";
 import {
   CHECKOUT_CASH_ON_DELIVERY_ENABLED,
   type CheckoutFieldErrors,
 } from "~/composables/commerce/useCheckoutForm";
-import type {
-  CheckoutBuyerType,
-  CheckoutPaymentMethod,
-} from "~/types/commerce";
+
 
 defineProps<{
   disabled?: boolean;
@@ -33,6 +34,8 @@ defineProps<{
   deliveryRegionsPending?: boolean;
   deliveryCitiesPending?: boolean;
   deliveryLocationsError?: string | null;
+  deliveryOptions?: CommerceDeliveryOption[];
+  deliveryPending?: boolean;
 }>();
 
 const buyerType = defineModel<CheckoutBuyerType>("buyerType", {
@@ -52,6 +55,7 @@ const deliveryRegionId = defineModel<number | null>("deliveryRegionId", {
   required: true,
 });
 const deliveryCityId = defineModel<number | null>("deliveryCityId", { required: true });
+const deliveryServiceSlug = defineModel<DeliveryServiceSlug>("deliveryServiceSlug", { default: "standard" });
 const addressLine = defineModel<string>("addressLine", { required: true });
 const note = defineModel<string>("note", { required: true });
 const termsAccepted = defineModel<boolean>("termsAccepted", { required: true });
@@ -317,6 +321,11 @@ const lastNameLabel = computed(() =>
         required
       />
     </div>
+
+    <CheckoutDeliveryOptions
+v-if="deliveryOptions?.length" v-model="deliveryServiceSlug"
+      :options="deliveryOptions" :pending="deliveryPending" :disabled="disabled" />
+    <p v-if="errors.delivery_service_slug" class="mt-3 text-sm text-error">{{ errors.delivery_service_slug }}</p>
 
     <div
       v-if="deliveryLocationsError"

@@ -170,6 +170,24 @@ export interface CommerceDeliveryCityList {
 
 export type CommerceDeliveryProvider = "wingo" | "redcap" | "internal" | "easyway";
 
+export type DeliveryServiceSlug = "standard" | "fast";
+
+export interface CommerceDeliverySummary {
+  service_slug: DeliveryServiceSlug;
+  label: string;
+  estimated_delivery_date: string | null;
+  estimate_label: string;
+}
+
+export interface CommerceDeliveryOption extends CommerceDeliverySummary {
+  delivery_type_id: number;
+  available: boolean;
+  unavailable_reason: string;
+  price: string | null;
+  booking_deadline_at: string | null;
+  checkout_deadline_at: string | null;
+}
+
 export interface CommerceDeliveryQuote {
   version: number;
   source: "cart" | "buy_now";
@@ -184,7 +202,11 @@ export interface CommerceDeliveryQuote {
   package_id: number | null;
   delivery_type_id?: number;
   weight_range_id?: number;
-  service_slug?: string;
+  service_slug?: DeliveryServiceSlug;
+  options?: CommerceDeliveryOption[];
+  schedule?: { estimated_delivery_date: string | null; estimate_label: string; booking_deadline_at: string | null; checkout_deadline_at: string | null };
+  expires_at?: string;
+  server_time?: string;
   tariff_revision?: string;
   measurements: {
     length: string | null;
@@ -275,6 +297,7 @@ export interface CheckoutPayload {
   delivery_region_id: number;
   delivery_city_id: number;
   delivery_quote_token: string;
+  delivery_service_slug: DeliveryServiceSlug;
   city: string;
   address_line: string;
   note?: string;
@@ -321,6 +344,7 @@ export interface CommerceOrderSummary extends CommerceReceiptAccess {
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
   refund_summary?: CommerceRefundSummary | null;
+  delivery_summary?: CommerceDeliverySummary | null;
   status: CommerceOrderStatus;
   subtotal: string;
   delivery_price: string;
@@ -346,6 +370,7 @@ export interface CommerceOrderLookupSummary extends CommerceReceiptAccess {
   status: CommerceOrderStatus;
   payment_status: CommercePaymentStatus;
   refund_summary?: CommerceRefundSummary | null;
+  delivery_summary?: CommerceDeliverySummary | null;
   payment_method: CheckoutPaymentMethod;
   checkout_source: "cart" | "buy_now";
   total: string;
@@ -362,6 +387,7 @@ export interface OwnedOrderListItem {
   payment_method: CheckoutPaymentMethod;
   payment_status: CommercePaymentStatus;
   refund_summary?: CommerceRefundSummary | null;
+  delivery_summary?: CommerceDeliverySummary | null;
   total: string;
   created_at: string;
   item_count: number;

@@ -15,6 +15,7 @@ const props = withDefaults(
     total: string;
     showVat?: boolean;
     deliveryPrice?: string | null;
+    deliveryLabel?: string;
     deliveryPending?: boolean;
     deliveryError?: string | null;
     errorMessage?: string | null;
@@ -36,6 +37,7 @@ const props = withDefaults(
     errorMessage: null,
     showVat: false,
     deliveryPrice: null,
+    deliveryLabel: "",
     deliveryPending: false,
     deliveryError: null,
     priceChangeMessage: null,
@@ -163,7 +165,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
       </div>
 
       <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
-        <span>მიწოდება</span>
+        <span>{{ deliveryLabel || "მიწოდება" }}</span>
         <span
           class="shrink-0 font-semibold"
           :class="deliveryError ? 'text-error' : 'text-success'"

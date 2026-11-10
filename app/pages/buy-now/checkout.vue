@@ -81,6 +81,8 @@ const {
   city,
   deliveryRegionId,
   deliveryCityId,
+  deliveryServiceSlug,
+  deliveryOptions,
   deliveryRegionOptions,
   deliveryCityOptions,
   deliveryRegionsPending,
@@ -378,6 +380,7 @@ const buildCheckoutPayload = (
   delivery_region_id: submittedValues.delivery_region_id as number,
   delivery_city_id: submittedValues.delivery_city_id as number,
   delivery_quote_token: deliveryQuote.value?.quote_token || "",
+  delivery_service_slug: submittedValues.delivery_service_slug,
   city: submittedValues.city.trim(),
   address_line: submittedValues.address_line.trim(),
   note: submittedValues.note?.trim() || "",
@@ -593,6 +596,7 @@ watch(
     phone.value,
     deliveryRegionId.value,
     deliveryCityId.value,
+    deliveryServiceSlug.value,
     addressLine.value,
     note.value,
     termsAccepted.value,
@@ -767,6 +771,7 @@ useNoindexPage({
                 v-model:phone="phone"
                 v-model:delivery-region-id="deliveryRegionId"
                 v-model:delivery-city-id="deliveryCityId"
+                v-model:delivery-service-slug="deliveryServiceSlug"
                 v-model:address-line="addressLine"
                 v-model:note="note"
                 v-model:terms-accepted="termsAccepted"
@@ -781,6 +786,8 @@ useNoindexPage({
                 :phone-attrs="phoneAttrs"
                 :delivery-region-options="deliveryRegionOptions"
                 :delivery-city-options="deliveryCityOptions"
+                :delivery-options="deliveryOptions"
+                :delivery-pending="deliveryQuotePending"
                 :delivery-regions-pending="deliveryRegionsPending"
                 :delivery-cities-pending="deliveryCitiesPending"
                 :delivery-locations-error="deliveryLocationsError"
@@ -799,6 +806,7 @@ useNoindexPage({
                 :item-count="buyNowStore.itemCount"
                 :subtotal="buyNowStore.subtotal"
                 :delivery-price="deliveryPrice"
+                :delivery-label="deliveryServiceSlug === 'fast' ? 'სწრაფი მიტანა' : 'სტანდარტული მიტანა'"
                 :delivery-pending="deliveryQuotePending"
                 :delivery-error="deliveryQuoteError"
                 :total="checkoutTotal"

@@ -106,7 +106,7 @@ test("refresh restores legal/individual drafts and recalculates delivery after c
   assert.equal(current.quotes.length, 0);
   ready.value = true;
   await flush();
-  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 4, delivery_city_id: 4 }]);
+  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 4, delivery_city_id: 4, delivery_service_slug: "standard" }]);
   assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "49.00");
   assert.deepEqual(Object.keys(current.form.errors.value), []);
 
@@ -199,7 +199,7 @@ test("late localities from a previous region cannot replace the current selectio
   assert.deepEqual(current.form.deliveryCityOptions.value, [{ value: 1100, label: "თბილისი" }]);
   assert.equal(current.form.deliveryCityId.value, 1100);
   assert.equal(current.form.city.value, "თბილისი");
-  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 11, delivery_city_id: 1100 }]);
+  assert.deepEqual(current.quotes, [{ source: "cart", delivery_region_id: 11, delivery_city_id: 1100, delivery_service_slug: "standard" }]);
   current.app.unmount();
 });
 
@@ -335,5 +335,120 @@ test("failed locality loading can be retried without preserving an old price", a
   assert.equal(current.form.deliveryLocationsError.value, null);
   assert.equal(current.form.deliveryCityId.value, 400);
   assert.equal(current.form.deliveryQuote.value.delivery_type_id, 1);
+  current.app.unmount();
+});
+
+
+const serviceQuote = (payload, fastAvailable = true) => ({
+  ...standardQuote(payload, payload.delivery_service_slug === "fast" ? "83.00" : "46.00"),
+  service_slug: payload.delivery_service_slug,
+  delivery_type_id: payload.delivery_service_slug === "fast" ? 2 : 1,
+  options: [
+    { service_slug: "standard", delivery_type_id: 1, label: "სტანდარტული მიტანა", price: "46.00", available: true },
+    { service_slug: "fast", delivery_type_id: 2, label: "სწრაფი მიტანა", price: "83.00", available: fastAvailable },
+  ],
+});
+
+test("fast service is selected explicitly, quoted and preserved in the allowed draft", async () => {
+  storage.clear();
+  let current = mountForm({ regions: twoRegions, quoteFor: serviceQuote });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  await flush();
+  current.form.setFieldValue("delivery_service_slug", "fast", false);
+  await flush();
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "83.00");
+  assert.equal(current.quotes.at(-1).delivery_service_slug, "fast");
+  current.app.unmount();
+  current = mountForm({ regions: twoRegions, quoteFor: serviceQuote });
+  await flush();
+  assert.equal(current.form.deliveryServiceSlug.value, "fast");
+  assert.equal(current.form.deliveryQuote.value.delivery_type_id, 2);
+  current.app.unmount();
+});
+
+test("a late fast price cannot replace a newer standard selection", async () => {
+  storage.clear();
+  const fast = deferred();
+  const current = mountForm({ regions: twoRegions,
+    quoteFor: (payload) => payload.delivery_service_slug === "fast" ? fast.promise : serviceQuote(payload) });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  await flush();
+  current.form.setFieldValue("delivery_service_slug", "fast", false);
+  await flush();
+  current.form.setFieldValue("delivery_service_slug", "standard", false);
+  await flush();
+  fast.resolve(serviceQuote({ source: "cart", delivery_region_id: 11, delivery_city_id: 4, delivery_service_slug: "fast" }));
+  await flush();
+  assert.equal(current.form.deliveryServiceSlug.value, "standard");
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "46.00");
+  current.app.unmount();
+});
+
+test("changing destination clears a fast selection and recalculates standard", async () => {
+  storage.clear();
+  const current = mountForm({ regions: twoRegions, quoteFor: serviceQuote });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  await flush();
+  current.form.setFieldValue("delivery_service_slug", "fast", false);
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 4, false);
+  await flush();
+  assert.equal(current.form.deliveryServiceSlug.value, "standard");
+  assert.equal(current.form.deliveryQuote.value.region_id, 4);
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "46.00");
+  current.app.unmount();
+});
+
+test("an unavailable refreshed fast tariff blocks payment without silently changing selection", async () => {
+  storage.clear();
+  let fastRequests = 0;
+  const current = mountForm({ regions: twoRegions, quoteFor: (payload) => {
+    if (payload.delivery_service_slug === "fast" && ++fastRequests > 1) throw new Error("tariff unavailable");
+    const quote = serviceQuote(payload, fastRequests < 2);
+    return payload.delivery_service_slug === "fast" ? { ...quote,
+      server_time: new Date().toISOString(), expires_at: new Date(Date.now() + 80).toISOString() } : quote;
+  } });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  await flush();
+  current.form.setFieldValue("delivery_service_slug", "fast", false);
+  await flush();
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  await flush();
+  assert.equal(current.form.deliveryServiceSlug.value, "fast");
+  assert.equal(current.form.deliveryQuote.value, null);
+  assert.ok(current.form.deliveryQuoteError.value);
+  assert.equal(current.form.deliveryOptions.value.find((option) => option.service_slug === "fast").available, false);
+  current.form.setFieldValue("delivery_service_slug", "standard", false);
+  await flush();
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "46.00");
+  current.app.unmount();
+});
+
+test("same-day expiry refreshes fast to next working day without switching service or price", async () => {
+  storage.clear();
+  let fastRequests = 0;
+  const current = mountForm({ regions: twoRegions, quoteFor: (payload) => {
+    const quote = serviceQuote(payload);
+    if (payload.delivery_service_slug !== "fast") return quote;
+    const first = ++fastRequests === 1;
+    return { ...quote, schedule: { estimated_delivery_date: first ? "2026-11-09" : "2026-11-10",
+      estimate_label: first ? "დღეს" : "მომდევნო სამუშაო დღეს" },
+      server_time: new Date().toISOString(), expires_at: new Date(Date.now() + (first ? 80 : 60000)).toISOString() };
+  } });
+  await flush();
+  current.form.setFieldValue("delivery_region_id", 11, false);
+  await flush();
+  current.form.setFieldValue("delivery_service_slug", "fast", false);
+  await flush();
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  await flush();
+  assert.equal(current.form.deliveryServiceSlug.value, "fast");
+  assert.equal(current.form.deliveryQuote.value.schedule.estimated_delivery_date, "2026-11-10");
+  assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "83.00");
+  assert.equal(current.form.deliveryQuoteError.value, null);
   current.app.unmount();
 });

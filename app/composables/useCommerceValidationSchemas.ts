@@ -34,6 +34,7 @@ const checkoutSchema = z
     phone: georgianMobile,
     delivery_region_id: requiredSelectionId("აირჩიე რეგიონი."),
     delivery_city_id: requiredSelectionId("აირჩიე ქალაქი ან სოფელი."),
+    delivery_service_slug: z.enum(["standard", "fast"]).default("standard"),
     city: requiredText("აირჩიე ქალაქი ან სოფელი."),
     address_line: requiredText("შეიყვანე მისამართი."),
     note: z.string(),

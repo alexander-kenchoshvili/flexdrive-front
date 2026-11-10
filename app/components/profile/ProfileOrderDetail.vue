@@ -671,9 +671,10 @@ const getTrackingStateLabel = (state: string) => {
             <div
               class="flex items-center justify-between text-sm text-text-secondary"
             >
-              <span>მიწოდება</span>
-              <span class="font-semibold text-success">უფასო</span>
+              <span>{{ order.delivery_summary?.label || "მიწოდება" }}</span>
+              <span class="font-semibold text-success">{{ Number(order.delivery_price) === 0 ? "უფასო" : formatMoney(order.delivery_price) }}</span>
             </div>
+            <p v-if="order.delivery_summary?.estimate_label" class="text-xs leading-5 text-text-muted">სავარაუდო მიწოდება: {{ order.delivery_summary.estimate_label }}</p>
             <div class="border-t border-border-default pt-3">
               <div class="flex items-center justify-between gap-3">
                 <span class="text-base font-semibold text-text-primary"
