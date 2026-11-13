@@ -1,3 +1,5 @@
+import { previewCookieForUpstream } from "~/utils/storefrontPreview";
+
 const UNSAFE_HTTP_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 const isAbsoluteRequestUrl = (value: string) => /^[a-z][a-z0-9+.-]*:\/\//i.test(value);
@@ -11,7 +13,14 @@ export const buildSecureFetchOptions = async (
   const credentials: RequestCredentials = "include";
   const baseURL = useApiBaseUrl();
   const method = normalizeMethod(options.method);
+  const previewCookie = import.meta.server
+    ? previewCookieForUpstream(
+      url, String(options.baseURL || baseURL),
+      String(useRuntimeConfig().apiBaseUrl || ""),
+      useRequestHeaders(["cookie"]).cookie,
+    ) : undefined;
   const headers = {
+    ...(previewCookie ? { cookie: previewCookie } : {}),
     ...(options.headers || {}),
   } as Record<string, string>;
 

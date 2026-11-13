@@ -1,4 +1,5 @@
 import { createError, defineEventHandler, getRequestURL, proxyRequest } from "h3";
+import { guardEnabled, preventStorefrontCaching } from "../../utils/storefrontAccess";
 
 const API_PREFIX = "/api";
 
@@ -23,6 +24,10 @@ export default defineEventHandler(async (event) => {
   target.search = requestUrl.search;
 
   return proxyRequest(event, target.toString(), {
+    onResponse: () => {
+      // Streaming proxies finish before Nitro's normal beforeResponse hook.
+      if (guardEnabled(config.storefrontAccessGuardEnabled)) preventStorefrontCaching(event);
+    },
     // Keep cookies on the frontend host so preview/staging domains work without shared subdomains.
     cookieDomainRewrite: "",
     // OAuth redirects must reach the browser. If the server follows them, Google pages render under our /api URL.

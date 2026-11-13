@@ -1,5 +1,30 @@
 # Project Instructions
 
+## Restricted Storefront And Launch Button Prepared - 2026-11-13
+
+- User requested a protected domain cutover before an evening public opening.
+  Added hostname-independent Nuxt server guard, holding/preview form, host-only
+  Secure/HttpOnly/SameSite=Lax preview cookie, and same-origin bounded form POST.
+  Backend pages0085 creates the closed LaunchControl singleton. Its superuser-only
+  admin generates24h codes and opens/closes public access with one audited button.
+- Activation uses private NUXT_STOREFRONT_ACCESS_GUARD_ENABLED (defaultFalse) paired
+  with backend STOREFRONT_ACCESS_GUARD_ENABLED. A backend status failure or disabled
+  backend guard denies access while the frontend guard is enabled. Unknown frontend
+  activation values cannot disable protection. Built production cookies use Secure.
+- Preview cookie propagates through SSR only to the configured backend API origin/
+  path. Existing OAuth/API proxies carry it. Before-response and streaming-proxy
+  hooks keep guarded responses private/no-store. Exact BOG/Wingo POST callbacks
+  pass to their existing backend verification. Direct starter domains are guarded.
+-17 frontend HTTP/SSR/redirect tests, Nuxt typecheck/scoped ESLint/production build
+  pass. Built Nitro loopback smoke confirms both hostnames closed, code access,
+  secure cookie, API privacy, dynamic opening/closing and fail-closed outages.
+  Backend also passes221 isolated network-blocked launch/auth/provider regressions.
+- Code preparation is complete. Both deployments, backend pages0085 migration and
+  runtime activation/live checks precede webDNS cutover. Deployment is the user's
+  next handoff. Backend docs/STOREFRONT_LAUNCH_ACCESS.md records the exact sequence.
+  No production env or database mutation, commit, push or deployment in this step.
+
+
 ## Wingo Courier Reporting Cleanup - 2026-11-10
 
 - User authorized replacing retired courier reporting. Business finance/shipments

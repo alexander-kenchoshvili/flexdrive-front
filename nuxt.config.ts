@@ -75,6 +75,7 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     apiBaseUrl: internalApiUrl,
+    storefrontAccessGuardEnabled: false,
     public: {
       NUXT_BASE_API_URL: publicApiUrl,
       siteUrl: publicSiteUrl,
