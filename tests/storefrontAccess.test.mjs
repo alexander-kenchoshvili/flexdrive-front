@@ -21,7 +21,7 @@ const loadTs = (relative, mocks = {}, globals = {}) => {
 const preview = loadTs("../app/utils/storefrontPreview.ts");
 const access = loadTs("../server/utils/storefrontAccess.ts", { "../../app/utils/storefrontPreview": preview });
 const code = "signed-preview:timestamp:signature";
-let publicOpen, healthy, backendEnabled, enabled, requests;
+let publicOpen, healthy, backendEnabled, enabled, requests, legalHealthy;
 let apiServer, frontServer, apiURL, frontURL, beforeResponse;
 const config = () => ({ storefrontAccessGuardEnabled: enabled, apiBaseUrl: apiURL });
 const listen = (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve(`http://127.0.0.1:${server.address().port}`)));
@@ -34,6 +34,10 @@ before(async () => {
     if (req.url === "/api/launch/status/") {
       res.statusCode = healthy ? 200 : 503;
       res.end(JSON.stringify(healthy ? { guard_enabled: backendEnabled, public_open: publicOpen, preview_allowed: authorized } : { code: "unavailable" }));
+    } else if (/^\/api\/launch\/information\/(terms|privacy-policy)\/$/.test(req.url)) {
+      res.statusCode = legalHealthy ? 200 : 503;
+      const slug = req.url.split("/").at(-2);
+      res.end(JSON.stringify({ slug, title: "Legal <test>", intro: "Existing policy", sections: [{ title: "Section <test>", html: "<p>Public legal text</p>" }] }));
     } else {
       res.statusCode = publicOpen || authorized ? 200 : 403;
       res.setHeader("cache-control", "public, max-age=3600");
@@ -56,7 +60,7 @@ before(async () => {
   frontServer = createServer(h3.toNodeListener(app));
   frontURL = await listen(frontServer);
 });
-beforeEach(() => { publicOpen = false; healthy = true; backendEnabled = true; enabled = true; requests = []; });
+beforeEach(() => { publicOpen = false; healthy = true; backendEnabled = true; enabled = true; legalHealthy = true; requests = []; });
 after(async () => {
   await Promise.all([frontServer, apiServer].map((server) => new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); })));
 });
@@ -238,4 +242,64 @@ test("misspelled frontend activation cannot disable the guard", () => {
   assert.equal(access.guardEnabled(""), true);
   assert.equal(access.guardEnabled("false"), false);
   assert.equal(access.guardEnabled(false), false);
+});
+
+
+test("holding homepage describes FlexDrive and links the public legal documents", async () => {
+  const response = await visit("/");
+  const html = await response.text();
+  assert.match(html, /ავტონაწილების ონლაინ მაღაზია საქართველოში/);
+  assert.match(html, /href="\/privacy-policy"/);
+  assert.match(html, /href="\/terms"/);
+  assert.match(html, /href="mailto:support@flexdrive.ge"/);
+  assert.doesNotMatch(html, /<script|STOREFRONT/);
+  assert.equal(response.headers.get("set-cookie"), null);
+});
+
+test("only two exact legal paths expose script-free CMS documents without preview credentials", async () => {
+  for (const path of ["/terms", "/terms/", "/privacy-policy", "/privacy-policy/?slug=catalog&content_id=1"]) {
+    requests = [];
+    const response = await visit(path, { headers: { cookie: "sessionid=private; fd_preview_access=invalid", authorization: "Bearer private" } });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("cache-control"), /private, no-store/);
+    assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
+    assert.equal(response.headers.get("set-cookie"), null);
+    const html = await response.text();
+    assert.match(html, /Legal &lt;test&gt;/);
+    assert.match(html, /Section &lt;test&gt;/);
+    assert.match(html, /<p>Public legal text<\/p>/);
+    assert.doesNotMatch(html, /<script|STOREFRONT|<test>/);
+    const upstream = requests.at(-1);
+    assert.match(upstream.url, /^\/api\/launch\/information\/(terms|privacy-policy)\/$/);
+    assert.equal(upstream.headers.cookie, undefined);
+    assert.equal(upstream.headers.authorization, undefined);
+  }
+  const head = await visit("/terms", { method: "HEAD" });
+  assert.equal(head.status, 200);
+  assert.equal(await head.text(), "");
+  for (const open of [false, true]) {
+    publicOpen = open;
+    const response = await visit("/terms", { headers: { cookie: `${preview.PREVIEW_COOKIE}=${code}` } });
+    assert.equal(await response.text(), "STOREFRONT");
+  }
+});
+
+test("public legal documents do not permit path tricks, CMS API access, or mutations", async () => {
+  for (const path of ["/terms/extra", "/Terms", "/privacy-policy-extra", "/api/pages/terms/", "/api/launch/information/terms/"]) {
+    requests = [];
+    const response = await visit(path);
+    assert.doesNotMatch(await response.text(), /Public legal text|STOREFRONT/);
+    assert.ok(requests.every((request) => request.url === "/api/launch/status/"));
+  }
+  assert.equal((await visit("/terms", { method: "POST" })).status, 403);
+  assert.equal((await visit("/privacy-policy", { method: "DELETE" })).status, 403);
+  assert.equal((await visit("/catalog")).status, 200);
+});
+
+test("legal data failure fails closed without reflecting upstream details", async () => {
+  legalHealthy = false;
+  const response = await visit("/privacy-policy");
+  assert.equal(response.status, 503);
+  assert.match(response.headers.get("cache-control"), /private, no-store/);
+  assert.doesNotMatch(await response.text(), /Public legal text|STOREFRONT|stack|127\.0\.0\.1/);
 });

@@ -1,5 +1,20 @@
 # Project Instructions
 
+## Public Legal Information Prepared For Google Branding - 2026-11-14
+
+- User authorized public homepage description/privacy/terms for Google brand
+  verification while the shop stays closed. Only two exact safe legal paths render
+  minimal script-free HTML from backend api/launch/information/{slug}/. Existing
+  CMS legal content is reused; no legal text/DB/env change. Other CMS/API remains
+  closed, preview/public launch switch and noindex/no-store stay unchanged.
+-18 guard HTTP tests incl HEAD/preview/open-state/safe-path/failure regressions,
+  scoped ESLint, Nuxt typecheck/production build and built Nitro local mock smoke
+  pass. Backend24 launch/legal/sanitizer tests pass too. User owns BOTH pushes/
+  deployments, backend first; no migration. No production/Google submission,
+  commit/push/browser action at this stage. After deployment verify anonymous
+  public information and closed shop, then finish Google prerequisites/submission.
+
+
 ## Preview Form Browser CSRF Fix Prepared - 2026-11-13
 
 - User's repeated admin preview-code403 exposed Referrer-Policy:no-referrer on
