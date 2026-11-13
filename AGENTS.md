@@ -1,5 +1,18 @@
 # Project Instructions
 
+## Preview Form Browser CSRF Fix Prepared - 2026-11-13
+
+- User's repeated admin preview-code403 exposed Referrer-Policy:no-referrer on
+  both launch admin and front holding/code form. Native browser forms send null
+  Origin under that policy. Changed both responses to same-origin.
+- Existing17 front tests pass with a response-policy regression assertion, plus
+  scoped ESLint.18 backend launch tests pass with rendered-token secure POST and
+  null-origin denial. An isolated Chromium mocked HTTPS form reproduces old null
+  Origin and verifies the corrected real Origin. No user browser data involved.
+- User owns BOTH front/backend source pushes/deployments, then real code creation
+  and entry need confirmation. No migration or runtime setting change in this fix.
+
+
 ## Production Guard Activated And Holding Response Fix - 2026-11-13
 
 - User confirmed both apps deployed. Backend pages0085 now applied to production

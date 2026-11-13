@@ -110,6 +110,7 @@ test("closed API and mutations do not reach the storefront or upstream business 
 test("preview form accepts only same-origin POST and sets a host-only secure HttpOnly cookie", async () => {
   const form = await visit("/__preview");
   assert.equal(form.status, 200);
+  assert.equal(form.headers.get("referrer-policy"), "same-origin");
   assert.match(form.headers.get("content-security-policy"), /form-action 'self'/);
   const response = await unlock();
   assert.equal(response.status, 303);

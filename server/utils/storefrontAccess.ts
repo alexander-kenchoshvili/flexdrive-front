@@ -47,7 +47,8 @@ const sendHoldingPage = (event: H3Event, status: number, form = false, invalid =
   setHeader(event, "content-type", "text/html; charset=utf-8");
   setHeader(event, "content-security-policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
   setHeader(event, "x-frame-options", "DENY");
-  setHeader(event, "referrer-policy", "no-referrer");
+  // Preserve the same-origin Origin header on native form POSTs.
+  setHeader(event, "referrer-policy", "same-origin");
   setHeader(event, "x-robots-tag", "noindex, nofollow");
   if (status === 503) setHeader(event, "retry-after", 60);
   return send(event, renderHoldingPage(form, invalid, unavailable));
