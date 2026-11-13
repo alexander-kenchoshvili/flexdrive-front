@@ -1,5 +1,22 @@
 # Project Instructions
 
+## Production Guard Activated And Holding Response Fix - 2026-11-13
+
+- User confirmed both apps deployed. Backend pages0085 now applied to production
+  after SSL identity/backup/rollback preview;61 original tables preserved and zero
+  pending migrations. Public_open remainsFalse. Both runtime flags enabled in DO;
+  original8 frontend/46 backend component env rows preserved.
+- Live backend status/API/admin checks pass, and front preview form returns200.
+  DO ingress replaces planned503 holding HTML with generic504 (x-do-orig-status503).
+  Changed ONLY planned closed GET/HEAD holding page to200, keeping private/no-store,
+  noindex and all cookie/API guards. Genuine backend/status failures remain503.
+  Updated existing HTTP regressions; all17, scoped lint, typecheck, production build
+  and built Nitro loopback smoke pass. User owns this frontend push/deploy.
+- Recheck live holding page and real code access before custom domains/webDNS.
+  Public opening, provider settings and mail flow test remain pending. CUA ended
+  and reset so the yellow frame is removed. Backend docs record rollout/evidence.
+
+
 ## Restricted Storefront And Launch Button Prepared - 2026-11-13
 
 - User requested a protected domain cutover before an evening public opening.

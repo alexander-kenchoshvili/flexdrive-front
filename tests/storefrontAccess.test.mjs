@@ -87,7 +87,8 @@ const unlock = (value = code, extra = {}) => visit("/__preview", {
 test("all storefront hosts show a private holding page, without HTML application data", async () => {
   for (const host of ["flexdrive.ge", "www.flexdrive.ge", "flexdrive-prod-front-pdzcv.ondigitalocean.app"]) {
     const response = await visit("/catalog?q=private", { headers: { host, "x-forwarded-host": "trusted.example.test", authorization: "Bearer unrelated" } });
-    assert.equal(response.status, 503);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("retry-after"), null);
     assert.match(response.headers.get("cache-control"), /private, no-store/);
     assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
     const html = await response.text();
@@ -100,7 +101,7 @@ test("all storefront hosts show a private holding page, without HTML application
 test("closed API and mutations do not reach the storefront or upstream business endpoint", async () => {
   for (const [path, method] of [["/api/catalog/", "GET"], ["/api/commerce/orders/checkout/", "POST"], ["/auth/google/start", "GET"]]) {
     const response = await visit(path, { method });
-    assert.equal(response.status, path.startsWith("/api/") || method === "POST" ? 403 : 503);
+    assert.equal(response.status, path.startsWith("/api/") || method === "POST" ? 403 : 200);
     assert.doesNotMatch(await response.text(), /STOREFRONT|"catalog"/);
   }
   assert.ok(requests.every((r) => r.url === "/api/launch/status/"));
@@ -144,7 +145,7 @@ test("invalid and expired codes do not set cookies or reflect their contents", a
   assert.match(body, /კოდი არასწორია/);
   assert.doesNotMatch(body, /alert\(1\)/);
   const invalid = await visit("/catalog", { headers: { cookie: `${preview.PREVIEW_COOKIE}=expired` } });
-  assert.equal(invalid.status, 503);
+  assert.equal(invalid.status, 200);
 });
 
 test("cross-origin, missing origin, insecure origin and forwarded-host spoof cannot unlock", async () => {
@@ -179,7 +180,7 @@ test("one backend switch opens and recloses the site immediately without redeplo
   for (const open of [true, false, true]) {
     publicOpen = open;
     const response = await visit("/catalog");
-    assert.equal(response.status, open ? 200 : 503);
+    assert.equal(response.status, 200);
     assert.equal((await response.text()).includes("STOREFRONT"), open);
   }
 });

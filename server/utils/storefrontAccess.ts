@@ -131,5 +131,7 @@ export const guardStorefrontRequest = async (event: H3Event, config: GuardConfig
   if (path.startsWith("/api/") || !["GET", "HEAD"].includes(event.method)) {
     return sendAccessError(event, 403, "storefront_not_open");
   }
-  return sendHoldingPage(event, 503);
+  // A planned closed storefront is a valid page. App Platform replaces 5xx bodies.
+  // Actual status/backend failures above still return 503 and deny access.
+  return sendHoldingPage(event, 200);
 };
