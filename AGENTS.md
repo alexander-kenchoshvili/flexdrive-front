@@ -1,5 +1,24 @@
 # Project Instructions
 
+## Search Console Business Panel Prepared - 2026-11-14
+
+- User requested clear Google Search data inside the business panel. Added
+  BusinessSearchConsole (overview compact/users full), lazy daily SearchChart,
+  useBusinessSearchConsole and typed formatting/comparison/summary helpers.
+  Google-search queries are distinct from renamed site-internal search section.
+- Existing private backend origin and business-only auth; no public credentials
+  or local storage. Cancellation/late-response guards/access redirects retained.
+  User-selected period vs actual finalized PT period,3day exclusion/16month limit,
+  top50/privacy limitations, stale/unknown/zero and Google/GA4/order distinctions
+  explicitly displayed. Table scroll contained; responsive1/2/4 metric columns.
+- Backend enabled API and added existing analytics reader as Restricted only
+  after specific user approval. Full live read succeeds (genuine empty data).
+-65 backend +43 frontend tests, scoped ESLint/typecheck/production build pass.
+  No dev server/browser visual test, event/real order/ad/indexing/public opening,
+  commit/push/deploy. User owns both new pushes/deployments, backend first, then
+  new UI desktop/mobile review. No ENV/migration needed. Backend reference:
+  docs/BUSINESS_SEARCH_CONSOLE.md. Google login/Branding remains separate.
+
 ## Business Decision Analytics Prepared - 2026-11-14
 
 - User requested preparing decision analytics before the real test purchase.

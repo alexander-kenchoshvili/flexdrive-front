@@ -115,6 +115,7 @@ const profitSteps = computed(() => [
         <p class="mt-4 border-t border-border-default pt-3 text-[11px] leading-5 text-text-muted">ეფუძნება არჩეული და შესადარებელი პერიოდების შენახულ მონაცემებს. განახლდება პერიოდის შეცვლისა და მონაცემების განახლებისას.</p>
       </section>
       <BusinessDecisionPanel v-if="section === 'overview'" :period="report.period" source="all" compact />
+      <BusinessSearchConsole v-if="section === 'overview'" :period="report.period" compact />
       <div v-if="section !== 'overview'" class="my-6 grid grid-cols-2 border-y border-border-default md:mb-7 md:grid-cols-4 md:py-6" aria-label="ძირითადი მაჩვენებლები">
         <article v-for="metric in metrics" :key="metric.key" class="border-b border-r border-border-default px-3.5 py-5 even:border-r-0 [&:nth-last-child(-n+2)]:border-b-0 md:border-b-0 md:px-5 md:py-0 md:first:pl-0 md:even:border-r md:last:border-r-0 md:last:pr-0">
           <h2 class="text-[13px] font-semibold leading-5 text-text-secondary">{{ metric.label }}</h2>
