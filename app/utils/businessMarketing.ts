@@ -1,7 +1,7 @@
 import type { BusinessPeriod } from "./businessReport";
 
 export type MetaState = { status: "ready" | "empty" | "stale" | "unavailable" | "range_limit"; fetched_at: string | null; message?: string };
-export type AdMetrics = { spend: string; impressions: number; clicks: number; reach: number; website_purchases: string; website_purchase_value: string };
+export type AdMetrics = { spend: string; impressions: number; clicks: number; reach: number; website_purchases: string; website_purchase_value: string; link_clicks?: string; landing_page_views?: string };
 export type AdDay = AdMetrics & { date: string };
 export type MarketingReport = {
   status: "ready" | "partial" | "unavailable" | "not_configured";

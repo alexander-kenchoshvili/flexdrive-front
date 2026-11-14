@@ -1,5 +1,25 @@
 # Project Instructions
 
+## Business Decision Analytics Prepared - 2026-11-14
+
+- User requested preparing decision analytics before the real test purchase.
+  BusinessDecisionPanel now appears in overview(compact), users(Google sources/
+  ecommerce/closed ordered journey) and marketing(Meta CPA/ROAS/comparisons/
+  campaign value, link clicks and landing views). Existing business layout/tokens,
+  financial reports, auth, tracking consent and purchase flow remain unchanged.
+- New useBusinessDecisions calls existing backend origin's private
+  /business/decisions/{all|google|meta}/, with no-store/credentials-included,
+  source+period snapshots, cancellation/generation guards and business-only
+  access redirects. Clear unknown/zero/stale/currency/attribution distinctions;
+  no profit claims from ROAS or financial-ledger/attribution double counting.
+-36 frontend analytics/marketing/report/decision tests, typecheck, scoped ESLint
+  and production build pass. Backend54 tests and actual Google core/funnel plus
+  current/previous Meta Ads read succeeded (valid zero-purchase/empty Ads period).
+  No server/browser or live purchase/event/ad started in this implementation.
+- User owns both source pushes/deployments, backend first. No ENV or migration.
+  New UI visual/mobile review after deployment and actual test purchase remain.
+  Backend docs/BUSINESS_DECISION_REPORTS.md records API contract and rollout.
+
 ## Public Legal Information Prepared For Google Branding - 2026-11-14
 
 - User authorized public homepage description/privacy/terms for Google brand

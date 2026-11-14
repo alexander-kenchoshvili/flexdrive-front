@@ -73,6 +73,7 @@ watch(() => [route.query.start, route.query.end], () => {
             <p class="mt-3 text-[11px] leading-5 text-text-muted">{{ metric.note }}</p>
           </article>
         </div>
+        <BusinessDecisionPanel :period="report.period" source="google" />
         <section class="mb-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="audience-analysis-title">
           <h2 id="audience-analysis-title" class="flex items-center gap-2 text-base font-bold"><InformationCircleIcon class="h-5 w-5 shrink-0 text-accent-primary" aria-hidden="true" /> მომხმარებლების მოკლე ანალიზი</h2>
           <p class="mt-3 text-sm leading-7 text-text-secondary">{{ insight }}</p>
