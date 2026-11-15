@@ -146,6 +146,8 @@ export const guardStorefrontRequest = async (event: H3Event, config: GuardConfig
   preventStorefrontCaching(event);
   const path = getRequestURL(event, { xForwardedHost: false }).pathname;
   if (isProviderCallback(path, event.method)) return; // The backend still verifies provider identity/signatures.
+  const seoResource = ["GET", "HEAD"].includes(event.method)
+    && ["/robots.txt", "/sitemap.xml"].includes(path);
   const previewForm = path === "/__preview";
   if (previewForm && !["GET", "HEAD", "POST"].includes(event.method)) {
     throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
@@ -155,12 +157,23 @@ export const guardStorefrontRequest = async (event: H3Event, config: GuardConfig
   try {
     state = await readAccessState(event, config, submittedCode);
   } catch {
+    if (seoResource) {
+      event.context.storefrontPreviewOnly = true;
+      setHeader(event, "x-robots-tag", "noindex, nofollow");
+      setHeader(event, "retry-after", 60);
+      setResponseStatus(event, 503);
+      return; // The resource handler emits only a blocked robots/empty XML body.
+    }
     if (path.startsWith("/api/") || !["GET", "HEAD"].includes(event.method)) {
       return sendAccessError(event, 503, "storefront_unavailable");
     }
     return sendHoldingPage(event, 503, false, false, true);
   }
   event.context.storefrontPreviewOnly = !state.public_open;
+  if (seoResource) {
+    if (!state.public_open) setHeader(event, "x-robots-tag", "noindex, nofollow");
+    return; // No catalog access: these handlers independently check public_open.
+  }
   if (previewForm) {
     if (state.public_open) return sendRedirect(event, "/", 303);
     if (event.method === "POST") {

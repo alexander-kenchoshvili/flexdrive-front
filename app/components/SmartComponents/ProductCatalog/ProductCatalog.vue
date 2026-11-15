@@ -208,7 +208,7 @@ const toAbsoluteUrl = (siteUrl: string, pathOrUrl: string) => {
   return `${normalizedSiteUrl}${normalizedPath}`;
 };
 
-const title = computed(() => (props.data?.title as string) || "კატალოგი");
+const title = computed(() => selectedCategory.value?.name || (props.data?.title as string) || "კატალოგი");
 const subtitle = computed(
   () =>
     (props.data?.subtitle as string) ||
@@ -219,7 +219,7 @@ const pageSubtitle = computed(() => {
     return `ძიების შედეგები მოთხოვნისთვის "${normalizedSearchQuery.value}". გამოიყენე ფილტრები უფრო ზუსტი შედეგისთვის.`;
   }
 
-  return subtitle.value;
+  return selectedCategory.value?.seo?.description || subtitle.value;
 });
 
 const selectedCategoryLabel = computed(() => {

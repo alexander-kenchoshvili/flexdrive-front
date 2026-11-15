@@ -109,6 +109,12 @@ async function productContext(t, overrides = {}, client = false) {
   c.mocks["~/composables/catalog/useCatalogApi"] = { useCatalogApi: () => ({
     getCatalogProduct: async () => ({ data: vue.ref(product), error: vue.ref(null) }),
   }) };
+  // These browser-only warmups are loaded from their real modules; lifecycle
+  // hooks stay inert in this standalone SSR harness (no DOM/image requests).
+  const media = execute("app/composables/media/useCloudinaryImage.ts");
+  const preloadMocks = { "../media/useCloudinaryImage": media, vue: { ...vue, onMounted() {}, onBeforeUnmount() {} } };
+  c.mocks["~/composables/catalog/useProductGalleryPreload"] = execute("app/composables/catalog/useProductGalleryPreload.ts", {}, preloadMocks);
+  c.mocks["~/composables/catalog/useProductZoomPreload"] = execute("app/composables/catalog/useProductZoomPreload.ts", {}, preloadMocks);
   await setup("app/pages/catalog/[slug].vue", c.globals, c.mocks, "", "const retryLoad =");
   return { ...c, product };
 }

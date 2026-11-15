@@ -74,6 +74,12 @@ async function product(c, request) {
   c.mocks["~/composables/commerce/errorUtils"] = {};
   c.mocks["~/composables/catalog/useCatalogPlaceholderMedia"] = execute("app/composables/catalog/useCatalogPlaceholderMedia.ts");
   c.mocks["~/composables/catalog/useCatalogApi"] = { useCatalogApi: () => ({ getCatalogProduct: request }) };
+  // These browser-only warmups are loaded from their real modules; lifecycle
+  // hooks stay inert in this standalone SSR harness (no DOM/image requests).
+  const media = execute("app/composables/media/useCloudinaryImage.ts");
+  const preloadMocks = { "../media/useCloudinaryImage": media, vue: { ...vue, onMounted() {}, onBeforeUnmount() {} } };
+  c.mocks["~/composables/catalog/useProductGalleryPreload"] = execute("app/composables/catalog/useProductGalleryPreload.ts", {}, preloadMocks);
+  c.mocks["~/composables/catalog/useProductZoomPreload"] = execute("app/composables/catalog/useProductZoomPreload.ts", {}, preloadMocks);
   return setup("app/pages/catalog/[slug].vue", c.globals, c.mocks,
     "return { productSchema, galleryImages, productSeoImage };", "const retryLoad =");
 }

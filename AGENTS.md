@@ -1,5 +1,23 @@
 # Project Instructions
 
+## SEO Launch Source Prepared - 2026-11-15
+
+- User authorized full sequential SEO plan. Prepared host-aware noindex headers,
+  strict runtime flag parsing/private routes, guarded text robots/empty XML,
+  sanitized live sitemap, category H1/description and real composable test loaders.
+-79 scoped frontend tests, ESLint/typecheck/production build pass. Built Nitro
+  10 scenarios plus4 outage checks pass (runtime flags, closed/preview/open,
+  starter/reclosed). No production frontend deploy yet; user owns push/deploy.
+- Backend fixes Product.public_canonical_url duplicate FD code on manual legacy
+  slugs;48 backend tests pass/1SQLite locking skip. Deploy BOTH backend then front,
+  no migration needed. Never enable indexing ENV before new source deploy verified.
+- CMS contact5/blogs3/catalog2 noindex cleared, exactly3 pages success and reload
+  verified. Store remains guard=true/public_open=false. No launch/ENV/DNS action.
+- Read backend docs/SEO_PRELAUNCH_AUDIT_2026-11-15.md and SEO_RELEASE_2026-11-15.md
+  for actual pending inventory/ENV/live and post-open GSC/performance/content work.
+  User owns final opening after friend payment. Preserve phone/address policy and
+  manual SEO overrides; no automatic OEM/SKU title changes. Do not claim all SEO done.
+
 ## Search Console Business Panel Prepared - 2026-11-14
 
 - User requested clear Google Search data inside the business panel. Added

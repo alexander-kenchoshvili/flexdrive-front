@@ -1,47 +1,13 @@
 import { defineEventHandler, setHeader } from "h3";
-
-const buildRobotsTxt = ({
-  allowIndexing,
-  sitemapUrl,
-}: {
-  allowIndexing: boolean;
-  sitemapUrl?: string | null;
-}) => {
-  const lines: string[] = [];
-
-  if (!allowIndexing) {
-    lines.push("User-agent: *");
-    lines.push("Disallow: /");
-    // Permit Facebook link previews for public blogs before search indexing opens.
-    lines.push("");
-    lines.push("User-agent: facebookexternalhit");
-    lines.push("Allow: /blogs/");
-    lines.push("Disallow: /");
-    return lines.join("\n");
-  }
-
-  lines.push("User-agent: *");
-  lines.push("Allow: /");
-
-  if (sitemapUrl) {
-    lines.push(`Sitemap: ${sitemapUrl}`);
-  }
-
-  return lines.join("\n");
-};
-
-const normalizeUrl = (value: string) => value.replace(/\/+$/, "");
+import { buildRobotsTxt } from "../../app/utils/seoIndexing";
+import { canIndexRequest } from "../utils/seoPolicy";
 
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig(event);
-  const allowIndexing = Boolean(config.public.allowIndexing);
-  const siteUrl = normalizeUrl(String(config.public.siteUrl || ""));
-  const sitemapUrl = allowIndexing && siteUrl ? `${siteUrl}/sitemap.xml` : null;
-
+  const allowIndexing = canIndexRequest(event, config);
+  const siteUrl = String(config.public.siteUrl || "").replace(/\/+$/, "");
   setHeader(event, "content-type", "text/plain; charset=utf-8");
-
-  return buildRobotsTxt({
-    allowIndexing,
-    sitemapUrl,
-  });
+  // A closed store and every noncanonical hostname expose no crawlable paths.
+  if (!allowIndexing) return "User-agent: *\nDisallow: /\n";
+  return buildRobotsTxt({ allowIndexing, sitemapUrl: `${siteUrl}/sitemap.xml` });
 });

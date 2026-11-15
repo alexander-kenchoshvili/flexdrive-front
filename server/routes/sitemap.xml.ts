@@ -1,5 +1,6 @@
 import { createError, defineEventHandler, setHeader } from "h3";
-import { isForcedNoindexPath } from "~/utils/seoIndexing";
+import { isForcedNoindexPath } from "../../app/utils/seoIndexing";
+import { canIndexRequest } from "../utils/seoPolicy";
 
 type SitemapEntry = {
   loc: string;
@@ -25,11 +26,14 @@ const resolveEntryUrl = (siteUrl: string, loc: string) => {
   const rawLoc = String(loc || "").trim();
   if (!rawLoc) return null;
 
+  // Sitemap entries must be canonical paths, never searches, pagination or URLs
+  // with an authority hidden in a protocol-relative/malformed value.
+  if (rawLoc.startsWith("//") || /[\\\s]/.test(rawLoc)) return null;
   const site = new URL(siteUrl);
 
   if (/^https?:\/\//i.test(rawLoc)) {
     const entryUrl = new URL(rawLoc);
-    if (entryUrl.origin !== site.origin) {
+    if (entryUrl.origin !== site.origin || entryUrl.username || entryUrl.password || entryUrl.search || entryUrl.hash) {
       return null;
     }
 
@@ -39,7 +43,9 @@ const resolveEntryUrl = (siteUrl: string, loc: string) => {
     return `${site.origin}${normalizedPath}`;
   }
 
-  return `${site.origin}${normalizePath(rawLoc)}`;
+  if (!rawLoc.startsWith("/") || rawLoc.includes("?") || rawLoc.includes("#")) return null;
+  const parsed = new URL(rawLoc, site.origin);
+  return `${site.origin}${normalizePath(parsed.pathname)}`;
 };
 
 const escapeXml = (value: string) =>
@@ -63,7 +69,7 @@ const buildSitemapXml = (entries: Array<{ loc: string; lastmod?: string | null }
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
-  const allowIndexing = Boolean(config.public.allowIndexing);
+  const allowIndexing = canIndexRequest(event, config);
   const siteUrl = normalizeUrl(String(config.public.siteUrl || ""));
 
   setHeader(event, "content-type", "application/xml; charset=utf-8");
@@ -86,10 +92,15 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  if (!payload || !Array.isArray(payload.entries)) {
+    throw createError({ statusCode: 502, statusMessage: "Invalid sitemap data" });
+  }
+
   const seen = new Set<string>();
   const mappedEntries = (payload.entries || [])
     .map((entry) => {
-      const absoluteUrl = resolveEntryUrl(siteUrl, entry.loc);
+      let absoluteUrl: string | null;
+      try { absoluteUrl = resolveEntryUrl(siteUrl, entry.loc); } catch { return null; }
       if (!absoluteUrl) return null;
 
       const url = new URL(absoluteUrl);
@@ -106,7 +117,8 @@ export default defineEventHandler(async (event) => {
       seen.add(absoluteUrl);
       return {
         loc: absoluteUrl,
-        lastmod: entry.lastmod ? new Date(entry.lastmod).toISOString() : null,
+        lastmod: entry.lastmod && Number.isFinite(Date.parse(entry.lastmod))
+          ? new Date(entry.lastmod).toISOString() : null,
       };
     });
 

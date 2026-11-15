@@ -4,6 +4,8 @@ const ALWAYS_NOINDEX_EXACT_PATHS = new Set([
   "/login",
   "/register",
   "/resend-activation",
+  "/order-status",
+  "/__preview",
 ]);
 
 const ALWAYS_NOINDEX_PREFIXES = [
@@ -13,6 +15,8 @@ const ALWAYS_NOINDEX_PREFIXES = [
   "/profile",
   "/reset-password",
   "/wishlist",
+  "/auth",
+  "/manager-fd",
 ];
 
 type ResolveRobotsValueInput = {
@@ -24,6 +28,24 @@ type ResolveRobotsValueInput = {
 type BuildRobotsTxtInput = {
   allowIndexing: boolean;
   sitemapUrl?: string | null;
+};
+
+// Runtime environment values may arrive as strings. Unknown values fail closed.
+export const indexingEnabled = (value: unknown) => value === true
+  || (typeof value === "string" && ["true", "1", "yes", "on"].includes(value.trim().toLowerCase()));
+
+export const isCanonicalIndexingHost = (siteUrl: string, host: string) => {
+  try {
+    const site = new URL(siteUrl);
+    if (site.protocol !== "https:" || site.username || site.password
+      || site.pathname !== "/" || site.search || site.hash) return false;
+    if (!host || /[\s/@\\?#]/.test(host)) return false;
+    const request = new URL(`https://${host}`);
+    return request.host === site.host && site.hostname !== "localhost"
+      && !site.hostname.endsWith(".localhost") && !site.hostname.startsWith("127.");
+  } catch {
+    return false;
+  }
 };
 
 export const normalizeSeoPath = (value: string) => {

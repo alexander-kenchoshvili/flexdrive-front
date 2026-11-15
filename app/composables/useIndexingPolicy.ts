@@ -1,6 +1,6 @@
 import { computed, toValue } from "vue";
 import type { MaybeRefOrGetter } from "vue";
-import { resolveRobotsValue } from "~/utils/seoIndexing";
+import { indexingEnabled, resolveRobotsValue } from "~/utils/seoIndexing";
 
 type UseIndexingPolicyOptions = {
   path?: MaybeRefOrGetter<string | null | undefined>;
@@ -15,7 +15,7 @@ export const useIndexingPolicy = (options: UseIndexingPolicyOptions = {}) => {
     () => toValue(options.path) || route.path || "/",
   );
   const pageNoindex = computed(() => Boolean(toValue(options.pageNoindex)));
-  const allowIndexing = computed(() => Boolean(config.public.allowIndexing));
+  const allowIndexing = computed(() => indexingEnabled(config.public.allowIndexing));
   const robots = computed(() =>
     resolveRobotsValue({
       allowIndexing: allowIndexing.value,
