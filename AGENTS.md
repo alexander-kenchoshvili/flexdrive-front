@@ -1,5 +1,51 @@
 # Project Instructions
 
+## Search Input ID/Name Attributes Prepared - 2026-11-16
+
+- User authorized small id/name cleanup without Computer Use. HeaderSearch now
+  calls Vue useId once per instance, adds distinct -desktop/-mobile input IDs and
+  name=q to both forms. Header has two component instances; IDs remain unique
+  across them and stable for SSR/hydration. No random/global counter added.
+- Exactly5 source lines added; v-model, submit prevention, keyboard handlers,
+  focus ref, draft/route/filter logic and autocomplete=off remain unchanged.
+  Existing55 header/search/filter/result tests, scoped ESLint, Nuxt typecheck
+  and whitespace checks pass. No new tests for this low-impact attribute edit.
+- No browser/server/production/data/ENV/backend action, migration, commit or push.
+  User owns frontend deploy; exact live Chrome issue disappearance remains to
+  verify afterwards. Prior BusinessReport source-link edit is preserved.
+- Vue useId documentation: https://vuejs.org/api/composition-api-helpers.html#useid
+
+
+## Business Source Placeholders Corrected; Pixel Unblocked - 2026-11-16
+
+- User requested resolving Pixel and misleading source connection cards. AdBlock
+  was active on flexdrive.ge; user manually paused it after request. Reload shows
+  fbevents.js200/script/disk-cache432kB and no ERR_BLOCKED_BY_CLIENT. No tracking
+  code, GTM, privacy/consent or extension setting changed by agent.
+- Existing live GA4 report fetched19:19; Meta ads/FB/IG fetched19:20 Tbilisi. Sources
+  already work; screenshot card and modal in BusinessReport had obsolete fixed
+  next-stage placeholders. Replaced with existing users/marketing report links,
+  preserving selected period and explaining where real status/update times appear.
+  No false all-green badge, new API call, permission, token or backend change.
+-56 existing business tests, scoped ESLint and Nuxt typecheck pass. Frontend push/
+  deploy required for copy/links; user owns it. No build rerun for this small Vue
+  text/link change. Real purchase/CAPI/dedup and Meta ingestion remain separate.
+  CUA reset; live browser left on marketing. Preserve prior cache fix and docs.
+
+
+## CSS/JS Cache Live Verification Complete - 2026-11-16
+
+- User deployed.18 live anonymous HTTP checks pass: current CSS/two actual JS,
+  MIME/year/immutable, CDN HIT and304; metadata/private/preview stay no-store.
+  Guard=true/public_open=false. Current build c0a07522-53cb-45d8-93c4-b753b6af2b85.
+- Real Chrome preview homepage reload shows CSS disk-cache hits; catalog and
+  FD-04-0446 product render with no new app JS/hydration error. Console has Meta
+  fbevents.js ERR_BLOCKED_BY_CLIENT and Chrome missing id/name autofill suggestion.
+  No extension/code/config change. Payment/login/all devices were not tested.
+- Earlier pending-deploy cache note below is historical. CUA reset/DevTools closed.
+  docs/STATIC_ASSET_CACHE.md and backend CACHE_AUDIT_2026-11-16.md updated.
+
+
 ## Hashed CSS/JS Cache Prepared - 2026-11-16
 
 - User authorized ONLY priority CSS/JS caching; category invalidation, Redis

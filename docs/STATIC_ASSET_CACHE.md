@@ -1,6 +1,6 @@
 # Static CSS/JS caching
 
-Prepared 2026-11-16; frontend deploy pending. No ENV or backend change is needed.
+Deployed and verified in production 2026-11-16. No ENV or backend change was needed.
 
 The storefront guard keeps documents, preview and API responses private/no-store.
 Nitro serves public files before that guard, but its final response hook previously
@@ -36,3 +36,14 @@ After frontend deployment, check an actual CSS and JS URL for 200 + immutable an
 their ETag requests for 304. Check that holding/preview/private API responses still
 return private/no-store and that a new deploy uses its new hashed URLs. No CDN-wide
 purge or "cache everything" rule is needed.
+
+## Production verification, 2026-11-16
+
+18 live anonymous HTTP checks passed: actual CSS and two deployed JS files,
+correct MIME/immutable, CDN MISS to HIT, HEAD and ETag304. Cookie-free holding,
+preview/private API and mutable latest.json remain no-store; public_open=false.
+Chrome preview homepage reload shows CSS disk-cache hits; catalog and product
+FD-04-0446 render. No application JS/hydration error appeared on these pages.
+Browser findings remain: Meta fbevents.js ERR_BLOCKED_BY_CLIENT and one Chrome
+autofill improvement for a field without id/name. Neither was changed. This is
+a targeted cache/navigation check, not a payment/login/full-device acceptance test.

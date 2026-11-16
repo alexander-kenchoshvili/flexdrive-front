@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useId } from "vue";
 import { onClickOutside, useDebounceFn, useMediaQuery } from "@vueuse/core";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/vue";
 import HeaderSearchFilters from "./HeaderSearchFilters.vue";
@@ -43,6 +44,7 @@ const { trackSearchSelection } = useEcommerceAnalytics();
 const rootRef = ref<HTMLElement | null>(null);
 const mobileInputRef = ref<HTMLInputElement | null>(null);
 
+const searchInputId = "header-search-" + useId();
 const searchPlaceholder = "მოძებნე ნაწილი, OEM ან SKU";
 
 const searchText = useCatalogSearchText();
@@ -492,6 +494,8 @@ defineExpose({
           <BaseIcon name="search" :size="18" />
         </span>
         <input
+          :id="searchInputId + '-desktop'"
+          name="q"
           v-model="searchText"
           type="search"
           :placeholder="searchPlaceholder"
@@ -586,6 +590,7 @@ defineExpose({
             <form role="search" class="flex items-center gap-2 rounded-lg border border-header-border bg-header-surface px-3 focus-within:border-accent-primary" @submit.prevent="submitSearch">
               <BaseIcon name="search" :size="18" class="shrink-0 text-text-muted" />
               <input
+                :id="searchInputId + '-mobile'" name="q"
                 ref="mobileInputRef" v-model="searchText" type="search"
                 :placeholder="searchPlaceholder" :aria-label="searchPlaceholder"
                 autocomplete="off" spellcheck="false" maxlength="255"
