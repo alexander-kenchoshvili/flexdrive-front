@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
+import { catalogSearchTextRuntime } from "./helpers/catalogSearchText.mjs";
 
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
@@ -196,6 +197,7 @@ test("actual catalog setup reports its loaded API count after mount and ignores 
     getCatalogCategoriesRaw: async () => [], getVehicleMakes: async () => [],
   };
   const mocks = {
+    "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(() => route) },
     "~/utils/pageScrollCoordinator": { markPagePending() {}, markPageReady() {} },
     "@vueuse/core": { useMediaQuery: () => vue.ref(false) },
     pinia: { storeToRefs: () => ({ settings: vue.ref({}) }) },

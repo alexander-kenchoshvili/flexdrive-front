@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { catalogSearchTextRuntime } from "./helpers/catalogSearchText.mjs";
 
 const root = process.env.FLEXDRIVE_FRONTEND_ROOT || resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(root, "package.json"));
@@ -110,6 +111,7 @@ async function renderListing(path, componentPath, kind) {
     pinia: { storeToRefs: (store) => store },
     "~/composables/useIndexingPolicy": { useIndexingPolicy: () => ({ robots: vue.ref("noindex, nofollow") }) },
     "~/composables/catalog/useCatalogApi": { useCatalogApi: () => api },
+    "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(() => route) },
     "~/composables/blog/useBlogApi": { useBlogApi: () => api },
     "~/composables/catalog/useCatalogSearchAnalytics": { useCatalogSearchAnalytics: () => ({ captureSearch: () => ({}), recordSearchResults() {} }) },
     "~/utils/pageScrollCoordinator": { markPagePending() {}, markPageReady() {} },

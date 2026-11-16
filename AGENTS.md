@@ -1,5 +1,29 @@
 # Project Instructions
 
+## Delivery Choice Card Prices Removed - 2026-11-16
+
+- User requested removing standard/fast delivery prices from the left checkout
+  choice cards; removed only the price prop in shared CheckoutDeliveryOptions.
+  Cart/buy-now summaries retain selected fee and totals; service selection,
+  timing and availability unchanged.8 existing service-card/summary tests pass,
+  scoped ESLint passes. Frontend deploy needed; no backend/migration change.
+
+## Cleared Search Text Preserved Across Catalog Filters - 2026-11-16
+
+- User reported clearing header "წინა გიტარა" then changing Subaru Legacy to
+  Forester in sidebar restores deleted text. Header route watcher and catalog's
+  separate applied q caused the old query to return.
+- Added request-safe useCatalogSearchText draft shared by header instances and
+  catalog filter query construction. Clearing/editing alone stays unsubmitted;
+  next sidebar/mobile filter action uses that draft, including omitting empty q.
+  Catalog API/results/analytics keep applied text until navigation commits. A
+  one-character incomplete draft is not sent by filter actions. New q/path and
+  browser Back restore route text; route refinements alone preserve the draft.
+-89 relevant tests pass (actual Vue setup/router/SSR; desktop/mobile regressions),
+  scoped ESLint, typecheck and production build pass. Existing Browserslist/Vue
+  package deprecation warnings only. No production browser verification, commit,
+  push, deployment or backend/migration/data changes. User owns frontend deploy.
+
 ## SEO Launch Source Prepared - 2026-11-15
 
 - User authorized full sequential SEO plan. Prepared host-aware noindex headers,

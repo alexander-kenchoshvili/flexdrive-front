@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
+import { catalogSearchTextRuntime } from "./helpers/catalogSearchText.mjs";
 
 const root = process.env.FLEXDRIVE_FRONTEND_ROOT || resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(root, "package.json"));
@@ -67,6 +68,7 @@ function context(t, path, { query = {}, props = {}, client = false } = {}) {
   };
   const policy = execute("app/composables/useIndexingPolicy.ts", globals, { "~/utils/seoIndexing": indexing });
   const mocks = {
+    "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(() => route) },
     pinia: { storeToRefs: (store) => store },
     "swiper/css": {}, "swiper/vue": {},
     "~/composables/useIndexingPolicy": policy,

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
+import { catalogSearchTextRuntime } from "./helpers/catalogSearchText.mjs";
 
 const require = createRequire(import.meta.url);
 const vue = require("vue");
@@ -44,6 +45,8 @@ async function catalog(t, location, facets = {}, options = {}) {
     watch: (...args) => { const stop = vue.watch(...args); stops.push(stop); return stop; },
     onMounted() {}, onBeforeUnmount: (callback) => unmountCallbacks.push(callback), useHead() {}, useSeoMeta() {},
   };
+  const useSearchText = catalogSearchTextRuntime(globals.useRoute);
+  mocks["~/composables/catalog/useCatalogSearchText"] = { useCatalogSearchText: useSearchText };
   t.after(() => stops.forEach((stop) => stop()));
   const { descriptor } = parse(readFileSync(new URL("../app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", import.meta.url), "utf8"));
   const output = ts.transpileModule(descriptor.scriptSetup.content.replaceAll("import.meta.client", String(Boolean(options.client))), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -51,7 +54,7 @@ async function catalog(t, location, facets = {}, options = {}) {
   const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest, handleDesktopVehicleMakeUpdate, handleDesktopVehicleModelUpdate, handleDesktopVehicleYearUpdate, handleDraftVehicleMakeUpdate, loadVehicleOptionsForDraft, vehicleModelsResponse, vehicleYearsResponse, vehicleOptionsError, desktopFiltersDisabled };`)(
     (name) => mocks[name] ?? (name.endsWith(".vue") ? {} : require(name)), {}, ...Object.values(globals),
   );
-  return { ...controls, requests, categoryRequests, router, unmount: () => unmountCallbacks.forEach((callback) => callback()) };
+  return { ...controls, requests, categoryRequests, router, useSearchText, unmount: () => unmountCallbacks.forEach((callback) => callback()) };
 }
 
 test("initial catalog request, pagination and sorting preserve all header filters", async (t) => {
@@ -61,6 +64,47 @@ test("initial catalog request, pagination and sorting preserve all header filter
   c.selectedSort.value = "price_asc";
   assert.deepEqual(c.buildRouteQueryFromControls(2), { q: "part", categories: "lights,mirrors", make: "subaru", model: "forester", year: "2018", ordering: "price_asc", page: "2" });
   assert.equal(c.buildRoutePathFromControls(), "/catalog");
+});
+
+for (const draft of ["", "სარკე"]) {
+  test(`sidebar model change uses the header's ${draft ? "edited" : "cleared"} query`, async (t) => {
+    const c = await catalog(t, "/catalog?q=წინა+გიტარა&make=subaru&model=legacy&page=3");
+    const headerText = c.useSearchText();
+    headerText.value = draft;
+    // Typing alone remains unsubmitted; the next filter action applies it.
+    assert.equal(c.router.currentRoute.value.query.q, "წინა გიტარა");
+    assert.equal(c.buildParamsFromControls().q, "წინა გიტარა");
+    await c.handleDesktopVehicleModelUpdate("forester");
+    await vue.nextTick();
+    assert.equal(c.router.currentRoute.value.query.q, draft || undefined);
+    assert.equal(c.router.currentRoute.value.query.model, "forester");
+    assert.equal(c.router.currentRoute.value.query.page, undefined);
+    assert.equal(c.buildParamsFromControls().q, draft || undefined);
+    assert.equal(headerText.value, draft);
+  });
+}
+
+test("an incomplete one-character header draft is not sent by a sidebar filter", async (t) => {
+  const c = await catalog(t, "/catalog?q=წინა+გიტარა&make=subaru&model=legacy");
+  const headerText = c.useSearchText();
+  headerText.value = "ფ";
+  await c.handleDesktopVehicleModelUpdate("forester");
+  await vue.nextTick();
+  assert.equal(c.router.currentRoute.value.query.q, "წინა გიტარა");
+  assert.equal(c.buildParamsFromControls().q, "წინა გიტარა");
+  assert.equal(headerText.value, "ფ");
+});
+
+test("mobile filter apply also honors a cleared header query", async (t) => {
+  const c = await catalog(t, "/catalog?q=წინა+გიტარა&make=subaru&model=legacy");
+  const headerText = c.useSearchText();
+  headerText.value = "";
+  await c.handleMobileFilterApply({ selectedCategoryId: null, selectedCategorySlugs: [], minPrice: "", maxPrice: "", sort: "recommended", selectedBrand: "", selectedPlacement: "", selectedSide: "", inStock: false, onSale: false, vehicle: { make: "subaru", model: "forester", year: "", engine: "" } });
+  await vue.nextTick();
+  assert.equal(c.router.currentRoute.value.query.q, undefined);
+  assert.equal(c.router.currentRoute.value.query.model, "forester");
+  assert.equal(c.buildParamsFromControls().q, undefined);
+  assert.equal(headerText.value, "");
 });
 
 test("removing a selected category updates API and route conditions together", async (t) => {

@@ -4,6 +4,7 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/vue";
 import HeaderSearchFilters from "./HeaderSearchFilters.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
+import { useCatalogSearchText } from "~/composables/catalog/useCatalogSearchText";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { getCatalogCategorySlugFromPath } from "~/utils/routePaths";
 import { waitForPageReady } from "~/utils/pageScrollCoordinator";
@@ -44,7 +45,7 @@ const mobileInputRef = ref<HTMLInputElement | null>(null);
 
 const searchPlaceholder = "მოძებნე ნაწილი, OEM ან SKU";
 
-const searchText = ref("");
+const searchText = useCatalogSearchText();
 const isDesktopOpen = ref(false);
 const isMobileOpen = ref(false);
 const categories = ref<CatalogCategoryItem[]>([]);
@@ -91,12 +92,6 @@ const hasActiveSuggestion = computed(
 const mobileTriggerLabel = computed(
   () => normalizedSearchText.value || "მოძებნე ნაწილი",
 );
-
-const extractSearchQueryFromRoute = () => {
-  const queryValue = route.query.q;
-  if (Array.isArray(queryValue)) return String(queryValue[0] || "");
-  return typeof queryValue === "string" ? queryValue : "";
-};
 
 const resetSuggestionsState = () => {
   ++latestSuggestionsRequestId.value;
@@ -414,7 +409,6 @@ const handleInputKeydown = async (event: KeyboardEvent) => {
 
 const syncSearchTextFromRoute = () => {
   clearCatalogRefinementsOnSubmit.value = false;
-  searchText.value = extractSearchQueryFromRoute();
   const first = (value: unknown) => String((Array.isArray(value) ? value[0] : value) || "");
   const inCatalog = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
   selectedMake.value = inCatalog ? first(route.query.make) : "";

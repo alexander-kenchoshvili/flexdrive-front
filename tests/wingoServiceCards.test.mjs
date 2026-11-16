@@ -45,13 +45,12 @@ const options = [
   { service_slug: "fast", delivery_type_id: 2, label: "სწრაფი მიტანა", price: "83.00", available: true,
     estimate_label: "დღეს, 9 ნოემბერი", estimated_delivery_date: "2026-11-09", checkout_deadline_at: "2026-11-09T12:30:00+04:00" },
 ];
-test("actual delivery cards expose native choices, prices and agreed simple timing copy", async () => {
+test("actual delivery cards expose native choices and timing without prices", async () => {
   const html = await render("components/commerce/CheckoutDeliveryOptions.vue", { modelValue: "fast", options });
   assert.equal((html.match(/type="radio"/g) || []).length, 2);
   assert.equal((html.match(/name="delivery_service_slug"/g) || []).length, 2);
   assert.match(html, /value="fast" checked/);
-  assert.match(html, /46.00 ₾/);
-  assert.match(html, /83.00 ₾/);
+  assert.doesNotMatch(html, /46.00 ₾|83.00 ₾/);
   assert.match(html, /12:30-მდე/);
   assert.match(html, /12:30-მდე გაფორმებულ შეკვეთას მომდევნო სამუშაო დღეს მიიღებთ, ხოლო 12:30-დან — ორ სამუშაო დღეში/);
   assert.match(html, /12:30-მდე გაფორმებულ შეკვეთას იმავე დღეს მოგაწვდით, ხოლო 12:30-დან — მომდევნო სამუშაო დღეს/);
@@ -66,10 +65,10 @@ test("unavailable fast tariff is disabled with its actual reason", async () => {
   assert.match(html, /სწრაფი მიტანის ტარიფი მიუწვდომელია/);
   assert.doesNotMatch(html, /დღეს, 9 ნოემბერი/);
 });
-test("region standard remains a single choice and pending price is not an old payable amount", async () => {
+test("region standard remains a single choice without price or calculation labels", async () => {
   const html = await render("components/commerce/CheckoutDeliveryOptions.vue", { modelValue: "standard", options: [{ ...options[0], estimate_label: "3–5 სამუშაო დღეში, მარშრუტის გრაფიკის მიხედვით" }], pending: true });
   assert.equal((html.match(/type="radio"/g) || []).length, 1);
-  assert.match(html, /ითვლება/);
+  assert.doesNotMatch(html, /ითვლება…/);
   assert.doesNotMatch(html, /46.00 ₾/);
   assert.match(html, /3–5 სამუშაო დღეში/);
   assert.doesNotMatch(html, /12:30|სავარაუდო/);
@@ -119,5 +118,5 @@ test("after-cutoff fast remains selectable and shows next working day", async ()
   assert.doesNotMatch(html, /value="fast"[^>]*disabled/);
   assert.match(html, /მომდევნო სამუშაო დღეს/);
   assert.match(html, /12:30-მდე გაფორმებულ შეკვეთას იმავე დღეს მოგაწვდით, ხოლო 12:30-დან — მომდევნო სამუშაო დღეს/);
-  assert.match(html, /83.00 ₾/);
+  assert.doesNotMatch(html, /83.00 ₾/);
 });

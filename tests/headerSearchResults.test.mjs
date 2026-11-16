@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
+import { catalogSearchTextRuntime } from "./helpers/catalogSearchText.mjs";
 
 const require = createRequire(import.meta.url);
 const vue = require("vue");
@@ -59,6 +60,7 @@ for (const mobile of [false, true]) {
       fitment_summary: "Subaru Forester 2018", primary_image: { desktop: index ? `/photo-${index}.webp` : null, tablet: null, mobile: null, alt_text: `Photo ${index + 1}` },
     }));
     const header = compile("../app/components/LAYOUTS/HeaderSearch.vue", {
+      "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
       "@vueuse/core": { onClickOutside() {}, useMediaQuery: () => vue.ref(mobile), useDebounceFn: (fn) => fn },
       "@headlessui/vue": { Dialog: vue.defineComponent({ props: { open: Boolean }, setup: (props, { slots }) => () => props.open ? vue.h("section", slots.default?.()) : null }), DialogPanel: slotComponent, DialogTitle: slotComponent },
       "./HeaderSearchFilters.vue": { default: vue.defineComponent({ inheritAttrs: false, render: () => null }) },

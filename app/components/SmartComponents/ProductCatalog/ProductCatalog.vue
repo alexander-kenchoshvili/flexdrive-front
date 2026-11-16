@@ -8,6 +8,7 @@ import { publicPageError } from "~/utils/publicPageError";
 import AppPagination from "~/components/common/AppPagination.vue";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
+import { useCatalogSearchText } from "~/composables/catalog/useCatalogSearchText";
 import { useCatalogSearchAnalytics } from "~/composables/catalog/useCatalogSearchAnalytics";
 import { resolveCmsCollectionSeoPolicy } from "~/utils/cmsCollectionSeo";
 import {
@@ -142,6 +143,7 @@ const hasInitialized = ref(false);
 
 const selectedSort = ref<CatalogSort>("recommended");
 const searchQuery = ref("");
+const searchDraft = useCatalogSearchText();
 const selectedCategoryId = ref<number | null>(null);
 const selectedCategorySlug = ref<string | null>(null);
 const selectedCategorySlugs = ref<string[]>([]);
@@ -871,8 +873,12 @@ const buildRouteQueryFromControls = (page: number): Record<string, string> => {
   const query: Record<string, string> = {};
   if (selectedCategorySlugs.value.length) query.categories = selectedCategorySlugs.value.join(",");
 
-  if (normalizedSearchQuery.value) {
-    query.q = normalizedSearchQuery.value;
+  const draftQuery = searchDraft.value.trim();
+  // A single character is still an incomplete header draft, not a valid API query.
+  const queryText = draftQuery.length === 1 || draftQuery.length > 255
+    ? normalizedSearchQuery.value : draftQuery;
+  if (queryText) {
+    query.q = queryText;
   }
 
   if (selectedSort.value !== "recommended") {
@@ -1324,6 +1330,7 @@ const handleResetFilters = async () => {
 
 const handleClearCatalogState = async () => {
   searchQuery.value = "";
+  searchDraft.value = "";
   selectedSort.value = "recommended";
   setSelectedCategoryId(null);
   selectedBrand.value = "";

@@ -32,7 +32,6 @@ v-if="options.length" class="mt-5 min-w-0 border-t border-border-default pt-5 sm
 v-for="option in options" :key="option.service_slug" name="delivery_service_slug"
         :model-value="modelValue" :value="option.service_slug" :title="option.label"
         :disabled="disabled || !option.available"
-        :price="pending ? 'ითვლება…' : option.price ? `${Number(option.price).toFixed(2)} ₾` : '—'"
         :description="serviceDescription(option)"
         @update:model-value="emit('update:modelValue', option.service_slug)">
         <template #icon><component :is="option.service_slug === 'fast' ? BoltIcon : TruckIcon" class="h-5 w-5" aria-hidden="true" /></template>

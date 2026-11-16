@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
+import { catalogSearchTextRuntime } from "./helpers/catalogSearchText.mjs";
 
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
@@ -32,6 +33,7 @@ async function mountSearch(location, options = {}) {
   const trackedSearches = [];
   const trackedSelections = [];
   const mocks = {
+    "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
     "@vueuse/core": {
       onClickOutside() {}, useMediaQuery: () => options.mobileViewport ?? vue.ref(false), useDebounceFn: options.debounce ?? ((fn) => fn),
     },
@@ -441,4 +443,16 @@ test("applied vehicle and category route changes still replace the header draft"
   assert.equal(c.search.selectedModel.value, "jetta");
   assert.equal(c.search.selectedYear.value, "2019");
   assert.deepEqual(c.search.selectedCategories.value, ["mirrors"]);
+});
+
+test("cleared search text is not restored by a sidebar model route change", async (t) => {
+  const c = await mountSearch("/catalog?q=წინა+გიტარა&make=subaru&model=legacy");
+  t.after(() => c.app.unmount());
+  await c.input("");
+  await c.router.push("/catalog?q=წინა+გიტარა&make=subaru&model=forester");
+  await flush();
+  assert.equal(c.search.searchText.value, "");
+  assert.equal(c.search.selectedModel.value, "forester");
+  await c.search.submitSearch();
+  assert.equal(c.router.currentRoute.value.query.q, undefined);
 });
