@@ -1,5 +1,24 @@
 # Project Instructions
 
+## Hashed CSS/JS Cache Prepared - 2026-11-16
+
+- User authorized ONLY priority CSS/JS caching; category invalidation, Redis
+  fallback and client menu/settings refresh remain deferred. No other cache work.
+- Guard beforeResponse now permits public/year/immutable only GET/HEAD200/304
+  for current eight-character-hashed root /_nuxt CSS/JS files PRESENT in Nitro's
+  generated public-asset manifest with matching MIME. Cookie-setting responses,
+  errors, holding HTML, unknown files, source maps, payloads and mutable build
+  metadata never receive immutable. Metadata/private pages keep no-store;
+  Nitro's own missing-static404 retains no-cache. Guard/API/preview unchanged.
+-41 targeted cache/guard/SEO tests pass; scoped ESLint, Nuxt typecheck and local
+  production build pass.15 actual built-Nitro loopback checks pass incl CSS/JS
+  bytes, HEAD/304, metadata/404, closed/preview/open private API and mock outage.
+  Temporary own servers stopped; no real provider/DB/browser/public-open action.
+- Frontend-only deployment required, no ENV/backend/migration change. User owns
+  push/deploy; production headers NOT yet updated or rechecked. Backend audit:
+  docs/CACHE_AUDIT_2026-11-16.md (original findings plus implementation status).
+
+
 ## Delivery Choice Card Prices Removed - 2026-11-16
 
 - User requested removing standard/fast delivery prices from the left checkout

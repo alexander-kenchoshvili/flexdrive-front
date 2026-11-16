@@ -45,7 +45,10 @@ before(async () => {
     }
   });
   apiURL = `${await listen(apiServer)}/api`;
-  loadTs("../server/plugins/storefront-access-cache.ts", { "../utils/storefrontAccess": access }, {
+  loadTs("../server/plugins/storefront-access-cache.ts", {
+    "../utils/storefrontAccess": access,
+    "#nitro-internal-virtual/public-assets": { getAsset: () => undefined },
+  }, {
     useRuntimeConfig: config,
     defineNitroPlugin: (callback) => callback({ hooks: { hook: (_name, handler) => { beforeResponse = handler; } } }),
   });
