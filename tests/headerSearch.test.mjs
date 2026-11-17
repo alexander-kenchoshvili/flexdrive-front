@@ -35,6 +35,8 @@ async function mountSearch(location, options = {}) {
   const animationFrames = [], readyPaths = [], scrollCalls = [];
   const runFrames = () => animationFrames.splice(0).forEach((callback) => callback());
   const mocks = {
+    "~/composables/catalog/useVinSearchMarketing": { useVinSearchMarketing: () => ({ track: () => {} }) },
+    "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
     "@vueuse/core": {
       onClickOutside() {}, useMediaQuery: () => options.mobileViewport ?? vue.ref(false), useDebounceFn: options.debounce ?? ((fn) => fn),

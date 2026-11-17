@@ -8,6 +8,7 @@ import { publicPageError } from "~/utils/publicPageError";
 import AppPagination from "~/components/common/AppPagination.vue";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
+import { useVehicleInterestTracking } from "~/composables/catalog/useVehicleInterestTracking";
 import { useCatalogSearchText } from "~/composables/catalog/useCatalogSearchText";
 import { useCatalogSearchAnalytics } from "~/composables/catalog/useCatalogSearchAnalytics";
 import { resolveCmsCollectionSeoPolicy } from "~/utils/cmsCollectionSeo";
@@ -80,6 +81,7 @@ const {
   getVehicleEngines,
 } = useCatalogApi();
 const { captureSearch, recordSearchResults } = useCatalogSearchAnalytics();
+const vehicleInterest = useVehicleInterestTracking();
 let loadedSearch: { snapshot: ReturnType<typeof captureSearch>; count: number } | null = null;
 
 const PAGE_SIZE = 15;
@@ -1070,7 +1072,10 @@ const loadProducts = async () => {
 
   productsResponse.value = responseData;
   loadedSearch = { snapshot: searchSnapshot, count: responseData.count };
-  if (hasHydrated.value) recordSearchResults(searchSnapshot, responseData.count);
+  if (hasHydrated.value) {
+    recordSearchResults(searchSnapshot, responseData.count);
+    void vehicleInterest.capture({ make: params.make, model: params.model, year: params.year, variant: params.variant, result_count: responseData.count });
+  }
 };
 
 const loadCategories = async () => {
@@ -1474,7 +1479,13 @@ watch(isDesktopCatalogLayout, (isDesktop) => {
 
 onMounted(() => {
   hasHydrated.value = true;
-  if (loadedSearch) recordSearchResults(loadedSearch.snapshot, loadedSearch.count);
+  if (loadedSearch) {
+    recordSearchResults(loadedSearch.snapshot, loadedSearch.count);
+    if (loadedSearch.snapshot.path === route.fullPath) {
+      const params = buildParamsFromControls();
+      void vehicleInterest.capture({ make: params.make, model: params.model, year: params.year, variant: params.variant, result_count: loadedSearch.count });
+    }
+  }
 });
 
 useHead(() => {

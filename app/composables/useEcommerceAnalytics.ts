@@ -1,3 +1,4 @@
+import { useMetaMarketing } from "~/composables/useMetaMarketing";
 import { isBusinessPath } from "~/utils/businessRouting";
 import { isProductionTrackingHost } from "~/utils/trackingHost";
 import { normalizeSearchAnalyticsTerm } from "~/utils/searchAnalytics";
@@ -137,6 +138,7 @@ const buildDataLayerItem = (
 };
 
 export const useEcommerceAnalytics = () => {
+  const metaMarketing = useMetaMarketing();
   const config = useRuntimeConfig();
   const gtmId = normalizeGtmId(config.public.gtmId);
   const { trackingConsentGranted } = useCookieConsent();
@@ -258,13 +260,15 @@ export const useEcommerceAnalytics = () => {
     const normalizedSearchTerm = normalizeSearchAnalyticsTerm(searchTerm);
     if (!normalizedSearchTerm || !Number.isSafeInteger(resultCount) || resultCount < 0) return false;
 
-    return pushAnalyticsEvent("search", {
+    const sent = pushAnalyticsEvent("search", {
       search_term: normalizedSearchTerm,
       search_result_count: resultCount,
       search_outcome: resultCount === 0 ? "no_results" : "results",
       search_filtered: filtered ? "yes" : "no",
       search_tracking_version: "2",
     });
+    if (sent) metaMarketing.trackPartSearch(searchTerm, resultCount);
+    return sent;
   };
 
   const trackSearchSelection = (searchTerm: string, companySku: string) => {

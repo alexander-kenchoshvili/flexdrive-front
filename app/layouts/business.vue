@@ -6,12 +6,17 @@ import { BUSINESS_SECTIONS } from "~/utils/businessRouting";
 const route = useRoute();
 const router = useRouter();
 const { user, logout } = useBusinessAuth();
+watch(user, (actor) => {
+  if (import.meta.client && actor) {
+    try { localStorage.setItem("flexdrive-internal-traffic", "1"); } catch { /* No analytics storage required. */ }
+  }
+}, { immediate: true });
 const { isDark, toggleTheme } = useTheme();
 // This branch controls whether NuxtPage can render. Nuxt's useRoute waits for
 // that render, so use the committed router destination to avoid a logout deadlock.
 const isLogin = computed(() => router.currentRoute.value.path.replace(/\/$/, "") === "/business/login");
 const current = computed(() => BUSINESS_SECTIONS.find((item) => item.path === route.path.replace(/\/$/, "")) || BUSINESS_SECTIONS[0]);
-const icons = { overview: HomeIcon, sales: ChartBarIcon, finance: BanknotesIcon, users: UsersIcon, marketing: MegaphoneIcon, operations: CubeIcon };
+const icons = { overview: HomeIcon, sales: ChartBarIcon, finance: BanknotesIcon, users: UsersIcon, marketing: MegaphoneIcon, operations: CubeIcon, "vehicle-demand": ChartBarIcon };
 const mobile = useMediaQuery("(max-width: 1023px)");
 const menuOpen = ref(false);
 const menuButton = ref<HTMLButtonElement | null>(null);

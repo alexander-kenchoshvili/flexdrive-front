@@ -44,6 +44,7 @@ async function context(t, location = "/catalog?q=ფარი", { consent = true
     useRuntimeConfig: () => ({ public: { gtmId } }),
   };
   const analytics = execute("app/composables/useEcommerceAnalytics.ts", globals, {
+    "~/composables/useMetaMarketing": { useMetaMarketing: () => ({ trackPartSearch: () => {} }) },
     "~/utils/businessRouting": routing, "~/utils/searchAnalytics": normalization,
     "~/utils/trackingHost": trackingHost,
   }, client);
@@ -197,6 +198,7 @@ test("actual catalog setup reports its loaded API count after mount and ignores 
     getCatalogCategoriesRaw: async () => [], getVehicleMakes: async () => [],
   };
   const mocks = {
+    "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(() => route) },
     "~/utils/pageScrollCoordinator": { markPagePending() {}, markPageReady() {} },
     "@vueuse/core": { useMediaQuery: () => vue.ref(false) },

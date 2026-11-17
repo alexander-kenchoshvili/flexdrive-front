@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMetaMarketing } from "~/composables/useMetaMarketing";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import {
@@ -42,6 +43,7 @@ const props = defineProps<{
 const footerStore = useFooter();
 const { executeRecaptcha } = useRecaptcha();
 const { submitContactInquiry } = useContactApi();
+const { trackContact } = useMetaMarketing();
 const { contactInquirySchema } = useContactValidationSchemas();
 
 const sectionTitle = computed(
@@ -310,6 +312,7 @@ const submitContactForm = handleSubmit(
         values: initialFormValues,
       });
       isSuccessModalOpen.value = true;
+      trackContact();
     } catch (error: any) {
       const payload = error?.data ?? {};
 

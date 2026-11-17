@@ -267,9 +267,11 @@ export interface CatalogProductSuggestion {
 
 export type CatalogVinResult = {
   status: "matched";
+  interest_token?: string;
   vehicle: { make: string; model: string; year: number; trim?: string; trim2?: string; series?: string; series2?: string };
   filters: { make: string; model: string; year: string; variant?: string };
 } | {
   status: "not_in_catalog" | "no_coverage";
+  interest_token?: string;
   vehicle: { make: string; model: string; year: number; trim?: string; trim2?: string; series?: string; series2?: string };
 } | { status: "invalid_vin" | "unrecognized" | "unavailable" };

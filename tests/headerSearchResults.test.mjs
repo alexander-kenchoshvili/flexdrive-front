@@ -60,7 +60,9 @@ for (const mobile of [false, true]) {
       fitment_summary: "Subaru Forester 2018", primary_image: { desktop: index ? `/photo-${index}.webp` : null, tablet: null, mobile: null, alt_text: `Photo ${index + 1}` },
     }));
     const header = compile("../app/components/LAYOUTS/HeaderSearch.vue", {
-      "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
+      "~/composables/catalog/useVinSearchMarketing": { useVinSearchMarketing: () => ({ track: () => {} }) },
+      "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
+    "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
       "@vueuse/core": { onClickOutside() {}, useMediaQuery: () => vue.ref(mobile), useDebounceFn: (fn) => fn },
       "@headlessui/vue": { Dialog: vue.defineComponent({ props: { open: Boolean }, setup: (props, { slots }) => () => props.open ? vue.h("section", slots.default?.()) : null }), DialogPanel: slotComponent, DialogTitle: slotComponent },
       "./HeaderSearchFilters.vue": { default: vue.defineComponent({ inheritAttrs: false, render: () => null }) },
@@ -109,7 +111,9 @@ for (const mobile of [false, true]) {
       window: { localStorage: { removeItem() {} }, requestAnimationFrame() {} },
     };
     const header = compile("../app/components/LAYOUTS/HeaderSearch.vue", {
-      "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
+      "~/composables/catalog/useVinSearchMarketing": { useVinSearchMarketing: () => ({ track: () => {} }) },
+      "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
+    "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
       "@vueuse/core": { onClickOutside() {}, useMediaQuery: () => vue.ref(mobile), useDebounceFn: (fn) => fn },
       "@headlessui/vue": { Dialog: vue.defineComponent({ props: { open: Boolean }, setup: (props, { slots }) => () => props.open ? vue.h("section", slots.default?.()) : null }), DialogPanel: slotComponent, DialogTitle: slotComponent },
       "./HeaderSearchFilters.vue": { default: vue.defineComponent({ inheritAttrs: false, render: () => null }) },

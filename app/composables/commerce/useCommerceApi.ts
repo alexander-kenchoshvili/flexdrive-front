@@ -1,3 +1,4 @@
+import { metaBrowserIdentifierHeaders } from "~/utils/metaBrowserIdentifiers";
 import { apiFetchRaw } from "~/composables/apiFetch";
 import type {
   CheckoutPayload,
@@ -46,6 +47,7 @@ export const useCommerceApi = () => {
   const resolveMarketingConsentHeaders = () =>
     resolveHeaders({
       headers: {
+        ...metaBrowserIdentifierHeaders(marketingConsentGranted.value),
         "X-FlexDrive-Marketing-Consent": marketingConsentGranted.value
           ? "granted"
           : "denied",

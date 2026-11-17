@@ -71,8 +71,8 @@ const purchaseAnalyticsItems = computed(() =>
 const trackLoadedPurchase = () => {
   if (!order.value) return;
   if (
-    order.value.payment_method === "card" &&
-    order.value.payment_status !== "paid"
+    (order.value.payment_method === "card" && order.value.payment_status !== "paid") ||
+    (order.value.payment_method === "cash_on_delivery" && order.value.status !== "delivered")
   ) {
     return;
   }

@@ -4,6 +4,7 @@ export const BUSINESS_SECTIONS = [
   { key: "finance", path: "/business/finance", label: "ფინანსები", title: "ფინანსური მდგომარეობა", description: "მიღებული და დაბრუნებული თანხები, პროდუქტების ღირებულება და მოგება." },
   { key: "users", path: "/business/users", label: "მომხმარებლები", title: "მომხმარებლები და ძებნა", description: "როგორ მოდიან მომხმარებლები, რას ეძებენ და როგორ გადიან ყიდვის გზას." },
   { key: "marketing", path: "/business/marketing", label: "მარკეტინგი", title: "მარკეტინგის შედეგები", description: "რეკლამის შედეგები და Facebook/Instagram აქტივობა." },
+  { key: "vehicle-demand", path: "/business/vehicle-demand", label: "მოთხოვნა მანქანებზე", title: "რა მანქანების ნაწილებს ეძებენ", description: "მარკა, მოდელი, წელი და მომხმარებლების ინტერესის მოკლე შეჯამება." },
   { key: "operations", path: "/business/operations", label: "ოპერაციები", title: "ყოველდღიური ოპერაციები", description: "დაბრუნებები, საკუთარი მარაგი და სინქრონიზაციის მდგომარეობა." },
 ] as const;
 

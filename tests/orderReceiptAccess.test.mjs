@@ -50,9 +50,9 @@ const baseOrder = {
   public_token: token, order_number: "ORD-TEST-RECEIPT", payment_method: "card",
   payment_status: "paid", total: "12.00", items: [{ id: 1, sku: "FD-TEST", product_name: "Test", unit_price: "3.00", quantity: 1 }],
 };
-async function mount(t, { serverAccess, storedToken = "", user = null, paymentStatus = "paid", downloadError = false } = {}) {
+async function mount(t, { serverAccess, storedToken = "", user = null, paymentStatus = "paid", paymentMethod = "card", orderStatus = "new", downloadError = false } = {}) {
   const requests = [], downloads = [], purchases = [];
-  const order = { ...baseOrder, payment_status: paymentStatus, ...(serverAccess === undefined ? {} : { receipt_available: serverAccess }) };
+  const order = { ...baseOrder, payment_method: paymentMethod, status: orderStatus, payment_status: paymentStatus, ...(serverAccess === undefined ? {} : { receipt_available: serverAccess }) };
   const globals = { ...vue,
     definePageMeta: () => {},
     useRoute: () => ({ params: { token } }),
@@ -188,4 +188,11 @@ test("pending bank return still schedules polling and never redirects to a paid 
   await new Promise((done) => setImmediate(done));
   assert.deepEqual(events, [["status"], ["poll", 2000]]);
   app.unmount();
+});
+
+test("COD placed order is not a completed Purchase; delivered COD matches server eligibility", async (t) => {
+  const placed = await mount(t, { paymentMethod: "cash_on_delivery", paymentStatus: "pending" });
+  assert.equal(placed.purchases.length, 0);
+  const delivered = await mount(t, { paymentMethod: "cash_on_delivery", paymentStatus: "paid", orderStatus: "delivered" });
+  assert.ok(delivered.purchases.length > 0);
 });

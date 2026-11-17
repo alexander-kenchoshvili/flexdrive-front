@@ -1,5 +1,70 @@
 # Project Instructions
 
+## Meta Search, Contact And Checkout Attribution Prepared - 2026-11-18
+
+- User authorized useful Meta signals and specifically approved existing fbp/fbc
+  identifiers after automatic review requested explicit payload/destination consent.
+  No ad launch/account/budget edits. Shared useMetaMarketing owns VIN/part Search
+  and Contact through existing GTM-installed fbq; do not duplicate those in GTM.
+- Part search reuses existing successful-results/dedup hook, sends count/outcome;
+  obvious email/phone/long-number/VIN queries omit search_string. Contact only on
+  successful API form submission, no form content/customer/order info. Existing
+  consent/host/internal guards and bounded Pixel wait remain. GA tags unchanged.
+- Checkout forwards only existing validated fbp/fbc via two explicit headers,
+  marketing consent+canonical host required. Backend snapshots original checkout
+  values and validates again before Purchase CAPI. No new cookie/fake ad click.
+- COD success page no longer emits Purchase at placement: delivered required,
+  matching existing server rule. Card paid rule/event ID/value/SKUs unchanged.
+- Backend explicit denied header wins over stale consent cookie; existing local
+  Georgian mobile hash gains995 country prefix. Source phone/DB/checkout unchanged.
+- Both deploys needed, no additional migration/ENV. Prior vehicle demand still
+  requires business0002. Focused checks only; no build/browser/live receipt/event/
+  prod DB writes/push/deploy. Backend docs/META_MARKETING_EVENTS.md has full scope.
+
+
+## VIN Search Meta Event Prepared - 2026-11-18
+
+- Fresh public live GTM-MVNFL9TH v10 has no Search/VIN mapping. Added explicit
+  useVinSearchMarketing in HeaderSearch after decoder/stale guards: standard
+  Meta Search through existing fbq, NOT ViewContent. Safe make/model/year,
+  search_type=vin and vin_outcome only; never raw VIN/token/person/session.
+- Both analytics+marketing consent, canonical host, valid GTM and internal/staff
+  exclusion apply. Invalid/unrecognized/provider failures emit nothing; decoded
+  no_coverage/not_in_catalog carry distinct outcomes. Up to10 sanitized pending
+  events wait at most10sec for existing Pixel queue; revoke/dispose cancels.
+- This hook alone owns VIN Search. DO NOT also forward it through GTM. No new
+  Pixel/script/init/CAPI, GA4 event, ad/custom conversion/campaign/budget change.
+  Business vehicle demand remains separate first-party distinct-session report,
+  with analytics-only consent; it does not prove Meta receipt or equal counts.
+- Frontend deploy required; no new ENV/migration. Earlier demand feature still
+  independently needs both deploys/business0002. Scoped lint and strict Nuxt
+  typecheck pass; focused tests pass. No full build/browser/live event/deploy.
+  Backend docs/VIN_SEARCH_MARKETING.md records receipt/custom-conversion steps.
+
+
+## Vehicle Demand Business Section Implemented - 2026-11-17
+
+- User requested make/model/year demand history and readable Georgian insights,
+  explicitly no builds/visual automation. New /business/vehicle-demand navigation
+  section: date range, distinct search sessions, top100 car/year rows, VIN-use/
+  empty-result counts, factual leader/tie/runner-up/gap summary and empty states.
+- Consent-gated capture from VIN result and successful catalog loads. No raw VIN,
+  q or personal contact fields sent. VIN uses signed decoded-vehicle token; body
+  schema/manual IDs validated by server. Random per-tab30min idle session, keyed
+  digest persisted in new table; dedupe page/sort/refresh/VIN+manual contexts.
+- Only canonical flexdrive.ge; local/preview and business user/internal browser
+  flag excluded. Business layout sets flag after authenticated use. No GA/Meta
+  events or auto ad audiences. Analytics failure cannot block shopping. Customer
+  counts describe interest sessions, not all users/owners or sales attribution.
+- Backend business0002 migration REQUIRED on production after BOTH deploys. Local
+  SQLite needed business0001(permission anchor)+0002, both applied, table empty.
+  No fake historical activity, prod write/deploy/commit/push/new ENV/cron/service.
+-6 backend +5 collector focused checks pass; wiring run75 header/catalog checks
+  pass. Scoped ESLint/typecheck pass. No build/browser checks per user instruction;
+  user owns visual review. Backend docs/VEHICLE_DEMAND.md has exact deployment.
+
+
+
 ## VIN Format Errors Explain The Actual Cause - 2026-11-17
 
 - User showed17-character input rejected because letter O resembles digit0.

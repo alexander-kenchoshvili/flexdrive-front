@@ -32,6 +32,7 @@ async function catalog(t, location, facets = {}, options = {}) {
     "@vueuse/core": { useMediaQuery: () => vue.ref(false) },
     pinia: { storeToRefs: () => ({ settings: vue.ref({}) }) },
     "~/composables/useIndexingPolicy": { useIndexingPolicy: () => ({ robots: vue.ref("") }) },
+    "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
     "~/composables/catalog/useCatalogApi": { useCatalogApi: () => api },
     "~/composables/catalog/useCatalogSearchAnalytics": { useCatalogSearchAnalytics: () => ({ captureSearch() {}, recordSearchResults() {} }) },
     "~/utils/routePaths": { getCatalogCategorySlugFromPath: (path) => /^\/catalog\/category\/([^/]+)/.exec(path)?.[1] || null, buildCatalogCategoryPath: (slug) => `/catalog/category/${slug}` },

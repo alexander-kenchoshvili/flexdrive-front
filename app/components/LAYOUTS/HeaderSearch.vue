@@ -5,6 +5,8 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/vue";
 import HeaderSearchFilters from "./HeaderSearchFilters.vue";
 import BasePicture from "~/components/common/BasePicture.vue";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
+import { useVehicleInterestTracking } from "~/composables/catalog/useVehicleInterestTracking";
+import { useVinSearchMarketing } from "~/composables/catalog/useVinSearchMarketing";
 import { useCatalogSearchText } from "~/composables/catalog/useCatalogSearchText";
 import { useCatalogPlaceholderMedia } from "~/composables/catalog/useCatalogPlaceholderMedia";
 import { getCatalogCategorySlugFromPath } from "~/utils/routePaths";
@@ -40,6 +42,8 @@ const { getCatalogCategoriesRaw, getCatalogProductSuggestions, getVehicleMakes, 
   useCatalogApi();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
 const { trackSearchSelection } = useEcommerceAnalytics();
+const vehicleInterest = useVehicleInterestTracking();
+const vinSearchMarketing = useVinSearchMarketing();
 
 const rootRef = ref<HTMLElement | null>(null);
 const mobileInputRef = ref<HTMLInputElement | null>(null);
@@ -386,6 +390,8 @@ const submitSearch = async () => {
     try {
       const result = await decodeVehicleVin(vinValue.value, vinController.signal);
       if (disposed || requestId !== vinRequestId || startingPath !== route.fullPath || normalizedQuery !== normalizedSearchText.value) return;
+      if ("interest_token" in result && result.interest_token) void vehicleInterest.capture({ lookup_token: result.interest_token });
+      vinSearchMarketing.track(result);
       if (result.status === "matched") {
         // A new vehicle starts with all its parts, without stale part/category/
         // engine/price/page filters. Only derived vehicle filters enter the URL.
