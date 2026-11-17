@@ -184,12 +184,11 @@ const handleVisibilityChange = () => {
   }
 };
 
-await loadPayment();
-
 onMounted(() => {
   document.addEventListener("visibilitychange", handleVisibilityChange);
-  void redirectToOrder();
-  schedulePoll();
+  // The browser must receive the bank-return receipt cookie before navigating.
+  // An SSR-only fetch cannot install an upstream Set-Cookie in the browser.
+  void loadPayment();
 });
 
 onBeforeUnmount(() => {

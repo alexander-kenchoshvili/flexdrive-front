@@ -37,10 +37,19 @@ const receiptEligible = computed(
     (order.value?.payment_method === "card" &&
       order.value.payment_status === "paid"),
 );
-const receiptAvailable = computed(
-  () =>
-    receiptEligible.value &&
-    (Boolean(receiptAccessToken.value) || Boolean(globalStore.currentUser)),
+const receiptAvailable = computed(() => {
+  // The server verifies the owner's session or the bank-return receipt cookie.
+  // Older backends can still use the signed token saved by the existing client.
+  if (typeof order.value?.receipt_available === "boolean") {
+    return order.value.receipt_available;
+  }
+  return receiptEligible.value &&
+    (Boolean(receiptAccessToken.value) || Boolean(globalStore.currentUser));
+});
+const receiptRecoveryRequired = computed(() =>
+  order.value?.payment_method === "card" &&
+  ["paid", "refunded"].includes(order.value.payment_status) &&
+  !receiptAvailable.value,
 );
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
@@ -96,7 +105,14 @@ const loadOrder = async () => {
   order.value = null;
 
   try {
-    order.value = await getOrderSummary(token.value);
+    if (import.meta.client) {
+      receiptAccessToken.value = readReceiptAccessToken(token.value);
+    }
+    order.value = await getOrderSummary(token.value, {
+      headers: receiptAccessToken.value
+        ? { "X-Receipt-Token": receiptAccessToken.value }
+        : {},
+    });
   } catch (error) {
     loadError.value = error;
   } finally {
@@ -187,6 +203,7 @@ useNoindexPage({
           v-else
           :order="order"
           :receipt-available="receiptAvailable"
+          :receipt-recovery-required="receiptRecoveryRequired"
           :receipt-loading="receiptLoading"
           :receipt-error="receiptError"
           @download-receipt="void handleReceiptDownload()"

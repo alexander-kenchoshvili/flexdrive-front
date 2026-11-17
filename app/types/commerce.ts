@@ -232,6 +232,7 @@ export interface CommerceCardPaymentAvailability {
 }
 
 export interface CommerceReceiptAccess {
+  receipt_order_token?: string | null;
   receipt_url?: string | null;
   receipt_access_token?: string | null;
 }
@@ -334,6 +335,7 @@ export interface CommerceOrderLookupItem {
 }
 
 export interface CommerceOrderSummary extends CommerceReceiptAccess {
+  receipt_available?: boolean;
   id: number;
   public_token: string;
   order_number: string;

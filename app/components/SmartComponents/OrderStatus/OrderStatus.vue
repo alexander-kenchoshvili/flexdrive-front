@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import OrderRefundSummary from "~/components/commerce/OrderRefundSummary.vue";
+import OrderReceiptDownloadCard from "~/components/commerce/OrderReceiptDownloadCard.vue";
+import { useOrderReceipt } from "~/composables/commerce/useOrderReceipt";
 import {
   ClipboardDocumentCheckIcon,
   MagnifyingGlassIcon,
@@ -38,6 +40,7 @@ const props = defineProps<{
 const globalStore = useGlobalStore();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
 const { lookupOrder } = useCommerceApi();
+const { downloadReceipt } = useOrderReceipt();
 const { executeRecaptcha } = useRecaptcha();
 const {
   getOrderStatusBadgeClasses,
@@ -77,6 +80,27 @@ const order = ref<CommerceOrderLookupSummary | null>(null);
 const showGuestLookup = ref(false);
 const checkedAt = ref<string | null>(null);
 const restoredResult = ref(false);
+const receiptLoading = ref(false);
+const receiptError = ref("");
+const receiptAvailable = computed(() => !restoredResult.value &&
+  Boolean(order.value?.receipt_order_token && order.value?.receipt_access_token));
+const handleReceiptDownload = async () => {
+  const selectedOrder = order.value;
+  if (!selectedOrder?.receipt_order_token || !receiptAvailable.value || receiptLoading.value) return;
+  receiptLoading.value = true;
+  receiptError.value = "";
+  try {
+    await downloadReceipt({
+      orderToken: selectedOrder.receipt_order_token,
+      orderNumber: selectedOrder.order_number,
+      accessToken: selectedOrder.receipt_access_token || undefined,
+    });
+  } catch {
+    receiptError.value = "PDF-ის ჩამოტვირთვა ვერ მოხერხდა. განაახლე შეკვეთის სტატუსი და სცადე ხელახლა.";
+  } finally {
+    receiptLoading.value = false;
+  }
+};
 const formattedCheckedAt = computed(() => {
   if (!checkedAt.value) return "";
   const date = new Date(checkedAt.value);
@@ -96,6 +120,7 @@ watch([trimmedOrderNumber, trimmedPhone], () => {
   order.value = null;
   checkedAt.value = null;
   restoredResult.value = false;
+  receiptError.value = "";
 }, { flush: "sync" });
 
 const showLookupForm = computed(
@@ -232,6 +257,7 @@ const submitLookup = async () => {
   }
 
   loading.value = true;
+  receiptError.value = "";
   order.value = null;
   const lookupPayload = {
     order_number: trimmedOrderNumber.value,
@@ -392,6 +418,13 @@ onMounted(async () => {
           class="min-w-0 overflow-hidden rounded-[22px] border border-border-default bg-surface p-4 shadow-[0_22px_52px_-40px_var(--shadow-color)] sm:rounded-[26px] sm:p-6 lg:p-7"
         >
           <div v-if="order" class="min-w-0 space-y-5">
+            <OrderReceiptDownloadCard
+              v-if="receiptAvailable"
+              :preview="order.payment_method === 'cash_on_delivery'"
+              :loading="receiptLoading"
+              :error="receiptError"
+              @download="void handleReceiptDownload()"
+            />
             <div class="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div class="min-w-0">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-accent-primary">

@@ -16,7 +16,7 @@ const result = (status = "shipped") => ({
 });
 const stored = (extra = {}) => ({ order_number: "ORD-TEST-1", phone: "555000002", result: result(), checked_at: oldTime, ...extra });
 const source = readFileSync(new URL("../app/components/SmartComponents/OrderStatus/OrderStatus.vue", import.meta.url), "utf8")
-  .replace("</script>", "defineExpose({ form, order, checkedAt, restoredResult, submitLookup, errorMessage, loading });\n</script>");
+  .replace("</script>", "defineExpose({ form, order, checkedAt, restoredResult, submitLookup, errorMessage, loading, receiptAvailable, receiptError, handleReceiptDownload });\n</script>");
 const compiled = ts.transpileModule(compileScript(parse(source).descriptor, {
   id: "guest-status-test", inlineTemplate: true,
 }).content.replaceAll("import.meta.client", "true"), {
@@ -67,6 +67,7 @@ function mount({ snapshot = stored(), lookup = async () => result("delivered"), 
     removeItem: (name) => { if (brokenStorage) throw new Error("Storage disabled"); memory.delete(name); },
   } };
   const calls = [];
+  const downloads = [];
   const captchas = [];
   const exports = {};
   const globals = {
@@ -79,6 +80,7 @@ function mount({ snapshot = stored(), lookup = async () => result("delivered"), 
     if (name.endsWith("OrderRefundSummary.vue")) return refundExports;
     if (name.endsWith(".vue")) return { default: stub };
     if (name.includes("useCatalogPlaceholderMedia")) return { useCatalogPlaceholderMedia: () => ({ cardPlaceholderImage: {} }) };
+    if (name.includes("useOrderReceipt")) return { useOrderReceipt: () => ({ downloadReceipt: async (value) => downloads.push(value) }) };
     if (name.includes("useCommerceApi")) return { useCommerceApi: () => ({ lookupOrder: async (payload) => { calls.push(payload); return lookup(payload); } }) };
     if (name.includes("useCommercePresentation")) return { useCommercePresentation: () => ({
       getOrderStatusBadgeClasses: () => "", getOrderStatusLabel: (status) => status,
@@ -90,7 +92,7 @@ function mount({ snapshot = stored(), lookup = async () => result("delivered"), 
   const container = { children: [] };
   const app = renderer.createApp(exports.default);
   app.mount(container);
-  return { state: app._instance.exposed, container, memory, calls, captchas, unmount: () => app.unmount() };
+  return { state: app._instance.exposed, container, memory, calls, captchas, downloads, unmount: () => app.unmount() };
 }
 
 test("restored result is dated and labelled; refresh button requests a new status and timestamp", async () => {
@@ -200,4 +202,28 @@ test("pending and rejected refunds never appear as confirmed money returns", asy
     assert.match(text(current.container), status === "failed" ? /ბანკმა დაბრუნების მოთხოვნა უარყო/ : /ველოდებით ბანკის საბოლოო დადასტურებას/);
     current.unmount();
   }
+});
+
+
+test("fresh verified guest lookup downloads the receipt without sessionStorage", async () => {
+  const current = mount({ brokenStorage: true, lookup: async () => ({ ...result(),
+    receipt_order_token: "00000000-0000-4000-8000-000000000001", receipt_access_token: "signed-test-token",
+  }) });
+  await current.state.submitLookup(); await flush();
+  assert.equal(current.state.receiptAvailable.value, true);
+  await current.state.handleReceiptDownload();
+  assert.deepEqual(current.downloads, [{ orderToken: "00000000-0000-4000-8000-000000000001",
+    orderNumber: "ORD-TEST-1", accessToken: "signed-test-token" }]);
+  current.unmount();
+});
+
+test("restored receipt credentials require a fresh verified lookup", async () => {
+  const current = mount({ snapshot: stored({ result: { ...result(),
+    receipt_order_token: "00000000-0000-4000-8000-000000000001", receipt_access_token: "old-test-token",
+  } }) });
+  await flush();
+  assert.equal(current.state.receiptAvailable.value, false);
+  await current.state.handleReceiptDownload();
+  assert.equal(current.downloads.length, 0);
+  current.unmount();
 });

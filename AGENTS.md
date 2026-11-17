@@ -1,5 +1,32 @@
 # Project Instructions
 
+## Guest Receipt Availability And Recovery Prepared - 2026-11-17
+
+- User requested resolving missing guest receipt. Backend grants per-order signed
+  HttpOnly cookie on bank-status/verified lookup; public summary reports only
+  receipt_available, preserving private PDF authorization and old signed headers.
+- Bank result now loads payment status onMounted (browser must receive Set-Cookie
+  before redirect; SSR-only API response cannot install browser cookie). Polling,
+  paid/pending/error decisions and provider payment/refund logic retained.
+- Success page uses server availability, forwards existing signed header and SSR
+  owner cookies, keeps already-issued receipt available after refund. Lost access
+  shows order-status recovery. Verified order-number/phone/reCAPTCHA lookup now
+  offers PDF download using receipt_order_token; no account required. Restored stale
+  lookup must be refreshed. No price/stock/payment/analytics/ENV edits.
+-44 focused frontend tests pass (actual async success page, mounted bank return,
+  guest lookup without storage, checkout draft, consent); scoped ESLint/typecheck/
+  production build pass. Paired backend101 receipt/callback/refund tests pass.
+- Isolated real Django+Nitro+SQLite Chromium390/1440: sessionStorage disabled,
+  simulated bank return->visible receipt->real PDF download, no JS error/overflow;
+  cleared-cookie recovery link appears. Not a physical-device production test.
+  Own8127/3107 servers stopped. No real bank/provider/production data action.
+- Both backend then frontend push/deploy needed; user owns deploy. No migration or
+  new ENV. Then verify existing refunded-order lookup/PDF live without new purchase.
+  Historical Android incident exact runtime state isn't reconstructed; the lost
+  access mechanism is covered. Backend docs/TEST_SALE_AUDIT_2026-11-17.md updated.
+- Nuxt SSR cookie docs: https://nuxt.com/docs/4.x/getting-started/data-fetching#passing-cookies-from-server-side-api-calls-on-ssr-response
+
+
 ## Search Input ID/Name Attributes Prepared - 2026-11-16
 
 - User authorized small id/name cleanup without Computer Use. HeaderSearch now

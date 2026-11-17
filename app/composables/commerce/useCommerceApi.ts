@@ -236,8 +236,10 @@ export const useCommerceApi = () => {
     });
   };
 
-  const getOrderSummary = async (token: string) => {
-    return apiFetchRaw<CommerceOrderSummary>(`/commerce/orders/${token}/`);
+  const getOrderSummary = async (token: string, options?: CommerceRequestOptions) => {
+    return apiFetchRaw<CommerceOrderSummary>(`/commerce/orders/${token}/`, {
+      headers: resolveHeaders(options),
+    });
   };
 
   const lookupOrder = async (payload: CommerceOrderLookupPayload) => {

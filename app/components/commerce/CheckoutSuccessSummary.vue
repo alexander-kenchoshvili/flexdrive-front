@@ -11,6 +11,7 @@ import type { CommerceOrderItem, CommerceOrderSummary } from "~/types/commerce";
 const props = defineProps<{
   order: CommerceOrderSummary;
   receiptAvailable?: boolean;
+  receiptRecoveryRequired?: boolean;
   receiptLoading?: boolean;
   receiptError?: string;
 }>();
@@ -166,6 +167,22 @@ const miniItemMeta = (item: CommerceOrderItem) =>
       :error="receiptError"
       @download="$emit('downloadReceipt')"
     />
+    <section
+      v-else-if="receiptRecoveryRequired"
+      class="rounded-[20px] border border-border-default bg-surface p-5"
+      aria-labelledby="receipt-recovery-title"
+    >
+      <h2 id="receipt-recovery-title" class="text-base font-bold text-text-primary">
+        ელექტრონული ჩეკი
+      </h2>
+      <p class="mt-2 text-sm leading-6 text-text-secondary">
+        ქვითარზე წვდომის დასადასტურებლად შეიყვანე შეკვეთის ნომერი და შეკვეთაში მითითებული ტელეფონი.
+        რეგისტრაცია საჭირო არ არის.
+      </p>
+      <BaseButton as="nuxt-link" to="/order-status/" variant="secondary" class="mt-4">
+        ქვითრის მიღება
+      </BaseButton>
+    </section>
 
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
       <div class="space-y-4">
