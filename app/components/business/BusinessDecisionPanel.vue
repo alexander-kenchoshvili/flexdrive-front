@@ -31,7 +31,6 @@ const adCards = computed(() => [
 ]);
 const stateMessage = (state?: DecisionState) => state?.status === "not_configured" ? "ამ გარემოში წყაროს წაკითხვის წვდომა ჯერ არ არის მითითებული."
   : state?.message || "ანგარიში დროებით მიუწვდომელია. ეს ნულოვან შედეგს არ ნიშნავს.";
-const percent = (users: number) => funnel.value?.steps?.[0]?.users ? Math.round(users / funnel.value.steps[0].users * 100) : 0;
 </script>
 
 <template>
@@ -59,14 +58,7 @@ const percent = (users: number) => funnel.value?.steps?.[0]?.users ? Math.round(
           <p v-for="warning in google.warnings" :key="warning" class="mt-3 text-xs leading-5 text-text-muted">{{ warning }}</p>
         </template><p v-else role="status" class="mt-3 text-sm leading-6 text-text-muted">{{ stateMessage(google) }}</p>
       </section>
-      <section v-if="funnel && !compact" class="mt-6" aria-label="შეძენის თანმიმდევრული ეტაპები">
-        <h3 class="font-bold">რომელ ეტაპზე ჩერდება მომხმარებელი</h3><p class="mt-2 text-xs leading-5 text-text-muted">ითვლება მომხმარებელი, რომელმაც ეტაპები ამ რიგით გაიარა, პროდუქტის ნახვიდან დაწყებული. შუალედური მოქმედებები და რამდენიმე ვიზიტი დასაშვებია არჩეული პერიოდის ფარგლებში. ეს ყველა შეკვეთის რაოდენობა არ არის.</p>
-        <template v-if="decisionReady(funnel) && funnel.steps">
-          <p class="mt-2 text-xs text-text-muted">მიღებულია: {{ metaUpdated(funnel.fetched_at) }} <strong v-if="funnel.status === 'stale'" class="text-error">· ძველი პასუხი</strong></p>
-          <ol class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"><li v-for="(step, index) in funnel.steps" :key="step.event" class="min-w-0 rounded-lg border border-border-default p-4"><h4 class="text-xs font-semibold leading-5">{{ index + 1 }}. {{ step.label }}</h4><p class="mt-2 text-2xl font-bold tabular-nums">{{ reportNumber(step.users) }}</p><div class="my-3 h-2 overflow-hidden rounded bg-surface-2" aria-hidden="true"><div class="h-full bg-accent-primary" :style="{ width: `${percent(step.users)}%` }" /></div><p class="text-xs leading-5 text-text-muted">{{ funnel.steps[0]?.users ? `${percent(step.users)}% პირველი ეტაპიდან` : 'შედარებისთვის მონაცემები ჯერ არ არის' }}</p><p v-if="step.lost !== null" class="mt-2 text-xs leading-5">შემდეგ ეტაპზე არ გადასულა: {{ reportNumber(step.lost) }}</p></li></ol>
-          <p v-for="warning in funnel.warnings" :key="warning" class="mt-3 text-xs leading-5 text-text-muted">{{ warning }}</p>
-        </template><p v-else role="status" class="mt-3 text-sm leading-6 text-text-muted">{{ stateMessage(funnel) }}</p>
-      </section>
+      <BusinessFunnel v-if="funnel && !compact" :funnel="funnel" />
       <section v-if="ads" class="mt-6" aria-label="რეკლამის ეფექტიანობა">
         <h3 class="font-bold">Meta · რას ვიღებთ სარეკლამო ხარჯით</h3>
         <template v-if="decisionReady(ads) && ads.summary">

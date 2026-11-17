@@ -1,5 +1,61 @@
 # Project Instructions
 
+## Intermittent Public 500 Diagnostics Ready; Cause Unproven - 2026-11-17
+
+- User authorized investigation/fix after actual PSI home/catalog desktop500.
+  First mobile85/88served normal pages, desktop98/94were error pages (invalid
+  speed results). Fresh WITHOUT code/deploy: home96/SEO100/LCP1.083s, catalog97/
+  SEO100/LCP0.661s; latestmobile83/91. Thus not currently reproducible; do NOT
+  claim original cause established or500fixed. NativeChrome capture reset.
+- RuntimeLogs visible sample has h3statusMessage warnings10:48UTC and CMS404
+ 11:01UTC, not a proven500stack. Anonymous normal/Headless/Mobile/LighthouseUA
+  reads all200. PublicPageSpeedAPI429; no key/access/billing change.
+- Added only early server-only Nuxt app:error + Nitro error hooks using
+  server/utils/publicPageDiagnostics.ts. Public home/catalog/product GET/HEAD
+  failures>=500only; no private/API/write/4xx, requestdedup,20perminute limit,
+  max3causes/4build-file locations. Allowlisted type/code/status/hint only,
+  no rawmessages/URLs/query/cookies/headers/bodies/stacks/userdata. Logger/getter
+  failures cannot affect responses. No auth/checkout/cache/SEO/status rewrite.
+-5focused tests, scopedESLint/typecheck/productionbuild pass. Actual builtNuxt
+  + loopback upstream500fixture: home/catalog preserve500 and emit exactly2
+  deduplicated redacted public_page_failure records with real build locations.
+  No private fixture marker leaked; this proves logger, not original cause.
+  Own3107/8128QAservers stopped. ExistingNodeDEP0155buildwarning remains.
+- User owns frontendpush/deploy; no migration/ENV/new service/cron. Existing
+  analytics changes across BOTH repos remain untouched/uncommitted. After deploy
+  rerun PSI and use RuntimeLogs public_page_failure if500recurs; until then root
+  cause unresolved. Backend docs/PERFORMANCE_500_INVESTIGATION_2026-11-17.md.
+
+
+## Business Analytics Funnel, Public Pages And Meta Status Prepared - 2026-11-17
+
+- Approved plan implemented in paired backend/frontend. User owns push/deploy BOTH;
+  no migration/new ENV. Existing receipt fixes preserved. No fake production events,
+  real purchase/refund, account access/config edits or individual clickstream added.
+- Users adds BusinessPagePerformance (private independent /business/pages/, views,
+  users, average active seconds = userEngagementDuration/activeUsers; not full visit
+  duration). Top20/totalrows, refresh time, stale/empty/error distinctions. Backend
+  public route allowlist rejects checkout/order/token/query URLs; no private links.
+- BusinessFunnel has overall3steps including BuyNow + cart4/BuyNow3 path selector.
+  Backend normalizes actual alpha headers. Missing step remains null/dash; no fake
+ 0/drop/percentage. Uses supported pageLocation for checkout path, NOT pagePath.
+  Path audiences may overlap and are not summed. Existing summary uses overall.
+- Marketing adds BusinessMetaTechnical: real Pixel basic read/name/last event,
+  boolean CAPI configuration (not delivery proof), exact Events Manager link.
+  Existing reader can read id/name/last_fired_time200 but detailed stats returns
+  PermissionDenied; browser/server Purchase receipt/dedup stays EventsManager.
+- Real API reads verified all3funnels200 and14public pages. Historical Nov16
+  purchase still absent Nov17<24h; do not promise restored or cause proven.
+  Current receipt/browser/GTM chain separately emits correct Google purchase;
+  intercepted204 in isolated browser, not sent to real statistics.
+-56backend and27frontend focused tests pass, scoped ESLint/typecheck/build pass.
+ 390/1440 isolated built UI checks selector/pages/Meta link,0JSerrors/0docoverflow;
+  table scroll stays internal. Browser API fixtures distinct from real read-only
+  provider checks. All own contexts/server stopped, native CUA node reset.
+- Plan/status: backend docs/BUSINESS_ANALYTICS_COMPLETION_2026-11-17.md. Live UI
+  verification after user deploy and historical GA4 receipt recheck remain.
+
+
 ## Guest Receipt Availability And Recovery Prepared - 2026-11-17
 
 - User requested resolving missing guest receipt. Backend grants per-order signed

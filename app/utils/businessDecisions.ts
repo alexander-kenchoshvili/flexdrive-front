@@ -2,11 +2,13 @@ import type { BusinessPeriod } from "./businessReport";
 import type { MarketingReport } from "./businessMarketing";
 
 export type DecisionState = { status: string; fetched_at?: string | null; message?: string; warnings?: string[] };
+export type FunnelStep = { event: string; label: string; users: number | null; lost: number | null };
+export type FunnelReport = DecisionState & { steps?: FunnelStep[] | null; paths?: Record<string, DecisionState & { label: string; steps?: FunnelStep[] }> };
 export type GoogleTotals = { sessions: number; totalUsers: number; ecommercePurchases: number; purchaseRevenue: string | number };
 export type DecisionReport = {
   period: BusinessPeriod; previous_period: BusinessPeriod; refresh_seconds: number;
   google?: DecisionState & { current?: GoogleTotals; previous?: GoogleTotals; currency?: string; timezone?: string; sources?: (GoogleTotals & { sessionSourceMedium: string; sessionCampaignName: string })[]; source_row_count?: number };
-  funnel?: DecisionState & { steps?: { event: string; label: string; users: number; lost: number | null }[] };
+  funnel?: FunnelReport;
   ads?: MarketingReport["ads"] & DecisionState;
   previous_ads?: MarketingReport["ads"] & DecisionState;
 };

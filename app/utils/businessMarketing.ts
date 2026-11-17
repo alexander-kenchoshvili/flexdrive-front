@@ -10,6 +10,8 @@ export type MarketingReport = {
   generated_at: string;
   refresh_seconds: number;
   accounts: { facebook: string; instagram: string; ads: string };
+  technical?: { events_manager_url: string; pixel_id: string; capi_enabled: boolean; capi_configured: boolean; delivery_details: string; delivery_message: string };
+  pixel?: MetaState & { id?: string; name?: string; last_event_at?: string | null };
   facebook?: { profile: MetaState & { name?: string; followers?: number }; activity: MetaState & { views?: number; interactions?: number; reported_days?: number; complete?: boolean } };
   instagram?: { profile: MetaState & { username?: string; followers?: number; posts?: number }; activity: MetaState & { views?: number; reach?: number; total_interactions?: number } };
   ads?: MetaState & { currency?: string; timezone?: string; summary?: AdMetrics; daily?: AdDay[]; campaigns?: (AdMetrics & { id: string; name: string })[]; campaigns_limited?: boolean };

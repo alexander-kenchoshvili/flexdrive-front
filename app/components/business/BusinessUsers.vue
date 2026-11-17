@@ -56,6 +56,7 @@ watch(() => [route.query.start, route.query.end], () => {
       <p v-if="dateError" role="alert" class="mt-3 text-xs text-error">{{ dateError }}</p>
     </form>
     <BusinessSearchConsole :period="searchPeriod" />
+    <BusinessPagePerformance :period="searchPeriod" />
     <p v-if="loading" role="status" class="py-10 text-center text-sm text-text-muted">Google-ის მონაცემები იტვირთება…</p>
     <p v-else-if="errorMessage" role="alert" class="mt-5 rounded-xl border border-border-default bg-surface p-5 text-sm text-error">{{ errorMessage }}</p>
     <template v-else-if="report">

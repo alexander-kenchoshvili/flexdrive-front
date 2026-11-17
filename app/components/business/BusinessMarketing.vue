@@ -88,6 +88,7 @@ watch(() => [route.query.start, route.query.end], () => {
     <template v-else-if="report">
       <div class="my-5 flex flex-wrap items-center justify-between gap-2 text-[11px] leading-5 text-text-muted"><p>წყარო: Meta · FlexDrive-ის ანგარიშები</p><p>{{ reportDate(report.period.start) }} — {{ reportDate(report.period.end) }}</p></div>
       <p v-if="report.message" role="status" class="mb-5 rounded-xl border border-border-default bg-surface p-5 text-sm leading-6 text-text-secondary">{{ report.message }}</p>
+      <BusinessMetaTechnical :report="report" />
       <template v-if="report.status !== 'not_configured'">
         <BusinessDecisionPanel :period="report.period" source="meta" />
         <section class="mb-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="marketing-analysis-title">
