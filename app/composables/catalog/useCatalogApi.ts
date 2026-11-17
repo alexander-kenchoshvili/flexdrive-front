@@ -116,7 +116,7 @@ export const useCatalogApi = () => {
     );
   };
 
-  const getCatalogProductSuggestions = async (query: string, filters: Pick<CatalogListParams, "make" | "model" | "year" | "categories"> = {}) => {
+  const getCatalogProductSuggestions = async (query: string, filters: Pick<CatalogListParams, "make" | "model" | "year" | "variant" | "categories"> = {}) => {
     const normalizedQuery = query.trim();
     const endpoint = normalizedQuery
       ? `/catalog/products/suggestions/?${buildListQuery({ ...filters, q: normalizedQuery })}`

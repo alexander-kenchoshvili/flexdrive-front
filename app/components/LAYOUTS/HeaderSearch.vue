@@ -122,7 +122,7 @@ const resetSuggestionsState = () => {
 // A catalog refinement must not overwrite a header draft that is not submitted yet.
 const headerRouteKey = computed(() => JSON.stringify([
   route.path.replace(/\/$/, ""),
-  ...["q", "make", "model", "year", "category", "categories"].map((key) => {
+  ...["q", "make", "model", "year", "variant", "category", "categories"].map((key) => {
     const value = route.query[key];
     return (Array.isArray(value) ? value[0] : value) || "";
   }),
@@ -131,6 +131,7 @@ const clearCatalogRefinementsOnSubmit = ref(false);
 const selectedMake = ref("");
 const selectedModel = ref("");
 const selectedYear = ref("");
+const selectedVariant = ref("");
 const selectedCategories = ref<string[]>([]);
 const makes = ref<CatalogVehicleMake[]>([]);
 const models = ref<CatalogVehicleModel[]>([]);
@@ -157,6 +158,7 @@ const filterParams = computed(() => ({
   ...(selectedMake.value ? { make: selectedMake.value } : {}),
   ...(selectedMake.value && selectedModel.value ? { model: selectedModel.value } : {}),
   ...(selectedMake.value && selectedYear.value ? { year: Number(selectedYear.value) } : {}),
+  ...(selectedMake.value && selectedModel.value && selectedYear.value && selectedVariant.value ? { variant: selectedVariant.value } : {}),
   ...(selectedCategories.value.length ? { categories: selectedCategories.value.join(",") } : {}),
 }));
 const filtersKey = computed(() => JSON.stringify(filterParams.value));
@@ -218,15 +220,22 @@ const loadVehicleOptions = async () => {
 };
 const ensureFiltersLoaded = () => Promise.all([ensureCategoriesLoaded(), ensureMakesLoaded(), loadVehicleOptions()]);
 const updateMake = (value: string) => {
+  selectedVariant.value = "";
   selectedModel.value = "";
   selectedYear.value = "";
   selectedMake.value = value;
 };
 const updateModel = (value: string) => {
+  selectedVariant.value = "";
   selectedYear.value = "";
   selectedModel.value = value;
 };
+const updateYear = (value: string) => {
+  selectedVariant.value = "";
+  selectedYear.value = value;
+};
 const clearFilters = () => {
+  selectedVariant.value = "";
   clearCatalogRefinementsOnSubmit.value = true;
   searchText.value = "";
   selectedMake.value = "";
@@ -326,17 +335,48 @@ const openMobileSheet = async () => {
   if (normalizedSearchText.value) mobileInputRef.value?.focus();
 };
 
+let latestResultsScrollId = 0;
+// Leaving and returning to the same URL must not revive an old pending scroll.
+watch(() => router.currentRoute.value.fullPath, () => { ++latestResultsScrollId; }, { flush: "sync" });
+const scrollToCatalogResults = async (path: string) => {
+  const scrollId = ++latestResultsScrollId;
+  if (router.currentRoute.value.fullPath !== path) return;
+  await waitForPageReady(path);
+  await nextTick();
+  if (disposed || scrollId !== latestResultsScrollId || router.currentRoute.value.fullPath !== path) return;
+  window.requestAnimationFrame(() => {
+    if (disposed || scrollId !== latestResultsScrollId || router.currentRoute.value.fullPath !== path) return;
+    document.getElementById("catalog-results-start")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+};
+
 const submitSearch = async () => {
   const normalizedQuery = normalizedSearchText.value;
   if (!canSubmit.value) return;
+  const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
 
   if (isVinQuery.value) {
     if (isMobileViewport.value) isMobileOpen.value = true;
     else isDesktopOpen.value = true;
     vinMessage.value = "";
     resetSuggestionsState();
-    if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(normalizedQuery.replace(/^vin[\s:]+/i, ""))) {
-      vinMessage.value = "VIN უნდა შეიცავდეს 17 ლათინურ ასოსა და ციფრს; I, O და Q არ გამოიყენება.";
+    const rawVin = normalizedQuery.replace(/^vin[\s:]+/i, "");
+    if (rawVin.length !== 17) {
+      vinMessage.value = `ჩაწერე სრული, 17-სიმბოლოიანი VIN კოდი. ახლა ჩაწერილია ${rawVin.length} სიმბოლო.`;
+      return;
+    }
+    const forbiddenLetters = [...new Set(rawVin.toUpperCase().match(/[IOQ]/g) || [])];
+    if (forbiddenLetters.length) {
+      vinMessage.value = forbiddenLetters.length === 1 && forbiddenLetters[0] === "O"
+        ? "VIN-ში ასო O არ გამოიყენება. გადაამოწმე, მის ადგილას ციფრი 0 ხომ არ უნდა იყოს."
+        : `VIN-ში ${forbiddenLetters.join(", ")} ${forbiddenLetters.length === 1 ? "ასო არ გამოიყენება" : "ასოები არ გამოიყენება"}. შეადარე ორიგინალ კოდს.`;
+      return;
+    }
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(rawVin)) {
+      vinMessage.value = "VIN-ში გამოიყენება მხოლოდ ლათინური ასოები და ციფრები. შეადარე ორიგინალ კოდს.";
       return;
     }
     const requestId = ++vinRequestId;
@@ -349,9 +389,15 @@ const submitSearch = async () => {
       if (result.status === "matched") {
         // A new vehicle starts with all its parts, without stale part/category/
         // engine/price/page filters. Only derived vehicle filters enter the URL.
-        await router.push({ path: "/catalog", query: { ...result.filters } });
-        searchText.value = "";
+        const destination = { path: "/catalog", query: { ...result.filters } };
+        const searchPath = router.resolve(destination).fullPath;
+        // Release the mobile dialog's scroll lock before navigation/scrolling.
         closeAllSearchSurfaces();
+        await nextTick();
+        await router.push(destination);
+        if (router.currentRoute.value.fullPath !== searchPath) return;
+        searchText.value = "";
+        if (isCatalogSearch) await scrollToCatalogResults(searchPath);
         return;
       }
       if (result.status === "not_in_catalog" || result.status === "no_coverage") {
@@ -375,7 +421,6 @@ const submitSearch = async () => {
     return;
   }
 
-  const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
   const refinements: Record<string, string> = {};
   if (isCatalogSearch && !clearCatalogRefinementsOnSubmit.value) {
     for (const key of ["brand", "placement", "side", "in_stock", "on_sale", "min_price", "max_price", "ordering"]) {
@@ -395,16 +440,7 @@ const submitSearch = async () => {
   });
   clearCatalogRefinementsOnSubmit.value = false;
 
-  if (!isCatalogSearch || router.currentRoute.value.fullPath !== searchPath) return;
-  await waitForPageReady(searchPath);
-  await nextTick();
-  window.requestAnimationFrame(() => {
-    if (router.currentRoute.value.fullPath !== searchPath) return;
-    document.getElementById("catalog-results-start")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  });
+  if (isCatalogSearch) await scrollToCatalogResults(searchPath);
 };
 
 const goToSuggestion = async (suggestion: CatalogProductSuggestion) => {
@@ -479,6 +515,7 @@ const syncSearchTextFromRoute = () => {
   selectedMake.value = inCatalog ? first(route.query.make) : "";
   selectedModel.value = selectedMake.value ? first(route.query.model) : "";
   selectedYear.value = selectedMake.value ? first(route.query.year) : "";
+  selectedVariant.value = selectedModel.value && selectedYear.value ? first(route.query.variant) : "";
   const category = inCatalog ? getCatalogCategorySlugFromPath(route.path) || first(route.query.category) : "";
   const plural = inCatalog ? first(route.query.categories) : "";
   selectedCategories.value = [...new Set((category ? [category] : plural.split(",")).filter(Boolean))].map((value) =>
@@ -590,7 +627,7 @@ defineExpose({
             :categories-pending="categoriesPending" :makes-pending="makesPending"
             :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
             :can-clear="canClear"
-            @make="updateMake" @model="updateModel" @year="selectedYear = $event"
+            @make="updateMake" @model="updateModel" @year="updateYear"
             @categories="selectedCategories = $event" @search="submitSearch"
             @clear="clearFilters" @retry="ensureFiltersLoaded"
           />
@@ -678,7 +715,7 @@ defineExpose({
               :categories-pending="categoriesPending" :makes-pending="makesPending"
               :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
               :can-clear="canClear"
-              @make="updateMake" @model="updateModel" @year="selectedYear = $event"
+              @make="updateMake" @model="updateModel" @year="updateYear"
               @categories="selectedCategories = $event" @search="submitSearch"
               @clear="clearFilters" @retry="ensureFiltersLoaded"
             />

@@ -352,3 +352,31 @@ test("VIN API helper uses POST body, abort signal and bounded no-retry request",
   await module.useCatalogApi().decodeVehicleVin("1HGCM82633A004352", controller.signal);
   assert.deepEqual(calls, [["/catalog/vehicles/vin/", { method: "POST", body: { vin: "1HGCM82633A004352" }, signal: controller.signal, timeout: 12000, retry: 0 }]]);
 });
+
+
+test("decoded version survives catalog pagination, sorting, part query and same-car mobile refinement", async (t) => {
+  const c = await catalog(t, "/catalog?make=vw&model=jetta&year=2017&variant=gli");
+  assert.equal(c.requests[0].variant, "gli");
+  assert.match(c.activeFilterChips.value.find((chip) => chip.key === "vehicle").value, /GLI/);
+  c.useSearchText().value = "ბამპერი";
+  c.selectedSort.value = "price_asc";
+  const query = c.buildRouteQueryFromControls(2);
+  assert.equal(query.variant, "gli");
+  assert.equal(query.q, "ბამპერი");
+  assert.equal(query.page, "2");
+  await c.handleMobileFilterApply({ selectedCategoryId: null, minPrice: "", maxPrice: "", sort: "recommended", selectedBrand: "", selectedPlacement: "", selectedSide: "", inStock: true, onSale: false,
+    vehicle: { make: "vw", model: "jetta", year: "2017", engine: "" } });
+  assert.equal(c.router.currentRoute.value.query.variant, "gli");
+  await c.handleDesktopVehicleYearUpdate("2018");
+  await flushCatalog();
+  assert.equal(c.router.currentRoute.value.query.variant, undefined);
+  assert.equal(c.requests.at(-1).variant, undefined);
+});
+
+test("resetting car clears version while unspecified versions are honestly labelled", async (t) => {
+  const c = await catalog(t, "/catalog?make=vw&model=jetta&year=2017&variant=unspecified");
+  assert.match(c.activeFilterChips.value.find((chip) => chip.key === "vehicle").value, /ვერსია დაუზუსტებელია/);
+  await c.handleResetFilters();
+  assert.equal(c.router.currentRoute.value.query.variant, undefined);
+  assert.equal(c.requests.at(-1).variant, undefined);
+});

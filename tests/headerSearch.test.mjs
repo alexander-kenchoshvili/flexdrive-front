@@ -32,6 +32,8 @@ async function mountSearch(location, options = {}) {
   await router.push(location);
   const trackedSearches = [];
   const trackedSelections = [];
+  const animationFrames = [], readyPaths = [], scrollCalls = [];
+  const runFrames = () => animationFrames.splice(0).forEach((callback) => callback());
   const mocks = {
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
     "@vueuse/core": {
@@ -44,7 +46,10 @@ async function mountSearch(location, options = {}) {
     },
     "~/composables/catalog/useCatalogPlaceholderMedia": { useCatalogPlaceholderMedia: () => ({ cardPlaceholderImage: {} }) },
     "~/utils/routePaths": { getCatalogCategorySlugFromPath: (path) => /^\/catalog\/category\/([^/]+)\/?$/.exec(path)?.[1] || null },
-    "~/utils/pageScrollCoordinator": { waitForPageReady: async () => {} },
+    "~/utils/pageScrollCoordinator": { waitForPageReady: async (path) => {
+      readyPaths.push(path);
+      await options.waitForPageReady?.(path);
+    } },
   };
   const globals = {
     ...vue, useRoute, useRouter,
@@ -53,14 +58,14 @@ async function mountSearch(location, options = {}) {
     useEcommerceAnalytics: () => ({ trackSearch: (q) => trackedSearches.push(q), trackSearchSelection: (...args) => trackedSelections.push(args) }),
     navigateTo: (path) => router.push(path),
     useCookieConsent: () => ({ functionalityConsentGranted: vue.ref(false) }),
-    window: { localStorage: { removeItem() {} }, requestAnimationFrame() {} },
-    document: { body: { style: {} } },
+    window: { localStorage: { removeItem() {} }, requestAnimationFrame(callback) { animationFrames.push(callback); } },
+    document: { body: { style: {} }, getElementById: (id) => options.missingResults ? null : ({ scrollIntoView: (settings) => scrollCalls.push({ id, ...settings }) }) },
   };
   let search;
   const app = renderer.createApp({
     setup() {
       search = new Function("require", "exports", ...Object.keys(globals),
-        `${outputText}\nreturn { vinPending, vinMessage, isVinQuery, searchText, clearFilters, selectedMake, selectedModel, selectedYear, selectedCategories, updateMake, updateModel, models, years, vehiclePending, filterError, ensureFiltersLoaded, handleInputKeydown, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
+        `${outputText}\nreturn { selectedVariant, updateYear, vinPending, vinMessage, isVinQuery, searchText, clearFilters, selectedMake, selectedModel, selectedYear, selectedCategories, updateMake, updateModel, models, years, vehiclePending, filterError, ensureFiltersLoaded, handleInputKeydown, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
       )((name) => mocks[name] ?? require(name), {}, ...Object.values(globals));
       return () => null;
     },
@@ -72,7 +77,7 @@ async function mountSearch(location, options = {}) {
     search.searchText.value = value;
     await flush();
   };
-  return { search, router, input, trackedSearches, trackedSelections, app };
+  return { search, router, input, trackedSearches, trackedSelections, app, readyPaths, scrollCalls, runFrames };
 }
 
 const term = "ფარი";
@@ -459,7 +464,7 @@ test("cleared search text is not restored by a sidebar model route change", asyn
 
 
 const sampleVin = "1HGCM82633A004352";
-const matchedVin = { status: "matched", vehicle: { make: "Honda", model: "Accord", year: 2003 }, filters: { make: "honda", model: "accord", year: "2003" } };
+const matchedVin = { status: "matched", vehicle: { make: "Honda", model: "Accord", year: 2003 }, filters: { make: "honda", model: "accord", year: "2003", variant: "ex_v6" } };
 
 for (const mobile of [false, true]) {
   test(`VIN resolves then part search keeps vehicle, ${mobile ? "mobile" : "desktop"}`, async (t) => {
@@ -507,10 +512,10 @@ test("invalid explicit VIN does not call provider; ordinary OEM/SKU still search
   let count = 0;
   const c = await mountSearch("/", { decodeVin: async () => { count++; return matchedVin; } });
   t.after(() => c.app.unmount());
-  for (const value of ["VIN: short", "I" + sampleVin.slice(1)]) {
+  for (const [value, expected] of [["VIN: short", "17-სიმბოლოიანი"], ["I" + sampleVin.slice(1), "I ასო"]]) {
     await c.input(value);
     await c.search.submitSearch();
-    assert.ok(c.search.vinMessage.value.includes("17"));
+    assert.ok(c.search.vinMessage.value.includes(expected));
     assert.equal(c.router.currentRoute.value.path, "/");
   }
   assert.equal(count, 0);
@@ -551,4 +556,129 @@ test("provider/rate-limit errors are recoverable without navigating or losing dr
   fail = false;
   await c.search.submitSearch();
   assert.equal(c.router.currentRoute.value.path, "/catalog");
+});
+
+
+test("header retains decoded version for suggestions and clears it on manual vehicle edits", async (t) => {
+  const calls = [];
+  const c = await mountSearch("/catalog?make=vw&model=jetta&year=2017&variant=gli", {
+    fetchSuggestions: async (...args) => { calls.push(args); return []; },
+  });
+  t.after(() => c.app.unmount());
+  await c.search.openDesktopPanel();
+  await c.input("ბამპერი");
+  await flush();
+  assert.equal(c.search.selectedVariant.value, "gli");
+  assert.equal(calls.at(-1)[1].variant, "gli");
+  c.search.updateYear("2018");
+  assert.equal(c.search.selectedVariant.value, "");
+  await c.search.submitSearch();
+  assert.equal(c.router.currentRoute.value.query.variant, undefined);
+  assert.equal(c.router.currentRoute.value.query.year, "2018");
+});
+
+
+for (const mobile of [false, true]) {
+  test(`VIN submitted inside a scrolled catalog waits for new results then scrolls, ${mobile ? "mobile" : "desktop"}`, async (t) => {
+    let resolveReady;
+    const ready = new Promise((resolve) => { resolveReady = resolve; });
+    const c = await mountSearch("/catalog?make=subaru&model=forester&year=2019", {
+      mobileViewport: vue.ref(mobile), decodeVin: async () => matchedVin,
+      waitForPageReady: () => ready,
+    });
+    t.after(() => c.app.unmount());
+    await c.input(sampleVin);
+    const pending = c.search.submitSearch();
+    for (let i = 0; i < 30 && !c.readyPaths.length; i++) await flush();
+    assert.equal(c.readyPaths.length, 1);
+    c.runFrames();
+    assert.deepEqual(c.scrollCalls, []);
+    resolveReady();
+    await pending;
+    c.runFrames();
+    assert.deepEqual(c.scrollCalls, [{ id: "catalog-results-start", behavior: "smooth", block: "start" }]);
+    assert.equal(c.search.searchText.value, "");
+  });
+}
+
+test("submitting the same VIN to the same catalog URL still scrolls to the results", async (t) => {
+  const c = await mountSearch({ path: "/catalog", query: matchedVin.filters }, { decodeVin: async () => matchedVin });
+  t.after(() => c.app.unmount());
+  await c.input(sampleVin);
+  await c.search.submitSearch();
+  c.runFrames();
+  assert.equal(c.scrollCalls.length, 1);
+});
+
+test("VIN navigation from a category scrolls; navigation from home leaves scroll to the router", async (t) => {
+  for (const path of ["/catalog/category/lights", "/"]) {
+    const c = await mountSearch(path, { decodeVin: async () => matchedVin });
+    t.after(() => c.app.unmount());
+    await c.input(sampleVin);
+    await c.search.submitSearch();
+    c.runFrames();
+    assert.equal(c.scrollCalls.length, path === "/" ? 0 : 1);
+  }
+});
+
+test("a delayed result-scroll is discarded after leaving and returning to the same URL", async (t) => {
+  let resolveReady;
+  const c = await mountSearch("/catalog?make=subaru", { decodeVin: async () => matchedVin,
+    waitForPageReady: () => new Promise((resolve) => { resolveReady = resolve; }),
+  });
+  t.after(() => c.app.unmount());
+  await c.input(sampleVin);
+  const pending = c.search.submitSearch();
+  for (let i = 0; i < 30 && !resolveReady; i++) await flush();
+  const target = c.router.currentRoute.value.fullPath;
+  await c.router.push("/contact");
+  await c.router.push(target);
+  resolveReady();
+  await pending;
+  c.runFrames();
+  assert.deepEqual(c.scrollCalls, []);
+});
+
+test("failed or unrecognized VIN never scrolls away from the feedback", async (t) => {
+  for (const result of [{ status: "unrecognized" }, { status: "no_coverage", vehicle: matchedVin.vehicle }]) {
+    const c = await mountSearch("/catalog?make=subaru", { decodeVin: async () => result });
+    t.after(() => c.app.unmount());
+    await c.input(sampleVin);
+    await c.search.submitSearch();
+    c.runFrames();
+    assert.deepEqual(c.scrollCalls, []);
+    assert.deepEqual(c.readyPaths, []);
+  }
+});
+
+
+test("17-character VIN with letter O reports O/zero confusion rather than wrong length", async (t) => {
+  const calls = [];
+  const c = await mountSearch("/", { decodeVin: async (vin) => { calls.push(vin); return { status: "unrecognized" }; } });
+  t.after(() => c.app.unmount());
+  const withLetter = sampleVin.replace("0", "O");
+  assert.equal(withLetter.length, 17);
+  await c.input(withLetter);
+  await c.search.submitSearch();
+  assert.match(c.search.vinMessage.value, /ასო O/);
+  assert.match(c.search.vinMessage.value, /ციფრი 0/);
+  assert.ok(!c.search.vinMessage.value.includes("17"));
+  assert.deepEqual(calls, []);
+  assert.equal(c.search.searchText.value, withLetter, "VIN must never be silently corrected");
+  await c.input(sampleVin);
+  await c.search.submitSearch();
+  assert.deepEqual(calls, [sampleVin]);
+});
+
+test("non-Latin characters and length errors have distinct VIN guidance", async (t) => {
+  let requests = 0;
+  const c = await mountSearch("/", { decodeVin: async () => { requests++; return matchedVin; } });
+  t.after(() => c.app.unmount());
+  await c.input("VIN:" + sampleVin.slice(0, 16));
+  await c.search.submitSearch();
+  assert.match(c.search.vinMessage.value, /16 სიმბოლო/);
+  await c.input("VIN:АHGCM82633A004352"); // First character is Cyrillic, not Latin A.
+  await c.search.submitSearch();
+  assert.match(c.search.vinMessage.value, /მხოლოდ ლათინური/);
+  assert.equal(requests, 0);
 });

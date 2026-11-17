@@ -91,16 +91,16 @@ const sortModel = computed({
           v-for="filter in activeFilters"
           :key="filter.key"
           type="button"
-          class="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-accent-primary/35 bg-accent-primary/10 px-3 py-1 text-xs font-semibold text-accent-primary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary hover:text-text-invert disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex min-h-8 min-w-0 max-w-full items-start gap-1.5 rounded-full border border-accent-primary/35 bg-accent-primary/10 px-3 py-1 text-xs font-semibold text-accent-primary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary hover:text-text-invert disabled:cursor-not-allowed disabled:opacity-60"
           :disabled="disabled"
           :aria-label="`${filter.label} ფილტრის მოხსნა`"
           @click="emit('removeFilter', filter.key)"
         >
-          <span>{{ filter.label }}</span>
-          <span v-if="filter.value" class="max-w-[220px] truncate text-current/80">
+          <span class="shrink-0">{{ filter.label }}</span>
+          <span v-if="filter.value" class="min-w-0 whitespace-normal break-words text-left text-current/80">
             {{ filter.value }}
           </span>
-          <span aria-hidden="true">×</span>
+          <span class="shrink-0" aria-hidden="true">×</span>
         </button>
 
         <button

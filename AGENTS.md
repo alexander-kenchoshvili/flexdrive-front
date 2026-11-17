@@ -1,5 +1,54 @@
 # Project Instructions
 
+## VIN Format Errors Explain The Actual Cause - 2026-11-17
+
+- User showed17-character input rejected because letter O resembles digit0.
+  Header now distinguishes wrong length (actual count), forbidden I/O/Q (only
+  letters actually present; O-only guidance asks to verify0), and non-Latin/
+  other invalid characters. No silent character substitution or provider change.
+-44 header/actual-template tests and scoped ESLint pass. Regression uses the
+  public sample VIN with deliberately substituted O; friend's VIN not retained
+  in committed test fixtures or sent to a provider. No backend/schema/ENV changes.
+
+## Full Vehicle Chip And VIN Result Scroll Fixed - 2026-11-17
+
+- User screenshots: vehicle chip cut off version; VIN success while already
+  scrolled in catalog preserved old position. CatalogToolbar removes220px cap/
+  ellipsis; chip stays within parent, wraps full text, keeps label/remove visible.
+- HeaderSearch shares existing readiness-aware result scroll for ordinary and VIN
+  submissions from catalog/category. VIN closes mobile dialog and awaits nextTick
+  before push; same-URL successful submission also scrolls. Home navigation keeps
+  router top behavior; router options/Back restoration unchanged. Sync navigation
+  invalidation prevents delayed scroll after leave/return or unmount. Existing
+  catalog-results-start scroll margins account for sticky header.
+-68 header/catalog/actual-template tests pass, including mobile/desktop readiness,
+  same URL/category/home, stale Back and error no-scroll. Scoped ESLint and strict
+  typecheck pass. No full build repeated for this small frontend UI/scroll patch;
+  previous variant production build remains the earlier verified build. Browser
+  automation not run (project requires explicit request); user reviews local UI.
+- Frontend-only functional change, no backend/DB/ENV/migration/deploy/commit/push.
+  Existing uncommitted variant changes preserved.
+
+## Existing Supplier Version Hints Prepared For Local Review - 2026-11-17
+
+- User approved reversible version mentions from existing supplier names/fitment
+  notes. VIN filters now carry bounded variant context (e.g. gli/ex_v6 or
+  unspecified). Backend retains optional vPIC trim/series; no raw VIN query/history.
+- Header/catalog retain context for part search/suggestions, page/sort, same-car
+  mobile refinements and Back. Manual car/year/engine edits or reset clear it.
+  Vehicle chip includes version. No new explanatory paragraphs/buttons.
+- Product cards say model/year match, plus mentioned GLI/etc or version requires
+  checking. Mentions are not full/exclusive fitment proof. Backend prioritizes them
+  within stock/text relevance; NO version-based removal. Explicit sorts unchanged.
+-71 frontend +46 backend tests pass, scoped ESLint/strict typecheck/isolated
+  production build pass. Actual local read-only Jetta2017 count117 preserved,
+  GLI grille FD-04-0250/bumper FD-04-0328 rise first; other products remain.
+- Clean base frontendd797a6f/backend1f86fa3; user owns local review and BOTH later
+  deploys. No ENV/migration/new supplier data/product edits/import/deploy/commit.
+  Browser verification not run (requires explicit request). Local review route:
+  /catalog?make=volkswagen&model=jetta&year=2017&variant=gli . Backend docs/
+  VIN_VARIANT_HINTS.md has behavior/limits/rollback. Existing VIN500fix preserved.
+
 ## VIN Feedback Copy Simplified At User Request - 2026-11-17
 
 - Removed both lower lines from desktop/mobile VIN status: provider/compatibility

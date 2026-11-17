@@ -19,6 +19,7 @@ export interface CatalogListParams {
   model?: string | number;
   year?: number;
   engine?: string | number;
+  variant?: string;
   brand?: string | number;
   placement?: string;
   side?: string;
@@ -60,6 +61,7 @@ export interface CatalogProductCompatibility {
   matched: boolean;
   match_type: CatalogCompatibilityMatchType;
   notes: string;
+  variant?: { status: "mentioned" | "unverified"; labels: string[] };
 }
 
 export interface CatalogProductListItem {
@@ -265,9 +267,9 @@ export interface CatalogProductSuggestion {
 
 export type CatalogVinResult = {
   status: "matched";
-  vehicle: { make: string; model: string; year: number };
-  filters: { make: string; model: string; year: string };
+  vehicle: { make: string; model: string; year: number; trim?: string; trim2?: string; series?: string; series2?: string };
+  filters: { make: string; model: string; year: string; variant?: string };
 } | {
   status: "not_in_catalog" | "no_coverage";
-  vehicle: { make: string; model: string; year: number };
+  vehicle: { make: string; model: string; year: number; trim?: string; trim2?: string; series?: string; series2?: string };
 } | { status: "invalid_vin" | "unrecognized" | "unavailable" };

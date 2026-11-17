@@ -135,13 +135,20 @@ const compatibilityBadge = computed(() => {
 
   if (vehicleFilterLabel.value) {
     if (props.vehicleFilter.model && props.vehicleFilter.year) {
-      return `თავსებადია ${vehicleFilterLabel.value}-თან`;
+      return "მოდელი და წელი ემთხვევა";
     }
 
     return `შეესაბამება ${vehicleFilterLabel.value}-ის ფილტრს`;
   }
 
-  return "თავსებადია არჩეულ მანქანასთან";
+  return "არჩეული მანქანის ფილტრს ემთხვევა";
+});
+const variantBadge = computed(() => {
+  const hint = props.product.compatibility?.variant;
+  if (!hint) return "";
+  return hint.status === "mentioned" && hint.labels.length
+    ? `მითითებულია: ${hint.labels.join(" / ")}`
+    : "ვერსია გადასამოწმებელია";
 });
 </script>
 
@@ -236,7 +243,7 @@ const compatibilityBadge = computed(() => {
       </p>
 
       <div
-        v-if="productMetaItems.length || compatibilityBadge"
+        v-if="productMetaItems.length || compatibilityBadge || variantBadge"
         class="mt-2 min-h-[26px] space-y-1"
       >
         <p
@@ -253,6 +260,7 @@ const compatibilityBadge = computed(() => {
           <CheckCircleIcon class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span class="truncate">{{ compatibilityBadge }}</span>
         </span>
+        <span v-if="variantBadge" class="block text-xs text-text-muted" :title="variantBadge">{{ variantBadge }}</span>
       </div>
 
       <div class="mt-3 flex items-end justify-between gap-2">

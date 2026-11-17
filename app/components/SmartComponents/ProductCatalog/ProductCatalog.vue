@@ -156,6 +156,7 @@ const selectedVehicleMake = ref("");
 const selectedVehicleModel = ref("");
 const selectedVehicleYear = ref("");
 const selectedVehicleEngine = ref("");
+const selectedVehicleVariant = ref("");
 const draftVehicleMake = ref("");
 const draftVehicleModel = ref("");
 const draftVehicleYear = ref("");
@@ -299,6 +300,9 @@ const vehicleEngineLabel = computed(() => {
     )?.name || selectedVehicleEngine.value
   );
 });
+const selectedVariantLabel = computed(() => selectedVehicleVariant.value === "unspecified"
+  ? "ვერსია დაუზუსტებელია"
+  : selectedVehicleVariant.value.split(",").filter(Boolean).map((key) => key.replaceAll("_", " ").toUpperCase()).join(" / "));
 const selectedVehicleLabel = computed(() => {
   if (!hasActiveVehicleFilter.value) return "";
 
@@ -307,6 +311,7 @@ const selectedVehicleLabel = computed(() => {
     vehicleModelLabel.value,
     selectedVehicleYear.value,
     vehicleEngineLabel.value,
+    selectedVariantLabel.value,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -681,7 +686,8 @@ const hasVehicleRouteChanged = (query: LocationQuery) => {
     routeVehicle.make !== selectedVehicleMake.value ||
     routeVehicle.model !== selectedVehicleModel.value ||
     routeVehicle.year !== selectedVehicleYear.value ||
-    routeVehicle.engine !== selectedVehicleEngine.value
+    routeVehicle.engine !== selectedVehicleEngine.value ||
+    toCleanQueryString(firstQueryValue(query.variant)) !== selectedVehicleVariant.value
   );
 };
 const syncDraftVehicleFromApplied = () => {
@@ -691,6 +697,7 @@ const syncDraftVehicleFromApplied = () => {
   draftVehicleEngine.value = selectedVehicleEngine.value;
 };
 const clearAppliedVehicleFilter = () => {
+  selectedVehicleVariant.value = "";
   selectedVehicleMake.value = "";
   selectedVehicleModel.value = "";
   selectedVehicleYear.value = "";
@@ -712,6 +719,10 @@ const applyVehicleSelection = (vehicle: CatalogVehicleSelection) => {
 
   if (!isVehicleSelectionValid(normalizedVehicle)) return;
 
+  if ([normalizedVehicle.make, normalizedVehicle.model, normalizedVehicle.year, normalizedVehicle.engine].join("|")
+    !== [selectedVehicleMake.value, selectedVehicleModel.value, selectedVehicleYear.value, selectedVehicleEngine.value].join("|")) {
+    selectedVehicleVariant.value = "";
+  }
   selectedVehicleMake.value = normalizedVehicle.make;
   selectedVehicleModel.value = normalizedVehicle.model;
   selectedVehicleYear.value = normalizedVehicle.year;
@@ -775,6 +786,7 @@ const syncControlsFromRoute = (
   selectedVehicleModel.value = routeVehicle.model;
   selectedVehicleYear.value = routeVehicle.year;
   selectedVehicleEngine.value = routeVehicle.engine;
+  selectedVehicleVariant.value = routeVehicle.make && routeVehicle.model && routeVehicle.year ? toCleanQueryString(firstQueryValue(query.variant)) : "";
 
   if (options?.syncVehicleDraft) {
     syncDraftVehicleFromApplied();
@@ -822,6 +834,7 @@ const buildParamsFromControls = (): CatalogListParams => {
 
   if (hasActiveVehicleFilter.value) {
     params.make = selectedVehicleMake.value;
+    if (selectedVehicleModel.value && selectedVehicleYear.value && selectedVehicleVariant.value) params.variant = selectedVehicleVariant.value;
 
     if (selectedVehicleModel.value) {
       params.model = selectedVehicleModel.value;
@@ -898,6 +911,7 @@ const buildRouteQueryFromControls = (page: number): Record<string, string> => {
 
   if (hasActiveVehicleFilter.value) {
     query.make = selectedVehicleMake.value;
+    if (selectedVehicleModel.value && selectedVehicleYear.value && selectedVehicleVariant.value) query.variant = selectedVehicleVariant.value;
 
     if (selectedVehicleModel.value) {
       query.model = selectedVehicleModel.value;
