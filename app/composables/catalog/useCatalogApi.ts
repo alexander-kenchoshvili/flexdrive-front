@@ -5,6 +5,7 @@ import type {
   CatalogProductDetail,
   CatalogProductSuggestion,
   CatalogVehicleEngine,
+  CatalogVinResult,
   CatalogVehicleModel,
   CatalogVehicleYear,
 } from "~/types/catalog";
@@ -128,7 +129,14 @@ export const useCatalogApi = () => {
     return apiFetch<CatalogProductDetail>(`/catalog/products/${slug}/`);
   };
 
+  // Event-driven POST: VIN is not a search URL, SSR payload or analytics term.
+  const decodeVehicleVin = (vin: string, signal?: AbortSignal) =>
+    apiFetchRaw<CatalogVinResult>("/catalog/vehicles/vin/", {
+      method: "POST", body: { vin }, signal, timeout: 12000, retry: 0,
+    });
+
   return {
+    decodeVehicleVin,
     getCatalogProducts,
     getCatalogProductsRaw,
     getCatalogCategories,

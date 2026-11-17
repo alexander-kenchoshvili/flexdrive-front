@@ -327,3 +327,28 @@ test("late vehicle responses cannot replace the latest draft or populate a depar
   await loading;
   assert.deepEqual(departed.vehicleModelsResponse.value, []);
 });
+
+
+test("sidebar controls never turn an unsubmitted VIN into product q", async (t) => {
+  const c = await catalog(t, "/catalog?q=კაპოტი&make=subaru&model=legacy");
+  const text = c.useSearchText();
+  for (const value of ["1HGCM82633A004352", "VIN: short"]) {
+    text.value = value;
+    const query = c.buildRouteQueryFromControls(1);
+    assert.equal(query.q, "კაპოტი");
+    assert.ok(!JSON.stringify(query).includes(value));
+  }
+});
+
+
+test("VIN API helper uses POST body, abort signal and bounded no-retry request", async () => {
+  const calls = [];
+  const source = readFileSync(new URL("../app/composables/catalog/useCatalogApi.ts", import.meta.url), "utf8");
+  const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const exports = {};
+  const fetch = async (...args) => { calls.push(args); return { status: "unrecognized" }; };
+  const module = new Function("require", "exports", "apiFetch", `${output}\nreturn exports;`)(() => ({ apiFetchRaw: fetch, useCatalogVehicleMakes: () => ({}) }), exports, fetch);
+  const controller = new AbortController();
+  await module.useCatalogApi().decodeVehicleVin("1HGCM82633A004352", controller.signal);
+  assert.deepEqual(calls, [["/catalog/vehicles/vin/", { method: "POST", body: { vin: "1HGCM82633A004352" }, signal: controller.signal, timeout: 12000, retry: 0 }]]);
+});

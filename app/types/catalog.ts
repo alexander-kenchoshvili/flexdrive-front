@@ -261,3 +261,13 @@ export interface CatalogProductSuggestion {
   primary_image: CatalogImageAsset;
   fitment_summary: string;
 }
+
+
+export type CatalogVinResult = {
+  status: "matched";
+  vehicle: { make: string; model: string; year: number };
+  filters: { make: string; model: string; year: string };
+} | {
+  status: "not_in_catalog" | "no_coverage";
+  vehicle: { make: string; model: string; year: number };
+} | { status: "invalid_vin" | "unrecognized" | "unavailable" };

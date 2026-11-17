@@ -1,5 +1,54 @@
 # Project Instructions
 
+## VIN Feedback Copy Simplified At User Request - 2026-11-17
+
+- Removed both lower lines from desktop/mobile VIN status: provider/compatibility
+  explanation and search-as-part button. Only the existing primary result/loading/
+  failure feedback remains. Removed now-unused part-code mode and its obsolete
+  test. Earlier disclosure/escape-button notes below describe the previous UI.
+  VIN decoding/mapping/catalog filter logic is unchanged. No deploy performed.
+
+## VIN Search Prepared; Deploy Both Repos - 2026-11-17
+
+- User authorized VIN integration. Header full17-char VIN uses new backend POST
+  /catalog/vehicles/vin/; reliable match routes make/model/year only, clears VIN
+  text and stale category/engine/refinement/page filters. Typing a part keeps car.
+  Desktop/mobile share behavior; current catalog labels/removal unchanged. Explicit
+  part-code escape preserves17-char SKU search. No VIN provider calls on typing.
+- API wrapper uses POST body, abort signal,12sec timeout/no retry. Closed/edited/
+  departed/unmounted requests cannot navigate later. Failure/unsupported/ambiguous/
+  no-year-coverage messages retain current page and offer manual filters. Sidebar
+  actions cannot turn an unsubmitted VIN draft into product q/analytics.
+- Backend is conservative vPIC ErrorCode0 exact make/model/year matching, not
+  parts/OEM/engine/trim proof. No fuzzy cross-market alias. Availability preserves
+  existing catalog behavior. VIN provider disclosure included in both templates.
+-66 focused frontend +21 backend tests pass incl actual Vue template feedback,
+  subsequent part query, stale result/abort, explicit code fallback and POST shape.
+  Scoped ESLint, strict typecheck and isolated production build pass. Existing
+  Browserslist/DEP0155 build warnings only. Public sample decoder verified live.
+- No production data/config/deploy/commit/push. User owns BOTH frontend/backend
+  deploys. No new ENV/API key/migration/cron. Browser verification not run (requires
+  explicit request); post-deploy known VIN -> selected car -> cleared input ->
+  part search remains to verify in browser. Backend docs/VIN_SEARCH.md has limits.
+- Previous Pinia SEO500fix preserved; performance optimization remains deferred.
+
+## SEO Pinia Fix Published And PageSpeed Verified - 2026-11-17
+
+- User546a48afrontenddeployHealthy/Live18:22:09Tbilisi. FreshPSI18:24/18:26:
+  home89mobile/96desktop, catalog88/87; SEO100ALLfour. Fullpages, no unsuccessful
+  HTTPstatus/consoleerroraudit. LCP home3.602/1.002s,catalog3.189/0.834s.
+  RuntimeLogs public_page_failure filterNoresults. Publicroot/catalog/product
+  anonymouschecksALL200, atmost2parallel/no loadtest.
+- Livevalidation of specificSEO/Pinia500fix complete. DesktopcatalogTBT250ms,
+  mobilecatalogSI6.048s andmobileLCP remain optimizationopportunities, not partof
+  thisfix. CrUXinsufficient; labscorescanvary. SeparateCMS404/h3statusMessage
+  warnings remain; neverclaimallerrors/warningsremoved.
+- No furtherfunctional/config/deploy/migrationactionsperformed/required thisturn.
+  BrowsernativeCUAresetreleasesframe, tabsleftopen. Backendreport
+  docs/PERFORMANCE_500_INVESTIGATION_2026-11-17.md storesreportURLsandmetrics.
+  Older pendingdeploynotes below arehistorical.
+
+
 ## Production SEO Pinia 500 Race Fixed; Frontend Deploy Needed - 2026-11-17
 
 - User deployed diagnostics17:46Tbilisi; freshPSI17:50rootmobile/desktop500.

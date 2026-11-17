@@ -40,7 +40,7 @@ async function mountSearch(location, options = {}) {
     "~/components/common/BasePicture.vue": {},
     "./HeaderSearchFilters.vue": {},
     "~/composables/catalog/useCatalogApi": {
-      useCatalogApi: () => ({ getCatalogCategoriesRaw: options.fetchCategories ?? (async () => []), getCatalogProductSuggestions: options.fetchSuggestions ?? (async () => []), getVehicleMakes: async () => [], getVehicleModels: options.fetchModels ?? (async () => []), getVehicleYears: options.fetchYears ?? (async () => []) }),
+      useCatalogApi: () => ({ getCatalogCategoriesRaw: options.fetchCategories ?? (async () => []), getCatalogProductSuggestions: options.fetchSuggestions ?? (async () => []), decodeVehicleVin: options.decodeVin, getVehicleMakes: async () => [], getVehicleModels: options.fetchModels ?? (async () => []), getVehicleYears: options.fetchYears ?? (async () => []) }),
     },
     "~/composables/catalog/useCatalogPlaceholderMedia": { useCatalogPlaceholderMedia: () => ({ cardPlaceholderImage: {} }) },
     "~/utils/routePaths": { getCatalogCategorySlugFromPath: (path) => /^\/catalog\/category\/([^/]+)\/?$/.exec(path)?.[1] || null },
@@ -60,7 +60,7 @@ async function mountSearch(location, options = {}) {
   const app = renderer.createApp({
     setup() {
       search = new Function("require", "exports", ...Object.keys(globals),
-        `${outputText}\nreturn { searchText, clearFilters, selectedMake, selectedModel, selectedYear, selectedCategories, updateMake, updateModel, models, years, vehiclePending, filterError, ensureFiltersLoaded, handleInputKeydown, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
+        `${outputText}\nreturn { vinPending, vinMessage, isVinQuery, searchText, clearFilters, selectedMake, selectedModel, selectedYear, selectedCategories, updateMake, updateModel, models, years, vehiclePending, filterError, ensureFiltersLoaded, handleInputKeydown, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
       )((name) => mocks[name] ?? require(name), {}, ...Object.values(globals));
       return () => null;
     },
@@ -455,4 +455,100 @@ test("cleared search text is not restored by a sidebar model route change", asyn
   assert.equal(c.search.selectedModel.value, "forester");
   await c.search.submitSearch();
   assert.equal(c.router.currentRoute.value.query.q, undefined);
+});
+
+
+const sampleVin = "1HGCM82633A004352";
+const matchedVin = { status: "matched", vehicle: { make: "Honda", model: "Accord", year: 2003 }, filters: { make: "honda", model: "accord", year: "2003" } };
+
+for (const mobile of [false, true]) {
+  test(`VIN resolves then part search keeps vehicle, ${mobile ? "mobile" : "desktop"}`, async (t) => {
+    const decodes = [], suggestions = [];
+    const c = await mountSearch("/catalog?q=old&make=subaru&model=forester&year=2018&engine=old&categories=lights&brand=tyc&in_stock=true&page=3", {
+      mobileViewport: vue.ref(mobile),
+      decodeVin: async (...args) => { decodes.push(args); return matchedVin; },
+      fetchSuggestions: async (...args) => { suggestions.push(args); return []; },
+    });
+    t.after(() => c.app.unmount());
+    await c.input(sampleVin.toLowerCase());
+    await c.search[mobile ? "openMobileSheet" : "openDesktopPanel"]();
+    await c.search.submitSearch();
+    await flush();
+    assert.equal(decodes.length, 1);
+    assert.equal(decodes[0][0], sampleVin);
+    assert.deepEqual(suggestions, []);
+    assert.deepEqual(c.router.currentRoute.value.query, matchedVin.filters);
+    assert.equal(c.search.searchText.value, "");
+    assert.equal(c.search.selectedMake.value, "honda");
+    assert.equal(c.search.selectedModel.value, "accord");
+    assert.equal(c.search.selectedYear.value, "2003");
+    assert.deepEqual(c.trackedSearches, []);
+    assert.deepEqual(c.trackedSelections, []);
+    await c.input("კაპოტი");
+    await c.search.submitSearch();
+    assert.deepEqual(c.router.currentRoute.value.query, { ...matchedVin.filters, q: "კაპოტი" });
+    assert.ok(!c.router.currentRoute.value.fullPath.includes(sampleVin));
+  });
+}
+
+test("unrecognized/unmapped/unsupported year never falls back to an unrelated catalog", async (t) => {
+  for (const result of [ { status: "unrecognized" }, { status: "not_in_catalog", vehicle: matchedVin.vehicle }, { status: "no_coverage", vehicle: matchedVin.vehicle } ]) {
+    const c = await mountSearch("/catalog?make=subaru", { decodeVin: async () => result });
+    t.after(() => c.app.unmount());
+    await c.input(sampleVin);
+    await c.search.submitSearch();
+    assert.equal(c.router.currentRoute.value.fullPath, "/catalog?make=subaru");
+    assert.ok(c.search.vinMessage.value.length > 0);
+    assert.equal(c.search.vinPending.value, false);
+  }
+});
+
+test("invalid explicit VIN does not call provider; ordinary OEM/SKU still search normally", async (t) => {
+  let count = 0;
+  const c = await mountSearch("/", { decodeVin: async () => { count++; return matchedVin; } });
+  t.after(() => c.app.unmount());
+  for (const value of ["VIN: short", "I" + sampleVin.slice(1)]) {
+    await c.input(value);
+    await c.search.submitSearch();
+    assert.ok(c.search.vinMessage.value.includes("17"));
+    assert.equal(c.router.currentRoute.value.path, "/");
+  }
+  assert.equal(count, 0);
+  await c.input("FD-01-0001");
+  await c.search.submitSearch();
+  assert.deepEqual(c.router.currentRoute.value.query, { q: "FD-01-0001" });
+});
+
+test("editing, closing, navigating or unmounting cancels a stale VIN result", async () => {
+  for (const action of ["edit", "close", "navigate", "unmount"]) {
+    let resolve, signal;
+    const c = await mountSearch("/", { decodeVin: (_, s) => { signal = s; return new Promise((r) => { resolve = r; }); } });
+    await c.input(sampleVin);
+    const pending = c.search.submitSearch();
+    assert.equal(c.search.vinPending.value, true);
+    await c.search.submitSearch(); // Pending submit does not duplicate provider requests.
+    if (action === "edit") await c.input("კაპოტი");
+    if (action === "close") c.search.closeDesktopPanel();
+    if (action === "navigate") { await c.router.push("/contact"); await flush(); }
+    if (action === "unmount") c.app.unmount();
+    assert.equal(signal.aborted, true);
+    resolve(matchedVin);
+    await pending;
+    assert.equal(c.router.currentRoute.value.path, action === "navigate" ? "/contact" : "/");
+    if (action !== "unmount") c.app.unmount();
+  }
+});
+
+test("provider/rate-limit errors are recoverable without navigating or losing draft", async (t) => {
+  let fail = true;
+  const c = await mountSearch("/", { decodeVin: async () => { if (fail) throw { response: { status: 429 } }; return matchedVin; } });
+  t.after(() => c.app.unmount());
+  await c.input(sampleVin);
+  await c.search.submitSearch();
+  assert.match(c.search.vinMessage.value, /ერთი წუთი/);
+  assert.equal(c.search.searchText.value, sampleVin);
+  assert.equal(c.search.vinPending.value, false);
+  fail = false;
+  await c.search.submitSearch();
+  assert.equal(c.router.currentRoute.value.path, "/catalog");
 });

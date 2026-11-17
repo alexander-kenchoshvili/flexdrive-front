@@ -36,7 +36,7 @@ const route = useRoute();
 const router = useRouter();
 // Match the parent Header mobile trigger and desktop input at the md breakpoint.
 const isMobileViewport = useMediaQuery("(max-width: 767px)");
-const { getCatalogCategoriesRaw, getCatalogProductSuggestions, getVehicleMakes, getVehicleModels, getVehicleYears } =
+const { getCatalogCategoriesRaw, getCatalogProductSuggestions, getVehicleMakes, getVehicleModels, getVehicleYears, decodeVehicleVin } =
   useCatalogApi();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
 const { trackSearchSelection } = useEcommerceAnalytics();
@@ -45,7 +45,7 @@ const rootRef = ref<HTMLElement | null>(null);
 const mobileInputRef = ref<HTMLInputElement | null>(null);
 
 const searchInputId = "header-search-" + useId();
-const searchPlaceholder = "მოძებნე ნაწილი, OEM ან SKU";
+const searchPlaceholder = "მოძებნე ნაწილი, OEM, SKU ან VIN";
 
 const searchText = useCatalogSearchText();
 const isDesktopOpen = ref(false);
@@ -61,6 +61,21 @@ const latestSuggestionsRequestId = ref(0);
 const lastCompletedQuery = ref("");
 
 const normalizedSearchText = computed(() => searchText.value.trim());
+// Explicit "VIN:" also lets an incomplete/invalid VIN receive a useful error.
+const vinValue = computed(() => normalizedSearchText.value.replace(/^vin[\s:]+/i, "").toUpperCase());
+const isVinQuery = computed(() => /^vin[\s:]+/i.test(normalizedSearchText.value)
+  || (/^[a-z0-9]{17}$/i.test(normalizedSearchText.value)
+    && /[a-z]/i.test(normalizedSearchText.value) && /[0-9]/.test(normalizedSearchText.value)));
+const vinPending = ref(false);
+const vinMessage = ref("");
+let vinRequestId = 0;
+let vinController: AbortController | null = null;
+const cancelVinLookup = () => {
+  ++vinRequestId;
+  vinController?.abort();
+  vinController = null;
+  vinPending.value = false;
+};
 const showDesktopPanel = computed(
   () => !isMobileViewport.value && isDesktopOpen.value,
 );
@@ -68,7 +83,7 @@ const isSearchSurfaceOpen = computed(
   () => isDesktopOpen.value || isMobileOpen.value,
 );
 const hasEnoughCharacters = computed(
-  () => normalizedSearchText.value.length >= 2,
+  () => !isVinQuery.value && normalizedSearchText.value.length >= 2,
 );
 const showTypingHint = computed(() => normalizedSearchText.value.length === 1);
 const showSuggestionList = computed(
@@ -134,7 +149,7 @@ const categoryOptions = computed(() => categories.value.map((category) => ({ lab
 const makeOptions = computed(() => [{ label: "ყველა მარკა", value: "" }, ...makes.value.map((make) => ({ label: make.name, value: make.slug }))]);
 const modelOptions = computed(() => [{ label: "ყველა მოდელი", value: "" }, ...models.value.map((model) => ({ label: model.name, value: model.slug }))]);
 const yearOptions = computed(() => [{ label: "ყველა წელი", value: "" }, ...[...years.value].reverse().map(({ year }) => ({ label: String(year), value: String(year) }))]);
-const canSubmit = computed(() => normalizedSearchText.value.length !== 1 && normalizedSearchText.value.length <= 255);
+const canSubmit = computed(() => !vinPending.value && normalizedSearchText.value.length !== 1 && normalizedSearchText.value.length <= 255);
 const canClear = computed(() => Boolean(
   normalizedSearchText.value || selectedMake.value || selectedModel.value || selectedYear.value || selectedCategories.value.length,
 ));
@@ -226,7 +241,7 @@ const fetchSuggestions = async (query: string) => {
   // A queued debounce may run after the input changed or the panel closed.
   if (normalizedQuery !== normalizedSearchText.value || !isSearchSurfaceOpen.value) return;
 
-  if (normalizedQuery.length < 2) {
+  if (isVinQuery.value || normalizedQuery.length < 2) {
     resetSuggestionsState();
     return;
   }
@@ -262,18 +277,21 @@ const fetchSuggestionsDebounced = useDebounceFn((query: string) => {
 }, 300);
 
 const closeDesktopPanel = () => {
+  if (isDesktopOpen.value) cancelVinLookup();
   isDesktopOpen.value = false;
   activeSuggestionIndex.value = -1;
   if (!isSearchSurfaceOpen.value) resetSuggestionsState();
 };
 
 const closeMobileSheet = () => {
+  if (isMobileOpen.value) cancelVinLookup();
   isMobileOpen.value = false;
   activeSuggestionIndex.value = -1;
   if (!isSearchSurfaceOpen.value) resetSuggestionsState();
 };
 
 const closeAllSearchSurfaces = () => {
+  cancelVinLookup();
   closeDesktopPanel();
   closeMobileSheet();
 };
@@ -311,6 +329,51 @@ const openMobileSheet = async () => {
 const submitSearch = async () => {
   const normalizedQuery = normalizedSearchText.value;
   if (!canSubmit.value) return;
+
+  if (isVinQuery.value) {
+    if (isMobileViewport.value) isMobileOpen.value = true;
+    else isDesktopOpen.value = true;
+    vinMessage.value = "";
+    resetSuggestionsState();
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(normalizedQuery.replace(/^vin[\s:]+/i, ""))) {
+      vinMessage.value = "VIN უნდა შეიცავდეს 17 ლათინურ ასოსა და ციფრს; I, O და Q არ გამოიყენება.";
+      return;
+    }
+    const requestId = ++vinRequestId;
+    const startingPath = route.fullPath;
+    vinController = new AbortController();
+    vinPending.value = true;
+    try {
+      const result = await decodeVehicleVin(vinValue.value, vinController.signal);
+      if (disposed || requestId !== vinRequestId || startingPath !== route.fullPath || normalizedQuery !== normalizedSearchText.value) return;
+      if (result.status === "matched") {
+        // A new vehicle starts with all its parts, without stale part/category/
+        // engine/price/page filters. Only derived vehicle filters enter the URL.
+        await router.push({ path: "/catalog", query: { ...result.filters } });
+        searchText.value = "";
+        closeAllSearchSurfaces();
+        return;
+      }
+      if (result.status === "not_in_catalog" || result.status === "no_coverage") {
+        const vehicle = result.vehicle;
+        const label = `${vehicle.make} ${vehicle.model} · ${vehicle.year}`;
+        vinMessage.value = result.status === "no_coverage"
+          ? `${label} ამოვიცანით, თუმცა ამ წლისთვის კატალოგში ნაწილები ჯერ არ გვაქვს.`
+          : `${label} ამოვიცანით, თუმცა ჩვენს მოდელებთან ზუსტი შეხამება ვერ მოხერხდა. აირჩიე მანქანა ფილტრებიდან.`;
+      } else {
+        vinMessage.value = "VIN-ის სანდოდ ამოცნობა ვერ მოხერხდა. გადაამოწმე კოდი ან აირჩიე მანქანა ფილტრებიდან. ყველა ბაზრის ავტომობილი არ იძებნება.";
+      }
+    } catch (error: unknown) {
+      if (disposed || requestId !== vinRequestId) return;
+      const status = (error as { response?: { status?: number } }).response?.status;
+      vinMessage.value = status === 429
+        ? "ძალიან ბევრი VIN მოთხოვნაა. მოიცადე ერთი წუთი ან აირჩიე მანქანა ფილტრებიდან."
+        : "VIN-ის სერვისი დროებით მიუწვდომელია. სცადე ხელახლა ან აირჩიე მანქანა ფილტრებიდან.";
+    } finally {
+      if (requestId === vinRequestId) { vinPending.value = false; vinController = null; }
+    }
+    return;
+  }
 
   const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
   const refinements: Record<string, string> = {};
@@ -427,8 +490,10 @@ const syncSearchTextFromRoute = () => {
 watch([normalizedSearchText, filtersKey], ([nextValue]) => {
   // Invalidate in-flight responses immediately, before the next debounce starts.
   resetSuggestionsState();
+  cancelVinLookup();
+  vinMessage.value = "";
 
-  if (!isSearchSurfaceOpen.value) return;
+  if (isVinQuery.value || !isSearchSurfaceOpen.value) return;
 
   if (nextValue.length < 2) {
     resetSuggestionsState();
@@ -466,6 +531,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   disposed = true;
+  cancelVinLookup();
   ++vehicleRequestId;
   resetSuggestionsState();
 });
@@ -528,7 +594,12 @@ defineExpose({
             @categories="selectedCategories = $event" @search="submitSearch"
             @clear="clearFilters" @retry="ensureFiltersLoaded"
           />
-          <div v-if="normalizedSearchText" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
+          <div v-if="isVinQuery" class="mt-4 space-y-2 border-t border-border-default pt-4 text-sm" role="status" aria-live="polite" :aria-busy="vinPending">
+            <p v-if="vinPending" class="text-text-secondary">ავტომობილს ვეძებთ…</p>
+            <p v-else-if="vinMessage" class="text-warning">{{ vinMessage }}</p>
+            <p v-else class="text-text-secondary">VIN-ის ამოსაცნობად დააჭირე „ძებნას“. შემდეგ ნაწილის სახელს ამავე ველში ჩაწერ.</p>
+          </div>
+          <div v-if="normalizedSearchText && !isVinQuery" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
             <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
             <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
             <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>
@@ -611,7 +682,12 @@ defineExpose({
               @categories="selectedCategories = $event" @search="submitSearch"
               @clear="clearFilters" @retry="ensureFiltersLoaded"
             />
-            <div v-if="normalizedSearchText" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
+            <div v-if="isVinQuery" class="mt-4 space-y-2 border-t border-border-default pt-4 text-sm" role="status" aria-live="polite" :aria-busy="vinPending">
+            <p v-if="vinPending" class="text-text-secondary">ავტომობილს ვეძებთ…</p>
+            <p v-else-if="vinMessage" class="text-warning">{{ vinMessage }}</p>
+            <p v-else class="text-text-secondary">VIN-ის ამოსაცნობად დააჭირე „ძებნას“. შემდეგ ნაწილის სახელს ამავე ველში ჩაწერ.</p>
+          </div>
+          <div v-if="normalizedSearchText && !isVinQuery" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
               <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
               <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
               <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>

@@ -875,7 +875,10 @@ const buildRouteQueryFromControls = (page: number): Record<string, string> => {
 
   const draftQuery = searchDraft.value.trim();
   // A single character is still an incomplete header draft, not a valid API query.
-  const queryText = draftQuery.length === 1 || draftQuery.length > 255
+  // An unsubmitted VIN belongs to the decoder, never to product q/analytics.
+  const vinDraft = /^vin[\s:]+/i.test(draftQuery)
+    || (/^[a-z0-9]{17}$/i.test(draftQuery) && /[a-z]/i.test(draftQuery) && /[0-9]/.test(draftQuery));
+  const queryText = draftQuery.length === 1 || draftQuery.length > 255 || vinDraft
     ? normalizedSearchQuery.value : draftQuery;
   if (queryText) {
     query.q = queryText;

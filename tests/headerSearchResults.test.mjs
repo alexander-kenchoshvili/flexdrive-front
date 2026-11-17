@@ -96,3 +96,58 @@ for (const mobile of [false, true]) {
     assert.deepEqual(warnings, []);
   });
 }
+
+
+for (const mobile of [false, true]) {
+  test(`VIN loading/failure is readable in actual ${mobile ? "mobile" : "desktop"} template`, async (t) => {
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/:pathMatch(.*)*", component: slotComponent }] });
+    await router.push("/");
+    let resolve;
+    const globals = { ...vue, useRoute, useRouter,
+      useEcommerceAnalytics: () => ({ trackSearchSelection() {} }),
+      navigateTo: (path) => router.push(path),
+      window: { localStorage: { removeItem() {} }, requestAnimationFrame() {} },
+    };
+    const header = compile("../app/components/LAYOUTS/HeaderSearch.vue", {
+      "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
+      "@vueuse/core": { onClickOutside() {}, useMediaQuery: () => vue.ref(mobile), useDebounceFn: (fn) => fn },
+      "@headlessui/vue": { Dialog: vue.defineComponent({ props: { open: Boolean }, setup: (props, { slots }) => () => props.open ? vue.h("section", slots.default?.()) : null }), DialogPanel: slotComponent, DialogTitle: slotComponent },
+      "./HeaderSearchFilters.vue": { default: vue.defineComponent({ inheritAttrs: false, render: () => null }) },
+      "~/components/common/BasePicture.vue": { default: slotComponent },
+      "~/composables/catalog/useCatalogApi": { useCatalogApi: () => ({
+        getCatalogCategoriesRaw: async () => [], getCatalogProductSuggestions: async () => { throw new Error("VIN must not become product suggestions"); },
+        getVehicleMakes: async () => [], getVehicleModels: async () => [], getVehicleYears: async () => [],
+        decodeVehicleVin: () => new Promise((r) => { resolve = r; }),
+      }) },
+      "~/composables/catalog/useCatalogPlaceholderMedia": { useCatalogPlaceholderMedia: () => ({ cardPlaceholderImage: {} }) },
+      "~/utils/routePaths": { getCatalogCategorySlugFromPath: () => null },
+      "~/utils/pageScrollCoordinator": { waitForPageReady: async () => {} },
+    }, globals, (source) => source.replace(/defineExpose\(\{\s*openMobileSheet,/, "defineExpose({ searchText, submitSearch, openDesktopPanel, openMobileSheet,"));
+    const root = node("root");
+    const app = renderer().createApp(header);
+    app.use(router);
+    app.component("BaseButton", slotComponent);
+    app.component("BaseIcon", { render: () => null });
+    app.component("NuxtLink", slotComponent);
+    const warnings = [];
+    app.config.warnHandler = (message) => warnings.push(message);
+    const vm = app.mount(root);
+    t.after(() => app.unmount());
+    vm.searchText = "1HGCM82633A004352";
+    await vm[mobile ? "openMobileSheet" : "openDesktopPanel"]();
+    const pending = vm.submitSearch();
+    await flush();
+    const status = all(root).find((el) => el.props.role === "status");
+    assert.ok(status);
+    assert.equal(status.props["aria-busy"], true);
+    assert.match(text(status), /ავტომობილს ვეძებთ/);
+    resolve({ status: "no_coverage", vehicle: { make: "Honda", model: "Accord", year: 2003 } });
+    await pending;
+    await flush();
+    assert.equal(status.props["aria-busy"], false);
+    assert.match(text(status), /Honda Accord.*2003/);
+    assert.match(text(status), /ნაწილები ჯერ არ გვაქვს/);
+    assert.equal(router.currentRoute.value.path, "/");
+    assert.deepEqual(warnings, []);
+  });
+}
