@@ -47,7 +47,7 @@ test("actual global title template renders automatic and manual product titles o
       "~/utils/seoTitle": titles,
       "~/composables/useIndexingPolicy": { useIndexingPolicy: () => ({ robots: vue.ref("noindex, nofollow") }) },
     });
-    defaults.useSeoDefaults();
+    defaults.useSeoDefaults({ settings: vue.ref({ site_name: "FlexDrive" }) });
     headApi.useSeoMeta({ title }, { head });
     const { headTags } = await renderSSRHead(head);
     assert.match(headTags, /name="robots" content="noindex, nofollow"/);

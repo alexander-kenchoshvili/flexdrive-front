@@ -1,5 +1,29 @@
 # Project Instructions
 
+## Production SEO Pinia 500 Race Fixed; Frontend Deploy Needed - 2026-11-17
+
+- User deployed diagnostics17:46Tbilisi; freshPSI17:50rootmobile/desktop500.
+  RuntimeLogs13:50:29UTC captured public_page_failure/home/TypeError/missing_value
+  server.mjs3168:29→3229:3. Production call chain maps to useSiteSettings lookup
+  inside useSeoDefaults AFTER awaited siteSettings API in seo-defaults plugin.
+- Regression uses realPinia3.0.4production SDK: removing globalactivePinia during
+  await reproduces exact TypeError(reading '_s'); overlappingSSR isolation fails.
+  FIX: seo-defaults captures useSiteSettings(nuxtApp.$pinia as Pinia) beforeawait,
+  passes same request-owned store into useSeoDefaults(store). No global relookup.
+  Onlycallerplugin updated; existing seoTitle fixture passes explicitstore.
+-26focused SEO/error/diagnostic tests, scopedESLint/typecheck/prodbuild pass.
+  Actual isolated production Nuxt+loopback API forciblyclears its own outputPinia
+  during settings reply; parallelroot/catalog BOTH200 with content/SEO, no error.
+  Own3107/8128QA stopped; nativeCUA reset. No checkout/auth/indexing/cache changes.
+- User owns FRONTEND push/deploy, then actualPSI/logrecheck. No new ENV/migration/
+  backend redeploy for this fix. Do not call liveerrorclosed beforedeploy.
+- User devNuxt rewrites ordinary.nuxt; isolatedbuild uses ignored node_modules/
+  .cache/flexdrive-performance-500 and backend ignored performance-20261117/
+  nuxt-output. Devservices untouched. Documentation/evidence in backend
+  docs/PERFORMANCE_500_INVESTIGATION_2026-11-17.md. Earlier cause-unproven notes
+  below are historical; this matched SEO path now has a tested fix.
+
+
 ## Intermittent Public 500 Diagnostics Ready; Cause Unproven - 2026-11-17
 
 - User authorized investigation/fix after actual PSI home/catalog desktop500.

@@ -14,11 +14,12 @@ const toAbsoluteUrl = (siteUrl: string, pathOrUrl: string) => {
   return `${normalizedSiteUrl}${normalizedPath}`;
 };
 
-export const useSeoDefaults = () => {
+// Retain the request-owned store across the plugin's awaited API read.
+// Re-resolving a global active Pinia here can fail or select another SSR request.
+export const useSeoDefaults = (siteSettingsStore: ReturnType<typeof useSiteSettings>) => {
   const route = useRoute();
   const config = useRuntimeConfig();
   const { robots } = useIndexingPolicy();
-  const siteSettingsStore = useSiteSettings();
   const { settings } = storeToRefs(siteSettingsStore);
 
   const siteUrl = normalizeUrl(
