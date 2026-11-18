@@ -1,5 +1,161 @@
 # Project Instructions
 
+## Header Redesign Search Logic Audit - 2026-11-18
+
+- User explicitly requested confirming search/filter logic survived the full header
+  redesign. Compared changes to HEAD and ran actual setup/router/catalog tests.
+- Found and reproduced one inline-only regression: props.inline treated the search
+  surface as permanently open, so Escape retained hidden suggestions that ArrowDown
+  +Enter could select. New desktop+mobile regressions failed before fix. Restored
+  open-state gating; kept inline dependent model/year loading independent of popup.
+  Closing now invalidates queued/in-flight suggestions; reopening fetches current.
+- 80 targeted header/catalog/template tests pass, including ten inline cases for
+  mobile/desktop suggestions, Enter/button submit logic, VIN reset then part+variant
+  retention, category/engine/refinement preservation, page reset, draft resize,
+  hidden selection and stale response rejection. Two old template tests updated
+  to assert user-requested absence of transient VIN loading text and persistent
+  no-coverage feedback. VIN decoder used fixtures; no claim live vPIC availability.
+- Native Chrome local868px verified automatic real local suggestions, Enter ->
+  /catalog?q=capot (Georgian text), then embedded toolbar Search -> q=FD-01-0001.
+  No observed JS errors. Native session reset. Earlier native resize checks remain.
+  No production/backend/schema/ENV/events/push/deploy/full-build operation.
+
+
+## Header Resize Fixed In Native Chrome; Mobile Suggestions Restored - 2026-11-18
+
+- Latest user explicitly restored mobile typing suggestions and requested compact
+  controls below640px. Suggestions now use the existing debounce/filter/result
+  pipeline on mobile too. Applying full catalog filters still uses Search/Enter.
+- Native Chrome Computer Use (NOT Playwright) reproduced fresh hydration class
+  mismatches and insertBefore failure at1400->375 before this fix. Earlier isolated
+  nonhydrating renderer check was insufficient; previous hardening note superseded.
+- Parent custom-target Teleport subtree is now ClientOnly, with fixed parent/input/
+  feedback targets and a height fallback. Viewport-dependent button row classes
+  use CSS media variants. Same mounted search state/handlers; no resize remount.
+- Native local Chrome fresh reload now has no hydration warnings; home transitions
+ 375->1400->375->1089->768->639->439 retained typed text with no observed runtime
+  errors. Mobile capot query returned five real local suggestions automatically.
+  Fresh catalog439->1400->375 also had no observed console errors/warnings and
+  retained compact search/no duplicate header dropdowns. Nuxt development info
+  messages remain. This is targeted verification, not an all-browser guarantee.
+- Tailwind below640: dropdown36px/12px font, query40px/14px font and12px placeholder,
+  Search40px/14px font; reduced gaps/padding. Existing440/768/1089/1248 layout
+  breakpoints and Wishlist stay. Hero unchanged. No backend/ENV/migration/deploy.
+- Native CUA session reset after verification. Whitespace check passed. No full
+  build/broad test suite. User owns frontend push/deploy and further visual review.
+
+## Header Resize Hardening And Wishlist Restored - 2026-11-18
+
+- User reported actual Chrome Vue update/insertBefore anchor and emitsOptions
+  errors while dragging viewport size, and requested Wishlist remain in header.
+  Restored header Wishlist at all sizes; removed our added mobile-menu duplicate.
+  Earlier wishlist-in-burger notes are superseded.
+- Feedback Teleport target now stable after mount; only disabled follows media.
+  Outer filter-container relocation runs nextTick after inner search relocation,
+  post-flush, reading current phone media rather than a stale captured width.
+  Teardown blocks queued relocation. Search component/state is not remounted.
+- Focused isolated check compiles ACTUAL Header+HeaderSearch with installed
+  Vue3.5.26 and strict DOM-style insertBefore anchor validation.114 boundary
+  transitions across home/catalog + typed draft:0 errors/warnings,1 search instance,
+  retained draft. No network/provider events. Fresh isolated baseline did not
+  reproduce user's existing Chrome/HMR failure, so do NOT claim browser root
+  cause or real-browser resolution proven by this check. User should full reload
+  and repeat resizing. No production build/broad suite/browser run performed.
+
+
+## Mobile Search Form Single Column - 2026-11-18
+
+- User approved revised mobile proposal with explicit one-input-per-row: below768
+  non-catalog header form shows query first, then make/model/year/categories each
+  full width, then one full-width48px Search button. Enter/submit/draft behavior
+  unchanged; no automatic product requests. No mobile Clear text.
+- On these pages only logo/account/cart/burger toolbar stays sticky; query/form
+  remains with the normally scrolling filter block. Empty compact-search target
+  hidden. Catalog retains its compact sticky search with embedded submit and no
+  duplicated dropdowns. >=768/tablet/desktop controls and hero unchanged.
+- Existing responsive Teleports select presentation targets only; same state,
+  fields and handlers. Local VIN feedback stays with form except compact catalog.
+  No builds/tests/browser checks, backend/data/ENV or deploy actions.
+
+
+## Catalog Header Keeps Search Without Duplicate Filters - 2026-11-18
+
+- User authorized hiding header's four dropdowns on catalog listings only after
+  discussion. Header matches /catalog and /catalog/category/:slug (optional trailing
+  slash); product detail/other routes/home retain previous header controls.
+- HeaderSearch hideVehicleFilters prop removes only inline dropdown UI. Same search
+  component stays mounted; route-derived make/model/year/variant/categories persist.
+  Existing catalog refinements remain; engine retained for this search-only mode
+  because there is no header vehicle change to invalidate it. Explicit VIN still
+  starts a new vehicle with the existing reset rules; clear behavior unchanged.
+- Desktop listing header uses wide text/VIN field + existing Search/Clear. Below
+ 1089 search remains in toolbar; empty lower band is CSS-hidden without unmounting.
+  Autocomplete/VIN feedback stays visible in toolbar feedback target even though
+  the source band is hidden; outside-click ignore already covers that target.
+- Catalog's existing sidebar/mobile filter panel is unchanged. No backend/data/
+  ENV/deploy. No builds/tests/browser checks per user's ongoing instruction.
+
+
+## Mobile Header Search Is Explicit - 2026-11-18
+
+- User explicitly requested below768px text/vehicle/category drafts apply together
+  only on Search/Enter. Existing header filter handlers already do not navigate
+  before submit; automatic product suggestions were the visible auto-search.
+- HeaderSearch now skips suggestion scheduling/fetching and hides the suggestion
+  popup/list below768px. On resizing into mobile, suggestion state is invalidated;
+  queued debounce and in-flight results are guarded too. Mobile Enter cannot pick
+  a stale desktop suggestion. Desktop/tablet>=768 keep current suggestions.
+- Vehicle option loading stays enabled to populate dependent selects; it is not
+  a product search. Explicit submit/Enter, VIN decoder, filter params, routing,
+  analytics and layout unchanged. No builds/tests/browser checks per user request.
+
+
+## Header Responsive Iteration And Mobile Design - 2026-11-18
+
+- User owns visual review and explicitly prohibits builds/tests/browser checks
+  during these layout iterations. No such checks run. Frontend source edits only;
+  no backend/ENV/data/deploy. Search/filter/VIN parameter logic unchanged.
+- HeroSection.vue RESTORED byte-for-byte from original HEAD on explicit request;
+  do not simplify hero again. Earlier hero-removal note below is superseded.
+- Nav16px, centered whenever visible; burger below1089px. Search/filter one row
+  at1248+, filters above search at1089–1247. Below1089 existing input teleports
+  into toolbar, no visible label/Clear, submit inside border. Safe SSR default
+  disabled Teleport to#teleports; custom targets only after mounted. Ignore
+  relocated controls in outside-click handling. Same form ID/handlers/state.
+- Below768 user approved latest mobile proposal: logo/account/cart/burger first
+  row, full-width search second row; wishlist link/count moved into burger. Four
+  filters visible2x2 below, no outer panel frame. Filters scroll normally while
+  toolbar/search remain sticky. Existing HeaderSearch instance moves via parent
+  phone-only Teleport after hydration, not recreated. Desktop/tablet>=768 unchanged.
+- Mobile suggestions and VIN feedback teleport into sticky search feedback slot;
+  clicking inside suggestions/toolbar does not trigger outside-close. Actual
+  outside clicks close inline suggestions on mobile too. Input uses short mobile
+  placeholder; full accessible label and OEM/SKU/VIN search support retained.
+- Runtime/visual behavior NOT verified per user request. User reviews local page.
+
+
+## Responsive Inline Header Layout Prepared - 2026-11-18
+
+- After discussion user explicitly authorized all-resolution layout + removing
+  excess hero copy, Tailwind only, no builds/tests/browser verification; user
+  owns visual review. Only Header/HeaderSearch/HeaderSearchFilters/HeroSection
+  functional frontend files changed. No backend/ENV/migration/deploy.
+- Existing navigation moved beside logo/actions. ONE persistent HeaderSearch
+  below sticky toolbar serves all widths; search area scrolls with page. Existing
+  make/model/year/category component visible from mount; responsive4/2/1-column
+  grid. Inline listboxes overlay without expanding/clipping header. Suggestion
+  cards adapt to narrow widths. Legacy popup/sheet remains default off inline mode.
+- Inline prop adapts presentation surface/lifecycle only: eager options, shared
+  field bindings/handlers, active surface on all widths, inline VIN status without
+  mobile dialog. Search/filter params, dependent reset rules, VIN decoder/request
+  guards, explicit submit/Enter, refinements/Back/result scroll/analytics unchanged.
+- Hero keeps actual CMS H1/image/catalog CTA; removes eyebrow/subtitle/trust badges
+  and reduces responsive height using Tailwind. No CMS content/data mutation.
+- NO builds, tests, lint/typecheck or browser runs per user instruction. Source
+  review only while editing; no claim of runtime/visual validation. Frontend-only
+  push/deploy later; user reviews local appearance first.
+
+
 ## Meta Search, Contact And Checkout Attribution Prepared - 2026-11-18
 
 - User authorized useful Meta signals and specifically approved existing fbp/fbc

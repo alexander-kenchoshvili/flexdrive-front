@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { MoonIcon, SunIcon, UserCircleIcon } from "@heroicons/vue/24/outline";
+import { Teleport } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 
 const route = useRoute();
+const isCatalogListing = computed(() => /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path));
 const menuStore = useMenu();
 const globalStore = useGlobalStore();
 const cartStore = useCartStore();
@@ -9,17 +12,23 @@ const wishlistStore = useWishlistStore();
 const { logout } = useAuth();
 const { isDark, toggleTheme } = useTheme();
 
-const DESKTOP_MENU_QUERY = "(min-width: 1024px)";
+// Move only presentation after hydration; the same search/filter instance stays alive.
+const isPhoneViewport = useMediaQuery("(max-width: 767px)");
+const headerMounted = ref(false);
+const filtersInMobileFlow = ref(false);
+// Finish the search's inner relocation first, then move its outer container.
+// This avoids moving nested Teleport anchors in the same render flush on resize.
+const updateFilterPlacement = () => {
+  void nextTick(() => {
+    if (headerMounted.value) filtersInMobileFlow.value = isPhoneViewport.value;
+  });
+};
+watch(isPhoneViewport, updateFilterPlacement, { flush: "post" });
+const DESKTOP_MENU_QUERY = "(min-width: 1089px)";
 let desktopMenuMediaQuery: MediaQueryList | null = null;
 
 const isMobileMenuOpen = ref(false);
 const isAccountDialogOpen = ref(false);
-const desktopSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
-  null,
-);
-const mobileSearchRef = ref<{ openMobileSheet: () => Promise<void> } | null>(
-  null,
-);
 
 const menuItems = computed(() =>
   menuStore.menu.filter((item) => item.show_in_menu !== false),
@@ -135,11 +144,6 @@ const handleDesktopMenuChange = (event: MediaQueryListEvent | MediaQueryList) =>
   }
 };
 
-const openMobileSearch = async () => {
-  closeMobileMenu();
-  await mobileSearchRef.value?.openMobileSheet();
-};
-
 const closeAccountDialog = () => {
   isAccountDialogOpen.value = false;
 };
@@ -194,6 +198,8 @@ watch(isMobileMenuOpen, (isOpen) => {
 });
 
 onMounted(() => {
+  headerMounted.value = true;
+  updateFilterPlacement();
   if (!menuStore.menu.length) {
     void menuStore.fetchMenu();
   }
@@ -208,6 +214,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  headerMounted.value = false;
   if (!import.meta.client) return;
   desktopMenuMediaQuery?.removeEventListener("change", handleDesktopMenuChange);
   desktopMenuMediaQuery = null;
@@ -220,11 +227,11 @@ onBeforeUnmount(() => {
     data-site-header
     class="sticky top-0 z-40 border-b border-header-border bg-header-bg shadow-[0_14px_34px_-24px_var(--shadow-color)]"
   >
-    <div class="container-fluid px-3 py-3 sm:px-4">
-      <div class="flex min-h-[58px] items-center gap-2 sm:gap-3 lg:gap-4">
+    <div class="container-fluid px-3 py-2 sm:px-4 sm:py-2.5">
+      <div class="flex min-h-[58px] flex-wrap items-center gap-2 sm:gap-3 md:flex-nowrap lg:gap-4">
         <NuxtLink
           to="/"
-          class="site-logo-link inline-flex shrink-0 items-center no-underline"
+          class="site-logo-link order-1 inline-flex shrink-0 items-center no-underline"
           aria-label="FlexDrive"
         >
           <span class="inline-flex items-center md:hidden" aria-hidden="true">
@@ -243,26 +250,38 @@ onBeforeUnmount(() => {
           </span>
         </NuxtLink>
 
-        <div class="hidden min-w-0 flex-1 md:block lg:mx-4 xl:mx-6">
-          <HeaderSearch
-            ref="desktopSearchRef"
-            :hide-mobile-trigger="true"
-            @open-mobile-search="closeMobileMenu"
-          />
-        </div>
+        <nav
+          v-if="navigationMenuItems.length"
+          class="order-2 hidden min-w-0 flex-1 min-[1089px]:mx-4 min-[1089px]:block xl:mx-6"
+          aria-label="მთავარი ნავიგაცია"
+        >
+          <ul class="flex min-h-10 items-center justify-center gap-1 overflow-x-auto xl:gap-2">
+            <li v-for="item in navigationMenuItems" :key="item.id" class="shrink-0">
+              <NuxtLink
+                :to="item.final_url"
+                class="inline-flex min-h-10 items-center rounded-[8px] border px-2 text-[16px] xl:px-3 font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary upper"
+                :class="
+                  isNavigationItemActive(item)
+                    ? 'border-accent-primary bg-accent-primary text-text-invert shadow-[0_12px_24px_-16px_var(--accent-primary)]'
+                    : 'border-transparent text-text-secondary hover:border-accent-primary/40 hover:bg-header-hover hover:text-accent-primary'
+                "
+                :aria-current="isNavigationItemActive(item) ? 'page' : undefined"
+              >
+                {{ item.name }}
+              </NuxtLink>
+            </li>
+          </ul>
+        </nav>
 
         <div
-          class="header-action-cluster ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:gap-2 lg:gap-2"
-        >
-          <button
-            type="button"
-            aria-label="ძიების გახსნა"
-            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-header-border bg-transparent text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary max-[399px]:h-9 max-[399px]:w-9 max-[399px]:rounded-[9px] max-[359px]:h-[34px] max-[359px]:w-[34px] md:hidden"
-            @click="openMobileSearch"
-          >
-            <BaseIcon name="search" :size="20" />
-          </button>
+          id="header-compact-search"
+          class="order-3 grid w-full min-w-0 grid-cols-1 items-start md:order-2 md:w-auto md:flex-1 min-[1089px]:hidden"
+          :class="isCatalogListing ? '' : 'max-[767px]:!hidden'"
+        />
 
+        <div
+          class="header-action-cluster order-2 ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:order-3 md:gap-2 lg:gap-2"
+        >
           <button
             type="button"
             :aria-label="accountButtonLabel"
@@ -349,39 +368,29 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div class="md:hidden">
-        <HeaderSearch
-          ref="mobileSearchRef"
-          :hide-mobile-trigger="true"
-          :sheet-only="true"
-          @open-mobile-search="closeMobileMenu"
-        />
-      </div>
 
-      <nav
-        v-if="navigationMenuItems.length"
-        class="mt-3 hidden border-t border-header-border/80 pt-2 lg:block"
-        aria-label="მთავარი ნავიგაცია"
-      >
-        <ul class="flex min-h-10 items-center gap-[16px] overflow-x-auto">
-          <li v-for="item in navigationMenuItems" :key="item.id" class="shrink-0">
-            <NuxtLink
-              :to="item.final_url"
-              class="inline-flex min-h-10 items-center rounded-[8px] border px-3 text-[14px] font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary upper"
-              :class="
-                isNavigationItemActive(item)
-                  ? 'border-accent-primary bg-accent-primary text-text-invert shadow-[0_12px_24px_-16px_var(--accent-primary)]'
-                  : 'border-transparent text-text-secondary hover:border-accent-primary/40 hover:bg-header-hover hover:text-accent-primary'
-              "
-              :aria-current="isNavigationItemActive(item) ? 'page' : undefined"
-            >
-              {{ item.name }}
-            </NuxtLink>
-          </li>
-        </ul>
-      </nav>
+
     </div>
+    <div id="header-mobile-suggestions" class="relative min-[1089px]:hidden" />
+    <ClientOnly>
+      <Teleport to="#header-mobile-filters" :disabled="!headerMounted || !filtersInMobileFlow">
+        <div class="relative z-30 border-t border-header-border bg-header-bg" :class="isCatalogListing ? 'max-[1088px]:hidden' : ''">
+          <div class="container-fluid px-3 py-2 sm:px-4 sm:py-3 md:py-4">
+            <HeaderSearch inline :hide-vehicle-filters="isCatalogListing" :hide-mobile-trigger="true" @open-mobile-search="closeMobileMenu" />
+          </div>
+        </div>
+      </Teleport>
+      <template #fallback>
+        <div class="border-t border-header-border bg-header-bg" :class="isCatalogListing ? 'max-[1088px]:hidden' : ''" aria-hidden="true">
+          <div class="container-fluid px-3 py-2 sm:px-4 md:py-4">
+            <div :class="isCatalogListing ? 'h-12 md:h-20' : 'h-[264px] min-[440px]:h-[180px] sm:h-[220px] md:h-[108px] min-[1089px]:h-[200px] min-[1248px]:h-[108px]'" />
+          </div>
+        </div>
+      </template>
+    </ClientOnly>
   </header>
+
+  <div id="header-mobile-filters" class="relative z-30 md:hidden" />
 
   <HeaderAccountDialog
     :show="isAccountDialogOpen"
@@ -426,7 +435,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="border-b border-header-border px-4 py-4 lg:hidden">
+        <div class="border-b border-header-border px-4 py-4 min-[1089px]:hidden">
           <button
             type="button"
             class="flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[14px] border border-header-border bg-header-surface px-3 text-left text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:bg-header-hover hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
@@ -588,13 +597,13 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1089px) {
   .header-menu-button {
     display: none;
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1088px) {
   .header-theme-button {
     display: none;
   }

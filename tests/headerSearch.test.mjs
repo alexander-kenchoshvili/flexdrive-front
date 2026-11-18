@@ -39,7 +39,7 @@ async function mountSearch(location, options = {}) {
     "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
     "@vueuse/core": {
-      onClickOutside() {}, useMediaQuery: () => options.mobileViewport ?? vue.ref(false), useDebounceFn: options.debounce ?? ((fn) => fn),
+      onClickOutside() {}, useMediaQuery: (query) => query.includes("1088") ? (options.compactViewport ?? vue.ref(false)) : (options.mobileViewport ?? vue.ref(false)), useDebounceFn: options.debounce ?? ((fn) => fn),
     },
     "~/components/common/BasePicture.vue": {},
     "./HeaderSearchFilters.vue": {},
@@ -55,7 +55,7 @@ async function mountSearch(location, options = {}) {
   };
   const globals = {
     ...vue, useRoute, useRouter,
-    defineEmits: () => () => {}, defineProps: () => ({}),
+    defineEmits: () => () => {}, defineProps: () => (options.props ?? {}),
     withDefaults: (props, defaults) => ({ ...defaults, ...props }), defineExpose() {},
     useEcommerceAnalytics: () => ({ trackSearch: (q) => trackedSearches.push(q), trackSearchSelection: (...args) => trackedSelections.push(args) }),
     navigateTo: (path) => router.push(path),
@@ -683,4 +683,126 @@ test("non-Latin characters and length errors have distinct VIN guidance", async 
   await c.search.submitSearch();
   assert.match(c.search.vinMessage.value, /მხოლოდ ლათინური/);
   assert.equal(requests, 0);
+});
+
+
+// Exercise the redesigned inline setup, not only the retained legacy sheet.
+for (const mobile of [false, true]) {
+  const inlineOptions = () => ({ props: { inline: true }, mobileViewport: vue.ref(mobile), compactViewport: vue.ref(mobile) });
+  test(`inline ${mobile ? "mobile" : "desktop"}: automatic suggestions keep draft filters until Enter`, async (t) => {
+    const calls = [];
+    const c = await mountSearch("/", { ...inlineOptions(), fetchSuggestions: async (q, filters) => { calls.push({ q, filters }); return [{ id: 1, name: q, slug: "hood" }]; } });
+    t.after(() => c.app.unmount());
+    c.search.updateMake("subaru");
+    c.search.updateModel("forester");
+    c.search.updateYear("2018");
+    c.search.selectedCategories.value = ["body", "lights"];
+    await c.search.openDesktopPanel();
+    await c.input("კაპოტი");
+    assert.equal(c.search.showSuggestionList.value, true);
+    assert.deepEqual(calls.at(-1), { q: "კაპოტი", filters: { make: "subaru", model: "forester", year: 2018, categories: "body,lights" } });
+    assert.equal(c.router.currentRoute.value.fullPath, "/");
+    await c.search.handleInputKeydown({ key: "Enter", preventDefault() {} });
+    assert.deepEqual(c.router.currentRoute.value.query, { q: "კაპოტი", make: "subaru", model: "forester", year: "2018", categories: "body,lights" });
+  });
+  test(`inline ${mobile ? "mobile" : "desktop"}: Escape cannot leave a hidden keyboard-selectable result`, async (t) => {
+    const c = await mountSearch("/", { ...inlineOptions(), fetchSuggestions: async () => [{ id: 1, name: "Hood", slug: "hood", sku: "FD-01-0001" }] });
+    t.after(() => c.app.unmount());
+    await c.search.openDesktopPanel();
+    await c.input("კაპოტი");
+    await c.search.handleInputKeydown({ key: "Escape" });
+    await c.search.handleInputKeydown({ key: "ArrowDown", preventDefault() {} });
+    await c.search.handleInputKeydown({ key: "Enter", preventDefault() {} });
+    assert.equal(c.router.currentRoute.value.path, "/catalog");
+    assert.equal(c.router.currentRoute.value.query.q, "კაპოტი");
+    assert.deepEqual(c.trackedSelections, []);
+  });
+  test(`inline ${mobile ? "mobile" : "desktop"}: VIN clears stale filters, then part search retains car/version`, async (t) => {
+    let decodes = 0;
+    const c = await mountSearch("/catalog?make=subaru&categories=lights&engine=old&brand=tyc&page=3", { ...inlineOptions(), props: { inline: true, hideVehicleFilters: true }, decodeVin: async () => { decodes++; return matchedVin; } });
+    t.after(() => c.app.unmount());
+    await c.input(sampleVin);
+    await c.search.handleInputKeydown({ key: "Enter", preventDefault() {} });
+    assert.equal(decodes, 1);
+    assert.deepEqual(c.router.currentRoute.value.query, matchedVin.filters);
+    assert.equal(c.search.searchText.value, "");
+    await c.input("კაპოტი");
+    await c.search.submitSearch();
+    assert.deepEqual(c.router.currentRoute.value.query, { ...matchedVin.filters, q: "კაპოტი" });
+  });
+  test(`inline ${mobile ? "mobile" : "desktop"}: catalog text-only search retains engine/refinements and drops page`, async (t) => {
+    const c = await mountSearch("/catalog/category/body?make=subaru&model=forester&year=2018&variant=sport&engine=2&brand=tyc&side=left&in_stock=true&ordering=price_asc&page=3", { ...inlineOptions(), props: { inline: true, hideVehicleFilters: true } });
+    t.after(() => c.app.unmount());
+    await c.input("კაპოტი");
+    await c.search.submitSearch();
+    assert.deepEqual(c.router.currentRoute.value.query, { make: "subaru", model: "forester", year: "2018", variant: "sport", categories: "body", engine: "2", brand: "tyc", side: "left", in_stock: "true", ordering: "price_asc", q: "კაპოტი" });
+  });
+}
+
+test("inline resize keeps draft, variant and category selections for submission", async (t) => {
+  const mobile = vue.ref(false), compact = vue.ref(false);
+  const c = await mountSearch("/catalog?make=vw&model=jetta&year=2017&variant=gli&categories=body", { props: { inline: true }, mobileViewport: mobile, compactViewport: compact });
+  t.after(() => c.app.unmount());
+  await c.search.openDesktopPanel();
+  await c.input("ბამპერი");
+  for (const [phone, toolbar] of [[false, true], [true, true], [false, false], [true, true]]) { mobile.value = phone; compact.value = toolbar; await flush(); }
+  assert.equal(c.search.searchText.value, "ბამპერი");
+  assert.equal(c.search.selectedVariant.value, "gli");
+  assert.deepEqual(c.search.selectedCategories.value, ["body"]);
+  await c.search.submitSearch();
+  assert.deepEqual(c.router.currentRoute.value.query, { make: "vw", model: "jetta", year: "2017", variant: "gli", categories: "body", q: "ბამპერი" });
+});
+
+
+test("inline closing discards queued/in-flight suggestions while dependent filters still load", async (t) => {
+  const options = deferredSearchOptions();
+  const modelCalls = [];
+  const c = await mountSearch("/", { ...options, props: { inline: true }, fetchModels: async (make) => { modelCalls.push(make); return [{ slug: "forester", name: "Forester" }]; } });
+  t.after(() => c.app.unmount());
+  c.search.updateMake("subaru");
+  await flush();
+  assert.equal(modelCalls.at(-1), "subaru");
+  assert.equal(c.search.models.value[0].slug, "forester");
+  await c.search.openDesktopPanel();
+  await c.input("სარკე");
+  options.queued.shift()();
+  await c.input("კაპოტი");
+  c.search.closeDesktopPanel();
+  options.queued.shift()();
+  options.requests[0].resolve([{ id: 1, name: "stale" }]);
+  await flush();
+  assert.equal(options.requests.length, 1);
+  assert.equal(c.search.showSuggestionList.value, false);
+  assert.deepEqual(c.search.suggestions.value, []);
+  await c.search.openDesktopPanel();
+  options.requests[1].resolve([{ id: 2, name: "current" }]);
+  await flush();
+  assert.equal(c.search.suggestions.value[0].id, 2);
+});
+
+
+for (const mobile of [false, true]) {
+  test(`inline ${mobile ? "mobile" : "desktop"}: keyboard selects only the ${mobile ? 3 : 5} visible suggestions`, async (t) => {
+    const c = await mountSearch("/", { props: { inline: true }, mobileViewport: vue.ref(mobile), fetchSuggestions: async () => Array.from({ length: 5 }, (_, i) => ({ id: i + 1, name: `Part ${i + 1}`, slug: `part-${i + 1}`, sku: `SKU-${i + 1}` })) });
+    t.after(() => c.app.unmount());
+    await c.search.openDesktopPanel();
+    await c.input("კაპოტი");
+    await c.search.handleInputKeydown({ key: "ArrowUp", preventDefault() {} });
+    await c.search.handleInputKeydown({ key: "Enter", preventDefault() {} });
+    assert.equal(c.router.currentRoute.value.path, `/catalog/part-${mobile ? 3 : 5}`);
+  });
+}
+
+test("shrinking to mobile clears an active desktop suggestion that becomes hidden", async (t) => {
+  const mobile = vue.ref(false);
+  const c = await mountSearch("/", { props: { inline: true }, mobileViewport: mobile, fetchSuggestions: async () => Array.from({ length: 5 }, (_, i) => ({ id: i + 1, name: `Part ${i + 1}`, slug: `part-${i + 1}` })) });
+  t.after(() => c.app.unmount());
+  await c.search.openDesktopPanel();
+  await c.input("კაპოტი");
+  await c.search.handleInputKeydown({ key: "ArrowUp", preventDefault() {} });
+  mobile.value = true;
+  await flush();
+  await c.search.handleInputKeydown({ key: "Enter", preventDefault() {} });
+  assert.equal(c.router.currentRoute.value.path, "/catalog");
+  assert.equal(c.router.currentRoute.value.query.q, "კაპოტი");
 });

@@ -4,6 +4,7 @@ import BaseButton from "~/components/common/BaseButton.vue";
 import type { BaseSelectOption } from "~/components/common/BaseSelect.vue";
 
 const props = defineProps<{
+  embedded?: boolean;
   make: string;
   model: string;
   year: string;
@@ -26,6 +27,16 @@ const emit = defineEmits<{
   (e: "categories", value: string[]): void;
   (e: "search" | "clear" | "retry"): void;
 }>();
+// Empty value is a UI-only reset choice; it never enters catalog filters.
+const categorySelectOptions = computed(() => [
+  { label: "ყველა კატეგორია", value: "" },
+  ...props.categoryOptions,
+]);
+const categorySelectValues = computed(() => props.selectedCategories.length ? props.selectedCategories : [""]);
+const updateCategories = (values: Array<string | number>) => {
+  const next = values.map(String);
+  emit("categories", props.selectedCategories.length && next.includes("") ? [] : next.filter(Boolean));
+};
 const selectedOptions = computed(() => props.selectedCategories.map((value) => ({
   value,
   label: props.categoryOptions.find((option) => String(option.value) === value)?.label || value,
@@ -33,15 +44,17 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
 </script>
 
 <template>
-  <section aria-label="ძიების ფილტრები" class="min-w-0">
-    <div class="header-search-filter-grid grid min-w-0 grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <section aria-label="ძიების ფილტრები" class="min-w-0" :class="embedded ? 'max-[767px]:[&_label]:sr-only max-[659px]:[&_[aria-haspopup=listbox]]:min-h-9 max-[659px]:[&_[aria-haspopup=listbox]]:py-2 max-[659px]:[&_[aria-haspopup=listbox]]:text-xs max-[639px]:[&_[aria-haspopup=listbox]]:min-h-7 max-[639px]:[&_[aria-haspopup=listbox]]:py-1 max-[639px]:[&_[aria-haspopup=listbox]]:pl-2.5 max-[639px]:[&_[aria-haspopup=listbox]]:pr-8 max-[639px]:[&_[aria-haspopup=listbox]]:text-[10px] max-[639px]:[&_[aria-haspopup=listbox]_svg]:h-4 max-[639px]:[&_[aria-haspopup=listbox]_svg]:w-4' : ''">
+    <div
+      class="grid min-w-0 items-start"
+      :class="embedded ? 'grid-cols-1 gap-3 max-[639px]:gap-2 min-[440px]:grid-cols-2 md:grid-cols-4 md:gap-2.5 min-[1248px]:gap-3' : 'header-search-filter-grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'">
       <BaseSelect
         :model-value="make"
         :options="makeOptions"
         label="მარკა"
         placeholder="ყველა მარკა"
         empty-text="მარკები ვერ მოიძებნა"
-        inline-options
+        :inline-options="!embedded"
         :disabled="makesPending"
         @update:model-value="emit('make', String($event || ''))"
       />
@@ -51,7 +64,7 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
         label="მოდელი"
         placeholder="ყველა მოდელი"
         empty-text="მოდელები ვერ მოიძებნა"
-        inline-options
+        :inline-options="!embedded"
         :disabled="!make || vehiclePending"
         @update:model-value="emit('model', String($event || ''))"
       />
@@ -61,24 +74,24 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
         label="წელი"
         placeholder="ყველა წელი"
         empty-text="წლები ვერ მოიძებნა"
-        inline-options
+        :inline-options="!embedded"
         :disabled="!make || vehiclePending"
         @update:model-value="emit('year', String($event || ''))"
       />
       <BaseSelect
         class="min-w-0"
-        :selected-values="selectedCategories"
-        :options="categoryOptions"
+        :selected-values="categorySelectValues"
+        :options="categorySelectOptions"
         label="კატეგორიები"
         placeholder="ყველა კატეგორია"
         empty-text="კატეგორიები ვერ მოიძებნა"
         multiple
-        inline-options
+        :inline-options="!embedded"
         :disabled="categoriesPending"
-        @update:selected-values="emit('categories', $event.map(String))"
+        @update:selected-values="updateCategories"
       />
     </div>
-    <div v-if="selectedOptions.length || canClear" class="mt-3 flex min-w-0 items-center justify-between gap-3">
+    <div v-if="selectedOptions.length || canClear" class="mt-3 flex min-w-0 items-center justify-between gap-3" :class="embedded && !selectedOptions.length ? 'hidden' : ''">
       <ul v-if="selectedOptions.length" class="flex min-w-0 flex-1 flex-wrap gap-2" aria-label="არჩეული კატეგორიები">
         <li v-for="option in selectedOptions" :key="option.value" class="min-w-0 max-w-full">
           <button
@@ -92,13 +105,13 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
           </button>
         </li>
       </ul>
-      <BaseButton v-if="canClear" class="ml-auto shrink-0" variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
+      <BaseButton v-if="canClear" class="ml-auto shrink-0" :class="embedded ? 'hidden' : ''" variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
     </div>
     <div v-if="error" class="mt-3 flex flex-wrap items-center gap-2 text-sm text-warning" role="status">
       <p>{{ error }}</p>
       <button type="button" class="min-h-11 font-semibold underline" @click="emit('retry')">ხელახლა ცდა</button>
     </div>
-    <div class="mt-4 flex justify-end border-t border-border-default pt-4 md:hidden">
+    <div v-if="!embedded" class="mt-4 flex justify-end border-t border-border-default pt-4 md:hidden">
       <BaseButton :disabled="!canSubmit" @click="emit('search')">ძებნა</BaseButton>
     </div>
   </section>

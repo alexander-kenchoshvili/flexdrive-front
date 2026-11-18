@@ -86,8 +86,8 @@ for (const mobile of [false, true]) {
     await vm[mobile ? "openMobileSheet" : "openDesktopPanel"]();
     await flush();
     const images = all(root).filter((el) => el.tag === "img");
-    assert.equal(images.length, 5);
-    assert.deepEqual(images.map((el) => el.props.src), ["/placeholder.webp", "/photo-1.webp", "/photo-2.webp", "/photo-3.webp", "/photo-4.webp"]);
+    assert.equal(images.length, mobile ? 3 : 5);
+    assert.deepEqual(images.map((el) => el.props.src), ["/placeholder.webp", "/photo-1.webp", "/photo-2.webp", "/photo-3.webp", "/photo-4.webp"].slice(0, mobile ? 3 : 5));
     assert.equal(images[1].props.alt, "Photo 2");
     const viewAll = all(root).find((el) => el.tag === "button" && text(el).includes("ყველა შედეგის ნახვა"));
     assert.ok(viewAll, "View all must render below the suggestions");
@@ -101,7 +101,7 @@ for (const mobile of [false, true]) {
 
 
 for (const mobile of [false, true]) {
-  test(`VIN loading/failure is readable in actual ${mobile ? "mobile" : "desktop"} template`, async (t) => {
+  test(`VIN has no transient loading text and retains failure in actual ${mobile ? "mobile" : "desktop"} template`, async (t) => {
     const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/:pathMatch(.*)*", component: slotComponent }] });
     await router.push("/");
     let resolve;
@@ -141,14 +141,13 @@ for (const mobile of [false, true]) {
     await vm[mobile ? "openMobileSheet" : "openDesktopPanel"]();
     const pending = vm.submitSearch();
     await flush();
-    const status = all(root).find((el) => el.props.role === "status");
-    assert.ok(status);
-    assert.equal(status.props["aria-busy"], true);
-    assert.match(text(status), /ავტომობილს ვეძებთ/);
+    assert.equal(all(root).find((el) => el.props.role === "status"), undefined);
+    assert.doesNotMatch(text(root), /ავტომობილს ვეძებთ/);
     resolve({ status: "no_coverage", vehicle: { make: "Honda", model: "Accord", year: 2003 } });
     await pending;
     await flush();
-    assert.equal(status.props["aria-busy"], false);
+    const status = all(root).find((el) => el.props.role === "status");
+    assert.ok(status);
     assert.match(text(status), /Honda Accord.*2003/);
     assert.match(text(status), /ნაწილები ჯერ არ გვაქვს/);
     assert.equal(router.currentRoute.value.path, "/");

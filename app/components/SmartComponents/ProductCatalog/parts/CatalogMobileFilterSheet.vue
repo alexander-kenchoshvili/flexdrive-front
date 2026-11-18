@@ -383,9 +383,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex shrink-0 items-start justify-between gap-3 border-b border-border-default px-4 pb-4 pt-2 sm:px-5"
+          class="flex shrink-0 flex-wrap items-start justify-between gap-x-3 gap-y-1 border-b border-border-default px-4 pb-4 pt-2 sm:px-5"
         >
-          <div>
+          <div class="min-w-0 flex-1">
             <h2
               id="catalog-mobile-filter-title"
               class="text-lg font-bold text-text-primary"
@@ -405,6 +405,16 @@ onBeforeUnmount(() => {
           >
             <XMarkIcon class="h-5 w-5" aria-hidden="true" />
           </button>
+          <div v-if="hasDraftControls" class="flex w-full justify-end">
+            <button
+              type="button"
+              class="inline-flex min-h-9 items-center rounded text-sm font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="disabled"
+              @click="clearDraftFilters"
+            >
+              გასუფთავება
+            </button>
+          </div>
         </div>
 
         <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
@@ -591,15 +601,6 @@ onBeforeUnmount(() => {
         <div
           class="flex shrink-0 items-center gap-3 border-t border-border-default bg-surface px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5"
         >
-          <button
-            type="button"
-            class="min-h-11 shrink-0 text-sm font-semibold text-accent-primary transition-colors duration-200 hover:text-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="disabled || !hasDraftControls"
-            @click="clearDraftFilters"
-          >
-            გასუფთავება
-          </button>
-
           <BaseButton
             type="button"
             class="min-w-0 flex-1"

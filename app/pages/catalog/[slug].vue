@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {
   MagnifyingGlassPlusIcon,
   MinusIcon,
@@ -1033,8 +1033,7 @@ const handleBuyNow = async () => {
                 </div>
 
                 <p v-if="priceAvailable" class="mt-3 text-sm text-text-secondary">
-                  დაამატე პროდუქტი კალათაში ან დაგვიკავშირდი, თუ დამატებითი
-                  კონსულტაცია გჭირდება.
+                  დამატებითი კითხვების შემთხვევაში დაგვიკავშირდით
                 </p>
                 <p v-else class="mt-3 text-sm text-warning">
                   ფასი მომწოდებელთან დასაზუსტებელია. პროდუქტი ჩანს კატალოგში,

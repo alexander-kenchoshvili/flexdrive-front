@@ -67,7 +67,7 @@ const trustItems = [
           class="hero-copy max-w-[560px] py-8 sm:py-10 md:py-12 lg:max-w-[620px]"
         >
           <p
-            class="upper mb-3 inline-flex min-h-[32px] items-center rounded-full border border-accent-primary/25 bg-surface/80 px-3 text-[14px] font-bold leading-5 text-accent-primary shadow-[0_12px_28px_-24px_var(--shadow-color)] backdrop-blur"
+            class="upper mb-3 inline-flex max-[439px]:hidden min-h-[32px] items-center rounded-full border border-accent-primary/25 bg-surface/80 px-3 text-[14px] font-bold leading-5 text-accent-primary shadow-[0_12px_28px_-24px_var(--shadow-color)] backdrop-blur"
           >
             პრემიუმ ხარისხის ავტონაწილები
           </p>
@@ -81,7 +81,7 @@ const trustItems = [
 
           <p
             v-if="heroSubtitle"
-            class="hero-subtitle mt-3 max-w-[520px] text-[16px] font-medium leading-[24px] text-text-secondary"
+            class="hero-subtitle max-[439px]:hidden mt-3 max-w-[520px] text-[16px] font-medium leading-[24px] text-text-secondary"
           >
             {{ heroSubtitle }}
           </p>

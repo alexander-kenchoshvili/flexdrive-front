@@ -72,25 +72,10 @@ const sectionSubtitle = computed(() => sanitizeText(props.data?.subtitle));
 
 const titleParts = computed(() => splitAutoMateTitleParts(sectionTitle.value));
 
-const guestTabLabel = computed(() => {
-  const tab = items.value
-    .filter((item) => item.contentType === "guest_tab")
-    .sort(byOrder)[0];
-  return tab?.title || "სტუმრად ყიდვა";
-});
-
-const registeredTabLabel = computed(() => {
-  const tab = items.value
-    .filter((item) => item.contentType === "registered_tab")
-    .sort(byOrder)[0];
-  return tab?.title || "ანგარიშით ყიდვა";
-});
-
-const tabs = computed(() => [
-  { key: "guest" as FlowKey, label: guestTabLabel.value },
-  { key: "registered" as FlowKey, label: registeredTabLabel.value },
-]);
-
+const tabs = [
+  { key: "guest" as FlowKey, label: "სტუმარი" },
+  { key: "registered" as FlowKey, label: "რეგისტრაცია" },
+];
 const activeFlow = ref<FlowKey>("guest");
 
 const steps = computed(() =>
@@ -121,7 +106,7 @@ const mappedCards = computed(() =>
 );
 
 const activeTabLabel = computed(
-  () => tabs.value.find((tab) => tab.key === activeFlow.value)?.label || "",
+  () => tabs.find((tab) => tab.key === activeFlow.value)?.label || "",
 );
 </script>
 

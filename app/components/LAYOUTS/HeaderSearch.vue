@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useId } from "vue";
+import { Teleport, useId } from "vue";
 import { onClickOutside, useDebounceFn, useMediaQuery } from "@vueuse/core";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/vue";
 import HeaderSearchFilters from "./HeaderSearchFilters.vue";
@@ -27,10 +27,14 @@ const props = withDefaults(
   defineProps<{
     hideMobileTrigger?: boolean;
     sheetOnly?: boolean;
+    inline?: boolean;
+    hideVehicleFilters?: boolean;
   }>(),
   {
     hideMobileTrigger: false,
     sheetOnly: false,
+    inline: false,
+    hideVehicleFilters: false,
   },
 );
 
@@ -38,6 +42,10 @@ const route = useRoute();
 const router = useRouter();
 // Match the parent Header mobile trigger and desktop input at the md breakpoint.
 const isMobileViewport = useMediaQuery("(max-width: 767px)");
+const isCompactHeader = useMediaQuery("(max-width: 1088px)");
+const compactSearchMounted = ref(false);
+const searchInToolbar = computed(() => isCompactHeader.value && (!isMobileViewport.value || props.hideVehicleFilters));
+const feedbackInToolbar = computed(() => searchInToolbar.value && (isMobileViewport.value || props.hideVehicleFilters));
 const { getCatalogCategoriesRaw, getCatalogProductSuggestions, getVehicleMakes, getVehicleModels, getVehicleYears, decodeVehicleVin } =
   useCatalogApi();
 const { cardPlaceholderImage } = useCatalogPlaceholderMedia();
@@ -58,6 +66,7 @@ const categories = ref<CatalogCategoryItem[]>([]);
 const categoriesLoaded = ref(false);
 const categoriesPending = ref(false);
 const suggestions = ref<CatalogProductSuggestion[]>([]);
+const visibleSuggestions = computed(() => isMobileViewport.value ? suggestions.value.slice(0, 3) : suggestions.value);
 const suggestionsPending = ref(false);
 const suggestionsError = ref<string | null>(null);
 const activeSuggestionIndex = ref(-1);
@@ -108,7 +117,7 @@ const showNoResults = computed(
 const hasActiveSuggestion = computed(
   () =>
     activeSuggestionIndex.value >= 0 &&
-    activeSuggestionIndex.value < suggestions.value.length,
+    activeSuggestionIndex.value < visibleSuggestions.value.length,
 );
 const mobileTriggerLabel = computed(
   () => normalizedSearchText.value || "მოძებნე ნაწილი",
@@ -247,11 +256,12 @@ const clearFilters = () => {
   selectedYear.value = "";
   selectedCategories.value = [];
 };
-watch([selectedMake, selectedModel], () => { if (isSearchSurfaceOpen.value) void loadVehicleOptions(); });
+watch([selectedMake, selectedModel], () => { if (props.inline || isSearchSurfaceOpen.value) void loadVehicleOptions(); });
 
 const fetchSuggestions = async (query: string) => {
   const normalizedQuery = query.trim();
-  // A queued debounce may run after the input changed or the panel closed.
+  // Only suggestions update while typing; applying the full catalog still
+  // requires Search/Enter. Ignore a queued request for an obsolete draft.
   if (normalizedQuery !== normalizedSearchText.value || !isSearchSurfaceOpen.value) return;
 
   if (isVinQuery.value || normalizedQuery.length < 2) {
@@ -310,7 +320,7 @@ const closeAllSearchSurfaces = () => {
 };
 
 const openDesktopPanel = async () => {
-  if (isMobileViewport.value || isDesktopOpen.value) return;
+  if ((!props.inline && isMobileViewport.value) || isDesktopOpen.value) return;
 
   isDesktopOpen.value = true;
   activeSuggestionIndex.value = -1;
@@ -363,7 +373,7 @@ const submitSearch = async () => {
   const isCatalogSearch = /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path);
 
   if (isVinQuery.value) {
-    if (isMobileViewport.value) isMobileOpen.value = true;
+    if (isMobileViewport.value && !props.inline) isMobileOpen.value = true;
     else isDesktopOpen.value = true;
     vinMessage.value = "";
     resetSuggestionsState();
@@ -429,7 +439,7 @@ const submitSearch = async () => {
 
   const refinements: Record<string, string> = {};
   if (isCatalogSearch && !clearCatalogRefinementsOnSubmit.value) {
-    for (const key of ["brand", "placement", "side", "in_stock", "on_sale", "min_price", "max_price", "ordering"]) {
+    for (const key of ["brand", "placement", "side", "in_stock", "on_sale", "min_price", "max_price", "ordering", ...(props.hideVehicleFilters ? ["engine"] : [])]) {
       const rawValue = route.query[key];
       const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
       if (typeof value === "string" && value) refinements[key] = value;
@@ -486,7 +496,7 @@ const handleInputKeydown = async (event: KeyboardEvent) => {
     if (!showSuggestionList.value) return;
     event.preventDefault();
     activeSuggestionIndex.value =
-      activeSuggestionIndex.value < suggestions.value.length - 1
+      activeSuggestionIndex.value < visibleSuggestions.value.length - 1
         ? activeSuggestionIndex.value + 1
         : 0;
     return;
@@ -498,7 +508,7 @@ const handleInputKeydown = async (event: KeyboardEvent) => {
     activeSuggestionIndex.value =
       activeSuggestionIndex.value > 0
         ? activeSuggestionIndex.value - 1
-        : suggestions.value.length - 1;
+        : visibleSuggestions.value.length - 1;
     return;
   }
 
@@ -506,7 +516,7 @@ const handleInputKeydown = async (event: KeyboardEvent) => {
     event.preventDefault();
 
     if (showSuggestionList.value && hasActiveSuggestion.value) {
-      await goToSuggestion(suggestions.value[activeSuggestionIndex.value]!);
+      await goToSuggestion(visibleSuggestions.value[activeSuggestionIndex.value]!);
       return;
     }
 
@@ -554,6 +564,8 @@ watch(() => route.fullPath, closeAllSearchSurfaces);
 watch(headerRouteKey, syncSearchTextFromRoute);
 
 watch(isMobileViewport, (isMobile) => {
+  activeSuggestionIndex.value = -1;
+  if (props.inline) return;
   if (isMobile) {
     closeDesktopPanel();
     return;
@@ -563,6 +575,7 @@ watch(isMobileViewport, (isMobile) => {
 });
 
 onMounted(() => {
+  compactSearchMounted.value = true;
   // Remove history left by older versions; this panel no longer persists searches.
   try {
     window.localStorage.removeItem("flexdrive-header-searches");
@@ -570,6 +583,7 @@ onMounted(() => {
     // Search remains available when browser storage is blocked.
   }
   syncSearchTextFromRoute();
+  if (props.inline) void ensureFiltersLoaded();
 });
 
 onBeforeUnmount(() => {
@@ -580,10 +594,10 @@ onBeforeUnmount(() => {
 });
 
 onClickOutside(rootRef, () => {
-  if (showDesktopPanel.value) {
+  if (props.inline ? isDesktopOpen.value : showDesktopPanel.value) {
     closeDesktopPanel();
   }
-});
+}, { ignore: ["#header-compact-search", "#header-mobile-suggestions"] });
 
 defineExpose({
   openMobileSheet,
@@ -593,7 +607,103 @@ defineExpose({
 
 <template>
   <div ref="rootRef" class="w-full min-w-0">
-    <div v-if="!props.sheetOnly" class="relative hidden md:block">
+
+    <div v-if="props.inline" class="relative min-w-0">
+      <form
+        :id="searchInputId + '-form'"
+        role="search"
+        class="grid min-w-0 grid-cols-1 items-start gap-x-2 md:grid-cols-[minmax(0,1fr)_auto] gap-y-4 max-[639px]:gap-y-2.5 sm:gap-x-3 md:rounded-2xl md:border md:border-header-border md:bg-header-surface/40 md:p-4 min-[1248px]:gap-4"
+        :class="props.hideVehicleFilters ? 'min-[1248px]:grid-cols-[minmax(0,1fr)_auto]' : 'min-[1248px]:grid-cols-[minmax(0,2fr)_minmax(16rem,1.1fr)_auto]'"
+        @submit.prevent="submitSearch"
+      >
+        <Teleport to="#header-compact-search" :disabled="!compactSearchMounted || !searchInToolbar">
+          <div class="min-w-0 max-[1088px]:self-end" :class="props.hideVehicleFilters ? 'order-2 self-end' : 'order-1 md:order-2'">
+            <label v-if="!props.hideVehicleFilters" :for="searchInputId + '-inline'" class="sr-only text-sm font-semibold text-text-secondary min-[1089px]:not-sr-only min-[1089px]:mb-2 min-[1089px]:block">ნაწილი ან VIN</label>
+            <div class="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-header-border bg-header-surface px-3 transition-colors focus-within:border-accent-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent-primary/15 max-[639px]:h-10 max-[639px]:gap-1.5 max-[639px]:px-2.5" :class="searchInToolbar ? 'max-[1088px]:pr-1' : ''">
+              <BaseIcon name="search" :size="18" class="shrink-0 text-text-muted" aria-hidden="true" />
+              <input
+                :id="searchInputId + '-inline'" :form="searchInputId + '-form'" name="q" ref="mobileInputRef"
+                v-model="searchText" type="search"
+                :placeholder="compactSearchMounted && isMobileViewport ? 'ნაწილი ან VIN კოდი' : searchPlaceholder" :aria-label="searchPlaceholder"
+                :aria-expanded="isDesktopOpen && !isVinQuery && Boolean(normalizedSearchText)"
+                :aria-controls="searchInputId + '-suggestions'"
+                autocomplete="off" spellcheck="false" maxlength="255"
+                class="h-full min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none sm:text-sm max-[849px]:placeholder:text-[12px] max-[639px]:placeholder:text-xs max-[639px]:text-sm"
+                @focus="openDesktopPanel" @click="openDesktopPanel" @keydown="handleInputKeydown"
+              />
+              <BaseButton v-if="compactSearchMounted && searchInToolbar" type="submit" :form="searchInputId + '-form'" :disabled="!canSubmit" class="h-10 !min-h-0 shrink-0 rounded-lg px-3 text-sm max-[849px]:h-8 max-[849px]:!px-2 max-[849px]:!py-1 max-[849px]:text-xs max-[659px]:h-6 max-[659px]:!py-0 max-[659px]:text-[10px]">ძებნა</BaseButton>
+            </div>
+          </div>
+        </Teleport>
+        <div class="contents">
+          <HeaderSearchFilters
+            v-if="!props.hideVehicleFilters"
+            embedded
+            class="order-2 min-w-0 md:order-1 md:col-span-2 min-[1248px]:col-span-1"
+            :make="selectedMake" :model="selectedModel" :year="selectedYear"
+            :selected-categories="selectedCategories" :category-options="categoryOptions"
+            :make-options="makeOptions" :model-options="modelOptions" :year-options="yearOptions"
+            :categories-pending="categoriesPending" :makes-pending="makesPending"
+            :vehicle-pending="vehiclePending" :error="filterError" :can-submit="canSubmit"
+            :can-clear="canClear"
+            @make="updateMake" @model="updateModel" @year="updateYear"
+            @categories="selectedCategories = $event" @search="submitSearch"
+            @clear="clearFilters" @retry="ensureFiltersLoaded"
+          />
+          <div class="order-3 grid md:max-[1088px]:hidden max-[659px]:!grid-rows-[2.5rem] max-[639px]:!grid-rows-[2rem]" :class="props.hideVehicleFilters ? 'grid-rows-[3rem]' : 'grid-rows-[3rem] md:grid-rows-[1.25rem_3rem] md:gap-2'">
+            <button v-if="canClear && !props.hideVehicleFilters" type="button" class="hidden h-5 items-center justify-start rounded text-sm font-semibold text-text-secondary transition-colors hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary min-[1089px]:inline-flex" @click="clearFilters">გასუფთავება</button>
+            <BaseButton type="submit" :disabled="!canSubmit" class="h-12 shrink-0 rounded-xl px-4 sm:min-w-[112px] sm:px-6 min-[1248px]:min-w-[132px] min-[1248px]:px-7 max-[767px]:w-full max-[767px]:text-base max-[659px]:h-10 max-[659px]:!min-h-0 max-[659px]:!py-2 max-[659px]:text-sm max-[639px]:h-8 max-[639px]:!py-1 max-[639px]:text-xs" :class="props.hideVehicleFilters ? 'row-start-1' : 'row-start-1 md:row-start-2'">ძებნა</BaseButton>
+          </div>
+        </div>
+      </form>
+      <Teleport to="#header-mobile-suggestions" :disabled="!compactSearchMounted || !feedbackInToolbar">
+        <div v-if="isVinQuery && vinMessage" class="mt-3 rounded-xl border border-header-border bg-header-surface px-4 py-3 text-sm leading-6 max-[767px]:mx-3 max-[767px]:mb-3 max-[767px]:mt-0" role="status" aria-live="polite">
+
+          <p class="text-warning">{{ vinMessage }}</p>
+        </div>
+        <div
+          v-if="isDesktopOpen && normalizedSearchText && !isVinQuery"
+          :id="searchInputId + '-suggestions'"
+          :class="!props.hideVehicleFilters ? 'max-[767px]:top-12 max-[639px]:top-10' : ''"
+          class="header-search-scroll absolute inset-x-0 top-full z-50 mt-3 max-h-[min(28rem,55dvh)] overflow-y-auto overscroll-contain rounded-2xl border border-header-border bg-surface p-3 shadow-[0_24px_60px_-20px_var(--shadow-color)] sm:p-4" aria-live="polite" :aria-busy="suggestionsPending">
+          <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
+          <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
+          <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>
+          <ul v-else-if="showSuggestionList" class="space-y-2" aria-label="ნაპოვნი პროდუქტები">
+            <li v-for="(suggestion, index) in visibleSuggestions" :key="suggestion.id">
+              <button
+                type="button"
+                class="grid min-h-20 w-full grid-cols-[3rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1 rounded-lg border p-3 text-left transition-colors sm:flex sm:items-center sm:gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                :class="index === activeSuggestionIndex ? 'border-accent-primary bg-accent-soft' : 'border-border-default bg-surface hover:bg-surface-2'"
+                @click="goToSuggestion(suggestion)"
+              >
+                <span class="row-span-2 block h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-2 sm:h-14 sm:w-14">
+                  <BasePicture
+                    product-image
+                    :data="suggestion.primary_image.desktop || suggestion.primary_image.tablet || suggestion.primary_image.mobile ? suggestion.primary_image : cardPlaceholderImage"
+                    :alt="suggestion.primary_image.alt_text || suggestion.name" preset="search" fit="contain" lazy
+                  />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="header-search-result-title block text-sm font-semibold text-text-primary">{{ suggestion.name }}</span>
+                  <span class="mt-1 block text-xs text-text-muted">{{ suggestion.fitment_summary }}</span>
+                  <span class="mt-1 inline-flex rounded-md border px-2 py-0.5 text-xs" :class="suggestionStatusClass(suggestion)">{{ suggestionStatusLabel(suggestion) }}</span>
+                </span>
+                <span class="col-start-2 min-w-0 max-w-full text-left text-sm font-bold text-accent-primary sm:shrink-0 sm:text-right">{{ suggestion.price_available === false ? 'ფასი დასაზუსტებელია' : `${suggestionPriceLabel(suggestion)} GEL` }}</span>
+              </button>
+            </li>
+          </ul>
+          <p v-else-if="showNoResults" class="text-sm text-text-secondary">შედეგი ვერ მოიძებნა. შეცვალე სიტყვა ან არჩეული ფილტრები.</p>
+          <BaseButton v-if="showSuggestionList" variant="ghost" class="mt-3 w-full items-center justify-center" @click="submitSearch">
+            <span>ყველა შედეგის ნახვა</span>
+            <span aria-hidden="true">→</span>
+          </BaseButton>
+        </div>
+
+      </Teleport>
+    </div>
+
+    <div v-if="!props.inline && !props.sheetOnly" class="relative hidden md:block">
       <form
         class="flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 transition-colors focus-within:border-accent-primary focus-within:bg-surface"
         role="search"
@@ -637,17 +747,17 @@ defineExpose({
             @categories="selectedCategories = $event" @search="submitSearch"
             @clear="clearFilters" @retry="ensureFiltersLoaded"
           />
-          <div v-if="isVinQuery" class="mt-4 space-y-2 border-t border-border-default pt-4 text-sm" role="status" aria-live="polite" :aria-busy="vinPending">
-            <p v-if="vinPending" class="text-text-secondary">ავტომობილს ვეძებთ…</p>
-            <p v-else-if="vinMessage" class="text-warning">{{ vinMessage }}</p>
-            <p v-else class="text-text-secondary">VIN-ის ამოსაცნობად დააჭირე „ძებნას“. შემდეგ ნაწილის სახელს ამავე ველში ჩაწერ.</p>
+          <div v-if="isVinQuery && vinMessage" class="mt-4 space-y-2 border-t border-border-default pt-4 text-sm" role="status" aria-live="polite">
+
+            <p class="text-warning">{{ vinMessage }}</p>
+
           </div>
           <div v-if="normalizedSearchText && !isVinQuery" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
             <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
             <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
             <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>
             <ul v-else-if="showSuggestionList" class="space-y-2" aria-label="ნაპოვნი პროდუქტები">
-              <li v-for="(suggestion, index) in suggestions" :key="suggestion.id">
+              <li v-for="(suggestion, index) in visibleSuggestions" :key="suggestion.id">
                 <button
                   type="button"
                   class="flex min-h-20 w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
@@ -681,7 +791,7 @@ defineExpose({
     </div>
 
     <button
-      v-if="!props.hideMobileTrigger && !props.sheetOnly"
+      v-if="!props.inline && !props.hideMobileTrigger && !props.sheetOnly"
       type="button"
       class="flex min-h-[52px] w-full items-center gap-3 rounded-[14px] border border-header-border bg-header-surface px-4 text-left text-sm text-text-secondary md:hidden"
       @click="openMobileSheet"
@@ -690,7 +800,7 @@ defineExpose({
       <span class="min-w-0 truncate">{{ mobileTriggerLabel }}</span>
     </button>
 
-    <Dialog :open="isMobileOpen" class="relative z-50 md:hidden" @close="closeMobileSheet">
+    <Dialog :open="isMobileOpen && !props.inline" class="relative z-50 md:hidden" @close="closeMobileSheet">
       <div class="fixed inset-0 bg-text-primary/40" aria-hidden="true" />
       <div class="fixed inset-0 flex">
         <DialogPanel class="flex h-[100dvh] w-full min-w-0 flex-col bg-surface">
@@ -725,17 +835,17 @@ defineExpose({
               @categories="selectedCategories = $event" @search="submitSearch"
               @clear="clearFilters" @retry="ensureFiltersLoaded"
             />
-            <div v-if="isVinQuery" class="mt-4 space-y-2 border-t border-border-default pt-4 text-sm" role="status" aria-live="polite" :aria-busy="vinPending">
-            <p v-if="vinPending" class="text-text-secondary">ავტომობილს ვეძებთ…</p>
-            <p v-else-if="vinMessage" class="text-warning">{{ vinMessage }}</p>
-            <p v-else class="text-text-secondary">VIN-ის ამოსაცნობად დააჭირე „ძებნას“. შემდეგ ნაწილის სახელს ამავე ველში ჩაწერ.</p>
+            <div v-if="isVinQuery && vinMessage" class="mt-4 space-y-2 border-t border-border-default pt-4 text-sm" role="status" aria-live="polite">
+
+            <p class="text-warning">{{ vinMessage }}</p>
+
           </div>
           <div v-if="normalizedSearchText && !isVinQuery" class="mt-4 border-t border-border-default pt-4" aria-live="polite" :aria-busy="suggestionsPending">
               <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
               <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
               <p v-else-if="suggestionsError" class="text-sm text-warning">{{ suggestionsError }}</p>
               <ul v-else-if="showSuggestionList" class="space-y-2" aria-label="ნაპოვნი პროდუქტები">
-                <li v-for="(suggestion, index) in suggestions" :key="suggestion.id">
+                <li v-for="(suggestion, index) in visibleSuggestions" :key="suggestion.id">
                   <button
                     type="button"
                     class="flex w-full items-start gap-3 rounded-lg border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
