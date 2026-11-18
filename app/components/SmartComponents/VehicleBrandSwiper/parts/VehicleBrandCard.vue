@@ -94,7 +94,7 @@ const fallbackLabel = computed(() => {
       </span>
 
       <span
-        class="mt-3 flex items-center justify-center gap-1.5 text-[12px] font-extrabold leading-5 text-accent-primary"
+        class="mt-3 flex items-center justify-center gap-1.5 text-[10px] min-[430px]:text-[12px] font-extrabold leading-5 text-accent-primary"
       >
         <span>ნაწილების ნახვა</span>
         <ArrowRightIcon

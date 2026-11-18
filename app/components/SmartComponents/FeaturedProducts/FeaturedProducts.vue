@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowRightIcon } from "@heroicons/vue/20/solid";
 import { Swiper, SwiperSlide } from "swiper/vue";
+import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import type { Swiper as SwiperInstance } from "swiper";
 
@@ -52,6 +53,15 @@ const featuredProducts = computed<CatalogProductCardData[]>(() => {
   }));
 });
 
+const canLoop = computed(() => featuredProducts.value.length > 1);
+// Keep the same featured selection. Four visible cards need extra slide slots
+// for a seamless loop; repeat the existing sequence instead of fetching new items.
+const carouselProducts = computed(() => {
+  const products = featuredProducts.value;
+  if (!canLoop.value || products.length >= 5) return products;
+  return Array.from({ length: Math.ceil(5 / products.length) }, () => products).flat();
+});
+const swiperModules = [Autoplay];
 const showDots = computed(() => dotCount.value > 1);
 
 const handleSwiperInit = (swiper: SwiperInstance) => {
@@ -64,16 +74,14 @@ const handleSwiperChange = (swiper: SwiperInstance) => {
 };
 
 const updateSwiperDots = (swiper: SwiperInstance) => {
-  const snaps = Array.isArray(swiper.snapGrid) ? swiper.snapGrid.length : 1;
-  dotCount.value = Math.max(1, snaps);
-  activeDotIndex.value = Math.min(
-    Math.max(swiper.snapIndex ?? swiper.activeIndex ?? 0, 0),
-    dotCount.value - 1,
-  );
+  dotCount.value = Math.max(1, featuredProducts.value.length);
+  activeDotIndex.value = (swiper.realIndex ?? 0) % dotCount.value;
 };
 
 const goToDot = (index: number) => {
-  swiperInstance.value?.slideTo(index);
+  const swiper = swiperInstance.value;
+  if (swiper?.params.loop) swiper.slideToLoop(index);
+  else swiper?.slideTo(index);
 };
 
 const loadFeaturedProducts = async () => {
@@ -153,17 +161,15 @@ await loadFeaturedProducts();
       </div>
 
       <div v-else>
-        <div class="hidden gap-3 xl:grid xl:grid-cols-4 2xl:gap-4">
-          <ProductCard
-            v-for="product in featuredProducts"
-            :key="product.id"
-            :product="product"
-          />
-        </div>
-
         <ClientOnly>
-          <div class="xl:hidden">
+          <div>
             <Swiper
+              class="xl:!overflow-hidden"
+              :modules="swiperModules"
+              :loop="canLoop"
+              :autoplay="canLoop ? { delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true } : false"
+              :speed="700"
+              :slides-per-group="1"
               :slides-per-view="1.08"
               :space-between="12"
               :watch-overflow="true"
@@ -174,11 +180,14 @@ await loadFeaturedProducts();
                 480: { slidesPerView: 1.35, spaceBetween: 12 },
                 640: { slidesPerView: 2.05, spaceBetween: 14 },
                 900: { slidesPerView: 3.05, spaceBetween: 16 },
+                1280: { slidesPerView: 4, spaceBetween: 12 },
+                1536: { slidesPerView: 4, spaceBetween: 16 },
               }"
             >
               <SwiperSlide
-                v-for="product in featuredProducts"
-                :key="product.id"
+                v-for="(product, index) in carouselProducts"
+                :key="`${product.id}-${index}`"
+                class="h-auto"
               >
                 <ProductCard :product="product" />
               </SwiperSlide>
@@ -217,6 +226,15 @@ await loadFeaturedProducts();
               </template>
             </BaseButton>
           </div>
+          <template #fallback>
+            <div class="hidden gap-3 xl:grid xl:grid-cols-4 2xl:gap-4">
+              <ProductCard
+                v-for="product in featuredProducts"
+                :key="product.id"
+                :product="product"
+              />
+            </div>
+          </template>
         </ClientOnly>
       </div>
     </div>
@@ -225,6 +243,7 @@ await loadFeaturedProducts();
 
 <style scoped>
 .swiper {
+  --swiper-wrapper-transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
   overflow: visible;
 }
 </style>
