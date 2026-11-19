@@ -535,9 +535,14 @@ const submitContactForm = handleSubmit(
                 :key="`${social.type}-${social.url}`"
                 :href="social.url"
                 target="_blank"
-                rel="noreferrer"
-                class="rounded-lg border border-border-default bg-surface-2 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-lg border border-border-default bg-surface-2 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors duration-200 hover:border-accent-primary hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
               >
+                <BaseIcon
+                  v-if="['facebook', 'instagram', 'linkedin', 'tiktok'].includes(social.type.toLowerCase())"
+                  :name="social.type"
+                  :size="16"
+                />
                 {{ social.label }}
               </a>
             </div>

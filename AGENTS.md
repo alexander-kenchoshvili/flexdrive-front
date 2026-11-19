@@ -1,5 +1,25 @@
 # Project Instructions
 
+## Individual Vehicle Clear And Search Focus - 2026-11-20
+
+- User narrowed request to individual X controls (no new dropdown search). Shared
+  BaseSelect adds opt-in single-value clearable; enabled only make/model/year in
+  HeaderSearchFilters, desktop CatalogFilters and CatalogMobileFilterSheet.
+  Separate type=button emits existing empty scalar, obeys disabled, reserves label
+  space, restores control focus. Default checkout/other/multiple behavior stays.
+- Existing handlers unchanged: clear make resets model/year; clear model keeps make
+  and resets year; clear year keeps make/model. Existing engine/variant invalidation,
+  unrelated filters, header draft/submit, desktop auto-apply and mobile Apply stay.
+- All header search surfaces use theme focus tokens for green enclosing focus;
+  remove separate input browser ring. No global focus/checkout styling change.
+  Mobile/desktop vehicle-chip text and X icons align centrally and wrap long text;
+  accent-soft/background/border tokens work in both themes. No resize JS added.
+- 104 focused shared-select/header/catalog/refinement checks pass, including 15 new
+  clear/dependency regressions. Scoped ESLint and all7 SFC script/template/CSS
+  in-memory syntax checks pass; whitespace clean. No build/browser/live events/
+  backend/DB/ENV/deploy/push. User owns visual review; no all-viewport visual claim.
+
+
 ## Vehicle Label Visible On Mobile - 2026-11-19
 
 - User approved a compact vehicle-only label above mobile Filter/Sort; no status

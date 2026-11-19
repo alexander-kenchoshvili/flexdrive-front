@@ -287,6 +287,8 @@ watch([minPriceModel, maxPriceModel], () => {
       <div class="mt-3 grid gap-2">
         <BaseSelect
           v-model="vehicleMakeModel"
+          clearable
+          clear-label="მარკის გასუფთავება"
           :options="vehicleMakeOptions"
           :placeholder="vehicleMakesPending ? 'მარკები იტვირთება...' : 'მარკა'"
           empty-text="მარკები ჯერ არ არის დამატებული"
@@ -295,6 +297,8 @@ watch([minPriceModel, maxPriceModel], () => {
         />
         <BaseSelect
           v-model="vehicleModelModel"
+          clearable
+          clear-label="მოდელის გასუფთავება"
           :options="vehicleModelOptions"
           placeholder="მოდელი"
           empty-text="ჯერ აირჩიე მარკა ან დაამატე მოდელები"
@@ -302,6 +306,8 @@ watch([minPriceModel, maxPriceModel], () => {
         />
         <BaseSelect
           v-model="vehicleYearModel"
+          clearable
+          clear-label="წლის გასუფთავება"
           :options="vehicleYearOptions"
           placeholder="წელი"
           empty-text="წლების დიაპაზონი ჯერ არ არის მიბმული"

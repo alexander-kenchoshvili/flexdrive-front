@@ -52,7 +52,7 @@ async function catalog(t, location, facets = {}, options = {}) {
   const { descriptor } = parse(readFileSync(new URL("../app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", import.meta.url), "utf8"));
   const output = ts.transpileModule(descriptor.scriptSetup.content.replaceAll("import.meta.client", String(Boolean(options.client))), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest, handleDesktopVehicleMakeUpdate, handleDesktopVehicleModelUpdate, handleDesktopVehicleYearUpdate, handleDraftVehicleMakeUpdate, loadVehicleOptionsForDraft, vehicleModelsResponse, vehicleYearsResponse, vehicleOptionsError, desktopFiltersDisabled };`)(
+  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest, handleDesktopVehicleMakeUpdate, handleDesktopVehicleModelUpdate, handleDesktopVehicleYearUpdate, handleDraftVehicleMakeUpdate, handleDraftVehicleModelUpdate, handleDraftVehicleYearUpdate, draftVehicle, loadVehicleOptionsForDraft, vehicleModelsResponse, vehicleYearsResponse, vehicleOptionsError, desktopFiltersDisabled };`)(
     (name) => mocks[name] ?? (name.endsWith(".vue") ? {} : require(name)), {}, ...Object.values(globals),
   );
   return { ...controls, requests, categoryRequests, router, useSearchText, unmount: () => unmountCallbacks.forEach((callback) => callback()) };
@@ -381,3 +381,32 @@ test("resetting car clears version while unspecified versions are honestly label
   assert.equal(c.router.currentRoute.value.query.variant, undefined);
   assert.equal(c.requests.at(-1).variant, undefined);
 });
+
+for (const [field, expected] of [
+  ["Year", { make: "subaru", model: "forester" }],
+  ["Model", { make: "subaru" }],
+  ["Make", {}],
+]) {
+  test(`desktop clearing ${field} applies once, resets dependencies, and keeps unrelated filters`, async (t) => {
+    const c = await catalog(t, "/catalog?q=part&make=subaru&model=forester&year=2014&variant=touring&categories=lights&brand=tyc");
+    await c[`handleDesktopVehicle${field}Update`]("");
+    await flushCatalog();
+    assert.deepEqual(c.requests.at(-1), { page: 1, page_size: 15, q: "part", categories: "lights", brand: "tyc", ...expected });
+    assert.equal(c.requests.length, 2);
+    assert.equal(c.router.currentRoute.value.query.variant, undefined);
+  });
+
+  test(`mobile clearing ${field} stays a draft until Apply`, async (t) => {
+    const c = await catalog(t, "/catalog?q=part&make=subaru&model=forester&year=2014&variant=touring");
+    const original = c.router.currentRoute.value.fullPath;
+    await c[`handleDraftVehicle${field}Update`]("");
+    await flushCatalog();
+    assert.equal(c.router.currentRoute.value.fullPath, original);
+    assert.equal(c.requests.length, 1);
+    assert.deepEqual(c.draftVehicle.value, { make: expected.make || "", model: expected.model || "", year: "", engine: "" });
+    await c.handleMobileFilterApply({ selectedCategoryId: null, selectedCategorySlugs: [], minPrice: "", maxPrice: "", sort: "recommended", selectedBrand: "", selectedPlacement: "", selectedSide: "", inStock: false, onSale: false, vehicle: c.draftVehicle.value });
+    await flushCatalog();
+    assert.deepEqual(c.requests.at(-1), { page: 1, page_size: 15, q: "part", ...expected });
+    assert.equal(c.router.currentRoute.value.query.variant, undefined);
+  });
+}

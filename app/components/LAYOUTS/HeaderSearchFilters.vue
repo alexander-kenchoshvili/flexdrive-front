@@ -50,6 +50,8 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
       :class="embedded ? 'grid-cols-1 gap-3 max-[639px]:gap-2 min-[440px]:grid-cols-2 md:grid-cols-4 md:gap-2.5 min-[1248px]:gap-3' : 'header-search-filter-grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'">
       <BaseSelect
         :model-value="make"
+        clearable
+        clear-label="მარკის გასუფთავება"
         :options="makeOptions"
         label="მარკა"
         placeholder="ყველა მარკა"
@@ -60,6 +62,8 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
       />
       <BaseSelect
         :model-value="model"
+        clearable
+        clear-label="მოდელის გასუფთავება"
         :options="modelOptions"
         label="მოდელი"
         placeholder="ყველა მოდელი"
@@ -70,6 +74,8 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
       />
       <BaseSelect
         :model-value="year"
+        clearable
+        clear-label="წლის გასუფთავება"
         :options="yearOptions"
         label="წელი"
         placeholder="ყველა წელი"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { XMarkIcon } from "@heroicons/vue/24/outline";
 import BaseSelect from "~/components/common/BaseSelect.vue";
 
 type CatalogSortOption = {
@@ -91,16 +92,16 @@ const sortModel = computed({
           v-for="filter in activeFilters"
           :key="filter.key"
           type="button"
-          class="inline-flex min-h-8 min-w-0 max-w-full items-start gap-1.5 rounded-full border border-accent-primary/35 bg-accent-primary/10 px-3 py-1 text-xs font-semibold text-accent-primary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary hover:text-text-invert disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex min-h-8 min-w-0 max-w-full items-center justify-center gap-2 rounded-full border border-border-default bg-accent-soft px-3 py-1 text-xs font-semibold leading-5 text-accent-primary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary hover:text-text-invert disabled:cursor-not-allowed disabled:opacity-60"
           :disabled="disabled"
           :aria-label="`${filter.label} ფილტრის მოხსნა`"
           @click="emit('removeFilter', filter.key)"
         >
           <span v-if="filter.key !== 'vehicle'" class="shrink-0">{{ filter.label }}</span>
-          <span v-if="filter.value" class="min-w-0 whitespace-normal [overflow-wrap:anywhere] text-left text-current/80">
+          <span v-if="filter.value" class="min-w-0 whitespace-normal [overflow-wrap:anywhere]" :class="filter.key === 'vehicle' ? 'text-center' : 'text-left'">
             {{ filter.value }}
           </span>
-          <span class="shrink-0" aria-hidden="true">×</span>
+          <XMarkIcon class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         </button>
 
         <button

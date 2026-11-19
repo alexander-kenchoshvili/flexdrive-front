@@ -86,6 +86,7 @@ const socialIconMap: Record<string, string> = {
   instagram: "instagram",
   facebook: "facebook",
   linkedin: "linkedin",
+  tiktok: "tiktok",
 };
 
 const socials = computed(() =>

@@ -26,7 +26,7 @@ function select(props) {
     defineEmits: () => (...args) => emitted.push(args),
   };
   const code = ts.transpileModule(descriptor.scriptSetup.content, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const state = new Function("require", "exports", ...Object.keys(globals), `${code}\nreturn { displayLabel, updateValue, searchQuery, filteredOptions, handleSearchKeydown };`)(require, {}, ...Object.values(globals));
+  const state = new Function("require", "exports", ...Object.keys(globals), `${code}\nreturn { displayLabel, updateValue, searchQuery, filteredOptions, handleSearchKeydown, showClear, clearSelection };`)(require, {}, ...Object.values(globals));
   return { ...state, emitted };
 }
 const options = [{ label: "ფარები", value: "lights" }, { label: "სარკეები", value: "mirrors" }];
@@ -69,5 +69,48 @@ test("real shared select renders accessible scalar and multi-value controls thro
     assert.match(html, /კატეგორიები/);
     assert.ok(html.includes(props.multiple ? "ფარები, სარკეები" : "ფარები"));
     assert.doesNotMatch(html, /\[object Object\]/);
+  }
+});
+
+test("individual clear emits the existing empty scalar, including for a zero-valued option", () => {
+  for (const modelValue of ["lights", 0]) {
+    const control = select({ options, modelValue, clearable: true });
+    assert.equal(control.showClear.value, true);
+    control.searchQuery.value = "search";
+    control.clearSelection();
+    assert.deepEqual(control.emitted, [["update:modelValue", ""]]);
+    assert.equal(control.searchQuery.value, "");
+  }
+});
+
+test("clear stays opt-in and cannot alter empty, disabled, or multi-value controls", () => {
+  for (const props of [
+    { modelValue: "lights" },
+    { clearable: true, modelValue: "" },
+    { clearable: true, modelValue: null },
+    { clearable: true, modelValue: undefined },
+    { clearable: true, modelValue: "lights", disabled: true },
+    { clearable: true, multiple: true, selectedValues: ["lights"] },
+  ]) {
+    const control = select({ options, ...props });
+    control.clearSelection();
+    assert.deepEqual(control.emitted, []);
+  }
+});
+
+test("real clear control is a separate named non-submit button with reserved text space", async () => {
+  const component = execute(compileScript(descriptor, { id: "clear-select-test", inlineTemplate: true }).content, { ...vue }).default;
+  for (const clearable of [false, true]) {
+    const html = await renderToString(vue.createSSRApp({ render: () => vue.h(component, {
+      modelValue: "lights", options, clearable, label: "Category", clearLabel: "Clear category",
+    }) }));
+    const buttons = [...html.matchAll(/<button\b[\s\S]*?<\/button>/g)].map(([button]) => button);
+    assert.equal(buttons.length, clearable ? 2 : 1);
+    assert.ok(buttons.every((button) => (button.match(/<button\b/g) || []).length === 1));
+    if (clearable) {
+      assert.match(buttons[0], /padding-right:4.5rem/);
+      assert.match(buttons[1], /type="button"/);
+      assert.match(buttons[1], /aria-label="Clear category"/);
+    }
   }
 });

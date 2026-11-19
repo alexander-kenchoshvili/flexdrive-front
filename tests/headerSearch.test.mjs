@@ -806,3 +806,33 @@ test("shrinking to mobile clears an active desktop suggestion that becomes hidde
   assert.equal(c.router.currentRoute.value.path, "/catalog");
   assert.equal(c.router.currentRoute.value.query.q, "კაპოტი");
 });
+
+for (const path of ["/", "/catalog"]) {
+  for (const [field, expected] of [
+    ["Year", ["subaru", "forester", ""]],
+    ["Model", ["subaru", "", ""]],
+    ["Make", ["", "", ""]],
+  ]) {
+    test(`${path}: clearing ${field} preserves ancestors and stays unsubmitted`, async (t) => {
+      const context = await mountSearch(`${path}?q=part&make=subaru&model=forester&year=2014&variant=touring&categories=lights`, { props: { inline: true } });
+      t.after(() => context.app.unmount());
+      if (path === "/") {
+        // Home starts with a fresh draft; its query is intentionally not a catalog selection.
+        context.search.updateMake("subaru");
+        context.search.updateModel("forester");
+        context.search.updateYear("2014");
+        context.search.selectedVariant.value = "touring";
+        context.search.selectedCategories.value = ["lights"];
+        await context.input("part");
+      }
+      const original = context.router.currentRoute.value.fullPath;
+      context.search[`update${field}`]("");
+      await flush();
+      assert.deepEqual([context.search.selectedMake.value, context.search.selectedModel.value, context.search.selectedYear.value], expected);
+      assert.equal(context.search.selectedVariant.value, "");
+      assert.equal(context.search.searchText.value, "part");
+      assert.deepEqual(context.search.selectedCategories.value, ["lights"]);
+      assert.equal(context.router.currentRoute.value.fullPath, original);
+    });
+  }
+}

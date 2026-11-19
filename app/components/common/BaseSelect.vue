@@ -10,6 +10,7 @@ import {
   CheckIcon,
   ChevronUpDownIcon,
   MagnifyingGlassIcon,
+  XMarkIcon,
 } from "@heroicons/vue/24/solid";
 
 defineOptions({ inheritAttrs: false });
@@ -38,6 +39,8 @@ type BaseSelectProps = {
   multiple?: boolean;
   selectedValues?: Array<string | number>;
   inlineOptions?: boolean;
+  clearable?: boolean;
+  clearLabel?: string;
 };
 
 const props = withDefaults(defineProps<BaseSelectProps>(), {
@@ -58,6 +61,8 @@ const props = withDefaults(defineProps<BaseSelectProps>(), {
   multiple: false,
   selectedValues: () => [],
   inlineOptions: false,
+  clearable: false,
+  clearLabel: "არჩევანის გასუფთავება",
 });
 
 const emit = defineEmits<{
@@ -71,6 +76,19 @@ const searchInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref("");
 
 const selectId = computed(() => props.id || props.name || `select-${uid}`);
+
+const showClear = computed(() => props.clearable && !props.multiple
+  && props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== "");
+
+const clearSelection = () => {
+  if (!showClear.value || props.disabled) return;
+  searchQuery.value = "";
+  emit("update:modelValue", "");
+  // Keep keyboard focus on the stable control after its clear button disappears.
+  if (typeof document !== "undefined") {
+    void nextTick(() => document.getElementById(selectId.value)?.focus());
+  }
+};
 
 const selectedOption = computed(() =>
   props.options.find((option) => option.value === props.modelValue),
@@ -193,20 +211,34 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
           {{ label }}
         </ListboxLabel>
 
-        <ListboxButton
-          :id="selectId"
-          :name="name || undefined"
-          :class="controlClasses"
-          @click="prepareSearch"
-          @keydown.enter="prepareSearch"
-          @keydown.space="prepareSearch"
-          @keydown.down="prepareSearch"
-        >
-          <span class="block truncate">{{ displayLabel }}</span>
-          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <ChevronUpDownIcon class="h-5 w-5 text-text-muted" aria-hidden="true" />
-          </span>
-        </ListboxButton>
+        <div class="relative">
+          <ListboxButton
+            :id="selectId"
+            :name="name || undefined"
+            :class="controlClasses"
+            :style="showClear ? { paddingRight: '4.5rem' } : undefined"
+            @click="prepareSearch"
+            @keydown.enter="prepareSearch"
+            @keydown.space="prepareSearch"
+            @keydown.down="prepareSearch"
+          >
+            <span class="block truncate">{{ displayLabel }}</span>
+            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <ChevronUpDownIcon class="h-5 w-5 text-text-muted" aria-hidden="true" />
+            </span>
+          </ListboxButton>
+          <button
+            v-if="showClear"
+            type="button"
+            class="absolute right-8 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border-default bg-surface-2 text-text-muted transition-colors hover:border-accent-primary hover:bg-accent-soft hover:text-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="disabled"
+            :aria-label="clearLabel"
+            :title="clearLabel"
+            @click.stop="clearSelection"
+          >
+            <XMarkIcon class="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
 
         <transition
           enter-active-class="transition duration-100 ease-out"

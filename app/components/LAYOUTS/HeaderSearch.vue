@@ -619,7 +619,7 @@ defineExpose({
         <Teleport to="#header-compact-search" :disabled="!compactSearchMounted || !searchInToolbar">
           <div class="min-w-0 max-[1088px]:self-end" :class="props.hideVehicleFilters ? 'order-2 self-end' : 'order-1 md:order-2'">
             <label v-if="!props.hideVehicleFilters" :for="searchInputId + '-inline'" class="sr-only text-sm font-semibold text-text-secondary min-[1089px]:not-sr-only min-[1089px]:mb-2 min-[1089px]:block">ნაწილი ან VIN</label>
-            <div class="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-header-border bg-header-surface px-3 transition-colors focus-within:border-accent-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent-primary/15 max-[639px]:h-10 max-[639px]:gap-1.5 max-[639px]:px-2.5" :class="searchInToolbar ? 'max-[1088px]:pr-1' : ''">
+            <div class="header-search-control flex h-12 min-w-0 items-center gap-2 rounded-xl border border-header-border bg-header-surface px-3 transition-colors focus-within:border-accent-primary focus-within:bg-surface max-[639px]:h-10 max-[639px]:gap-1.5 max-[639px]:px-2.5" :class="searchInToolbar ? 'max-[1088px]:pr-1' : ''">
               <BaseIcon name="search" :size="18" class="shrink-0 text-text-muted" aria-hidden="true" />
               <input
                 :id="searchInputId + '-inline'" :form="searchInputId + '-form'" name="q" ref="mobileInputRef"
@@ -628,7 +628,7 @@ defineExpose({
                 :aria-expanded="isDesktopOpen && !isVinQuery && Boolean(normalizedSearchText)"
                 :aria-controls="searchInputId + '-suggestions'"
                 autocomplete="off" spellcheck="false" maxlength="255"
-                class="h-full min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none sm:text-sm max-[849px]:placeholder:text-[12px] max-[639px]:placeholder:text-xs max-[639px]:text-sm"
+                class="header-search-input h-full min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none sm:text-sm max-[849px]:placeholder:text-[12px] max-[639px]:placeholder:text-xs max-[639px]:text-sm"
                 @focus="openDesktopPanel" @click="openDesktopPanel" @keydown="handleInputKeydown"
               />
               <BaseButton v-if="compactSearchMounted && searchInToolbar" type="submit" :form="searchInputId + '-form'" :disabled="!canSubmit" class="h-10 !min-h-0 shrink-0 rounded-lg px-3 text-sm max-[849px]:h-8 max-[849px]:!px-2 max-[849px]:!py-1 max-[849px]:text-xs max-[659px]:h-6 max-[659px]:!py-0 max-[659px]:text-[10px]">ძებნა</BaseButton>
@@ -705,7 +705,7 @@ defineExpose({
 
     <div v-if="!props.inline && !props.sheetOnly" class="relative hidden md:block">
       <form
-        class="flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 transition-colors focus-within:border-accent-primary focus-within:bg-surface"
+        class="header-search-control flex items-center gap-2 rounded-[16px] border border-header-border bg-header-surface p-1.5 transition-colors focus-within:border-accent-primary focus-within:bg-surface"
         role="search"
         @submit.prevent="submitSearch"
       >
@@ -723,7 +723,7 @@ defineExpose({
           autocomplete="off"
           spellcheck="false"
           maxlength="255"
-          class="h-11 min-w-0 flex-1 bg-transparent px-1 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+          class="header-search-input h-11 min-w-0 flex-1 bg-transparent px-1 text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
           @focus="openDesktopPanel"
           @click="openDesktopPanel"
           @keydown="handleInputKeydown"
@@ -811,14 +811,14 @@ defineExpose({
                 <span aria-hidden="true" class="text-2xl leading-none">×</span>
               </BaseButton>
             </div>
-            <form role="search" class="flex items-center gap-2 rounded-lg border border-header-border bg-header-surface px-3 focus-within:border-accent-primary" @submit.prevent="submitSearch">
+            <form role="search" class="header-search-control flex items-center gap-2 rounded-lg border border-header-border bg-header-surface px-3 focus-within:border-accent-primary" @submit.prevent="submitSearch">
               <BaseIcon name="search" :size="18" class="shrink-0 text-text-muted" />
               <input
                 :id="searchInputId + '-mobile'" name="q"
                 ref="mobileInputRef" v-model="searchText" type="search"
                 :placeholder="searchPlaceholder" :aria-label="searchPlaceholder"
                 autocomplete="off" spellcheck="false" maxlength="255"
-                class="h-12 min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
+                class="header-search-input h-12 min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
                 @keydown="handleInputKeydown"
               />
             </form>
@@ -882,6 +882,15 @@ defineExpose({
 </template>
 
 <style scoped>
+.header-search-control:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring) 18%, transparent);
+}
+.header-search-input:focus,
+.header-search-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
 .header-search-panel { max-height: min(720px, calc(100dvh - 160px)); }
 .header-search-result-title { overflow-wrap: anywhere; }
 .header-search-scroll { scrollbar-width: thin; scrollbar-color: var(--border-muted) transparent; }
