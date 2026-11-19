@@ -1,5 +1,16 @@
 # Project Instructions
 
+## Compact Vehicle Clear Appearance - 2026-11-20
+
+- User requested smaller select X, especially on phones, with no circular badge.
+  BaseSelect clear control is now transparent/borderless, subtle rounded keyboard
+  focus only;20px button/12px icon below768,24px/14px otherwise. Existing clearable
+  opt-in, disabled guard, type=button, stop, scalar clear and focus restore unchanged.
+-98 focused select/header/catalog checks and SFC compile/whitespace pass. No full
+  build/browser/backend-data/ENV/migration/deploy/push. User owns frontend deploy.
+  Companion backend change only reorganizes/relabels the admin menu.
+
+
 ## Individual Vehicle Clear And Search Focus - 2026-11-20
 
 - User narrowed request to individual X controls (no new dropdown search). Shared

@@ -230,13 +230,13 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
           <button
             v-if="showClear"
             type="button"
-            class="absolute right-8 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border-default bg-surface-2 text-text-muted transition-colors hover:border-accent-primary hover:bg-accent-soft hover:text-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+            class="absolute right-8 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded border-0 bg-transparent p-0 text-text-muted transition-colors hover:text-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-50 max-[767px]:h-5 max-[767px]:w-5"
             :disabled="disabled"
             :aria-label="clearLabel"
             :title="clearLabel"
             @click.stop="clearSelection"
           >
-            <XMarkIcon class="h-3.5 w-3.5" aria-hidden="true" />
+            <XMarkIcon class="h-3.5 w-3.5 max-[767px]:h-3 max-[767px]:w-3" aria-hidden="true" />
           </button>
         </div>
 
