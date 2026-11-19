@@ -1,5 +1,20 @@
 # Project Instructions
 
+## Vehicle Label Visible On Mobile - 2026-11-19
+
+- User approved a compact vehicle-only label above mobile Filter/Sort; no status
+  copy or visible "vehicle" prefix on either layout. Desktop keeps existing place.
+- Mobile receives existing applied selectedVehicleLabel (including version), hides
+  when empty, reuses handleRemoveActiveFilter('vehicle') and existing pending guard.
+  No VIN/filter/query/analytics behavior changes. Existing complementary lg CSS
+  visibility covers mobile/tablet below1024 and desktop1024+. No resize JS added.
+- Full-width mobile chip uses flexible wrapping, overflow-wrap:anywhere and fixed
+  close mark; results grid child gets min-w-0. Desktop text wraps long tokens too.
+- Three changed Vue SFCs pass in-memory compiler syntax checks; git diff --check
+  passes. No build/test suite/lint/typecheck/browser/prod/deploy operation. User
+  owns visual verification; do not claim every viewport visually verified.
+
+
 ## Header Redesign Search Logic Audit - 2026-11-18
 
 - User explicitly requested confirming search/filter logic survived the full header

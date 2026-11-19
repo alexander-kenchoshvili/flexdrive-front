@@ -657,7 +657,7 @@ defineExpose({
         </div>
       </form>
       <Teleport to="#header-mobile-suggestions" :disabled="!compactSearchMounted || !feedbackInToolbar">
-        <div v-if="isVinQuery && vinMessage" class="mt-3 rounded-xl border border-header-border bg-header-surface px-4 py-3 text-sm leading-6 max-[767px]:mx-3 max-[767px]:mb-3 max-[767px]:mt-0" role="status" aria-live="polite">
+        <div v-if="isVinQuery && vinMessage" class="mt-3 rounded-xl border border-header-border bg-header-surface px-4 py-3 text-sm leading-6 max-[767px]:mb-3" role="status" aria-live="polite">
 
           <p class="text-warning">{{ vinMessage }}</p>
         </div>

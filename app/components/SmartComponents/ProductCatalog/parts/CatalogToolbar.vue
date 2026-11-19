@@ -96,8 +96,8 @@ const sortModel = computed({
           :aria-label="`${filter.label} ფილტრის მოხსნა`"
           @click="emit('removeFilter', filter.key)"
         >
-          <span class="shrink-0">{{ filter.label }}</span>
-          <span v-if="filter.value" class="min-w-0 whitespace-normal break-words text-left text-current/80">
+          <span v-if="filter.key !== 'vehicle'" class="shrink-0">{{ filter.label }}</span>
+          <span v-if="filter.value" class="min-w-0 whitespace-normal [overflow-wrap:anywhere] text-left text-current/80">
             {{ filter.value }}
           </span>
           <span class="shrink-0" aria-hidden="true">×</span>

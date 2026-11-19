@@ -1636,14 +1636,16 @@ useSeoMeta({
         <div
           id="catalog-results-start"
           ref="resultsStartRef"
-          class="flex flex-col gap-2 scroll-mt-28 lg:scroll-mt-40"
+          class="flex min-w-0 flex-col gap-2 scroll-mt-28 lg:scroll-mt-40"
         >
           <div class="lg:hidden">
             <CatalogMobileToolbar
               :result-count="resultCount"
+              :vehicle-label="selectedVehicleLabel"
               :has-active-filters="hasActiveMobileSheetControls"
               :disabled="productsPending"
               @open-filters="openMobileFilterSheet"
+              @remove-vehicle="handleRemoveActiveFilter('vehicle')"
             />
           </div>
 
