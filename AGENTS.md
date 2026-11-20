@@ -1,5 +1,26 @@
 # Project Instructions
 
+## Checkout Personal Number And Accountant Buyer Details - 2026-11-20
+
+- User explicitly requested individual personal number for transport waybills and
+  private buyer details in accountant HTML/Excel. Both cart and Buy Now use the
+  same required individual-only 11 ASCII digit text field with Georgian purpose
+  hint, client/API validation, error focus and idempotency reset on edits. Legal
+  buyers retain company ID/VAT flow; no contact person's personal number required.
+- Personal number stays in form memory and private backend order/payment snapshot;
+  excluded from browser drafts, profile backfill, public/owner summaries, receipts,
+  analytics, bank requests and Wingo payloads. Switching buyer type clears it.
+- Paired backend adds commerce0046 Order.personal_number and pages0087 privacy
+  notice. Old orders/in-flight bank snapshots remain valid with blank number.
+  Accountant shows saved order names/contact, delivery address, type-specific ID,
+  company name and phone; Excel adds one buyer row per order on a separate sheet.
+- 23 focused draft/schema/render/actual-page-payload tests, scoped ESLint and
+  strict vue-tsc app check pass. No full build/browser/live provider or production
+  DB operations. Both deployments and backend migrations required; migration
+  must precede new backend code, then deploy frontend promptly for required field.
+  User owns push/deploy. No existing order/payment/Wingo mutation.
+
+
 ## Compact Vehicle Clear Appearance - 2026-11-20
 
 - User requested smaller select X, especially on phones, with no circular badge.

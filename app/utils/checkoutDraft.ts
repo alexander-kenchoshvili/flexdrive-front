@@ -7,7 +7,7 @@ const textFields = [
   "email", "phone", "city", "address_line", "note",
 ] as const;
 
-// Explicit allowlist: prices, payment tokens and API responses are never persisted.
+// Explicit allowlist: personal numbers, prices, payment tokens and API responses are never persisted.
 export const sanitizeCheckoutDraft = (input: unknown): Partial<CheckoutFormValues> => {
   if (!input || typeof input !== "object" || Array.isArray(input)) return {};
   const data = input as Record<string, unknown>;

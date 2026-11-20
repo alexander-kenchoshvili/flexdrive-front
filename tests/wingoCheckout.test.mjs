@@ -17,9 +17,9 @@ const code = ts.transpileModule(compiled, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const field = vue.defineComponent({
-  props: ["name", "label", "modelValue", "error"],
+  props: ["name", "label", "modelValue", "error", "hint"],
   setup: (props) => () => vue.h("label", [props.label,
-    vue.h("input", { name: props.name, value: props.modelValue }), props.error]),
+    vue.h("input", { name: props.name, value: props.modelValue }), props.error, props.hint]),
 });
 const select = vue.defineComponent({
   props: ["name", "label", "modelValue", "options", "disabled", "error"],
@@ -43,9 +43,9 @@ const regions = [
 const localities = [
   { value: 301, label: "ბათუმი" }, { value: 302, label: "ქობულეთი" },
 ];
-const render = async ({ region = 1, city = 301, pending = false } = {}) => {
+const render = async ({ region = 1, city = 301, pending = false, buyerType = "individual" } = {}) => {
   const app = vue.createSSRApp({ render: () => vue.h(exports.default, {
-    buyerType: "individual", companyName: "", companyIsVatRegistered: null,
+    buyerType, personalNumber: "", companyName: "", companyIsVatRegistered: null,
     companyIdentificationCode: "", firstName: "Test", lastName: "Buyer", email: "", phone: "555000001",
     deliveryRegionId: region, deliveryCityId: city, addressLine: "Test address", note: "",
     termsAccepted: false, paymentMethod: "card", deliveryRegionOptions: regions,
@@ -81,3 +81,45 @@ test("locality selection is disabled until a region is selected and while loadin
   }
   assert.doesNotMatch(await render(), /<select name="delivery_city_id" disabled/);
 });
+
+test("personal number and waybill explanation appear only for individual buyers", async () => {
+  const html = await render();
+  assert.match(html, /name="personal_number"/);
+  assert.match(html, /პირადი ნომერი გვჭირდება ტრანსპორტირების ზედნადების მოსამზადებლად/);
+  assert.doesNotMatch(html, /name="company_identification_code"/);
+  const legal = await render({ buyerType: "legal_entity" });
+  assert.doesNotMatch(legal, /name="personal_number"/);
+  assert.match(legal, /name="company_identification_code"/);
+});
+
+for (const page of ["checkout/index.vue", "buy-now/checkout.vue"]) {
+  test(`${page} sends the personal number only for an individual and preserves payment and delivery fields`, () => {
+    const text = readFileSync(new URL(`../app/pages/${page}`, import.meta.url), "utf8");
+    const script = parse(text).descriptor.scriptSetup.content;
+    const ast = ts.createSourceFile("checkout.ts", script, ts.ScriptTarget.ES2022, true);
+    const statement = ast.statements.find((node) => ts.isVariableStatement(node)
+      && node.declarationList.declarations.some((item) => item.name.getText(ast) === "buildCheckoutPayload"));
+    assert.ok(statement);
+    const compiled = ts.transpileModule(statement.getText(ast), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const build = new Function("deliveryQuote", compiled + "; return buildCheckoutPayload;")({ value: { quote_token: "quote-test" } });
+    const values = { buyer_type: "individual", personal_number: "00000000001", company_name: "Company",
+      company_identification_code: "012345678", company_is_vat_registered: false,
+      first_name: "Test", last_name: "Buyer", email: "", phone: "555000001", delivery_region_id: 1,
+      delivery_city_id: 2, delivery_service_slug: "standard", city: "თბილისი", address_line: "Street 1",
+      terms_accepted: true, payment_method: "card", note: "" };
+    const individual = build(values, "captcha-test");
+    assert.equal(individual.personal_number, "00000000001");
+    assert.equal(individual.company_identification_code, "");
+    const legal = build({ ...values, buyer_type: "legal_entity" }, "captcha-test");
+    assert.equal(legal.personal_number, "");
+    assert.equal(legal.company_identification_code, "012345678");
+    for (const payload of [individual, legal]) {
+      assert.equal(payload.delivery_quote_token, "quote-test");
+      assert.equal(payload.payment_method, "card");
+      assert.equal(payload.recaptcha_token, "captcha-test");
+      assert.equal(payload.terms_accepted, true);
+    }
+  });
+}

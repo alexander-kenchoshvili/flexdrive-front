@@ -23,6 +23,7 @@ const georgianMobile = requiredText("შეიყვანე ტელეფო
 const checkoutSchema = z
   .object({
     buyer_type: z.enum(["individual", "legal_entity"]),
+    personal_number: z.string().trim().default(""),
     company_name: z.string().trim(),
     company_identification_code: z.string().trim(),
     company_is_vat_registered: z.boolean().nullable(),
@@ -45,6 +46,13 @@ const checkoutSchema = z
   })
   .superRefine((values, context) => {
     if (values.buyer_type !== "legal_entity") {
+      if (!/^[0-9]{11}$/.test(values.personal_number)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["personal_number"],
+          message: "შეიყვანე 11-ნიშნა პირადი ნომერი.",
+        });
+      }
       return;
     }
 

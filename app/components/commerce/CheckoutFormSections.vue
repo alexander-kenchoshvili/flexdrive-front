@@ -21,6 +21,7 @@ defineProps<{
   cardPaymentEnabled?: boolean;
   cardPaymentLoading?: boolean;
   errors: CheckoutFieldErrors;
+  personalNumberAttrs?: Record<string, unknown>;
   companyNameAttrs?: Record<string, unknown>;
   companyIdentificationCodeAttrs?: Record<string, unknown>;
   firstNameAttrs?: Record<string, unknown>;
@@ -41,6 +42,7 @@ defineProps<{
 const buyerType = defineModel<CheckoutBuyerType>("buyerType", {
   required: true,
 });
+const personalNumber = defineModel<string>("personalNumber", { required: true });
 const companyName = defineModel<string>("companyName", { required: true });
 const companyIsVatRegistered = defineModel<boolean | null>("companyIsVatRegistered", { required: true });
 const companyIdentificationCode = defineModel<string>(
@@ -233,6 +235,24 @@ const lastNameLabel = computed(() =>
         autocomplete="family-name"
         placeholder="შეიყვანე გვარი"
         :error="errors.last_name"
+        :disabled="disabled"
+        required
+      />
+
+      <BaseInput
+        v-if="!isLegalBuyer"
+        v-model="personalNumber"
+        v-bind="personalNumberAttrs"
+        name="personal_number"
+        data-checkout-field="personal_number"
+        label="პირადი ნომერი *"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        maxlength="11"
+        placeholder="11-ნიშნა პირადი ნომერი"
+        hint="პირადი ნომერი გვჭირდება ტრანსპორტირების ზედნადების მოსამზადებლად."
+        :error="errors.personal_number"
         :disabled="disabled"
         required
       />

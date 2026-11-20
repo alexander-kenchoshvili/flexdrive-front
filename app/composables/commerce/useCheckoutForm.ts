@@ -24,6 +24,7 @@ import type {
 
 export type CheckoutFormValues = {
   buyer_type: CheckoutBuyerType;
+  personal_number: string;
   company_name: string;
   company_identification_code: string;
   company_is_vat_registered: boolean | null;
@@ -55,6 +56,7 @@ export const checkoutFieldOrder: CheckoutFieldName[] = [
   "company_is_vat_registered",
   "first_name",
   "last_name",
+  "personal_number",
   "email",
   "phone",
   "delivery_region_id",
@@ -69,6 +71,7 @@ export const checkoutFieldOrder: CheckoutFieldName[] = [
 
 export const checkoutFieldSelectors: Record<CheckoutFieldName, string> = {
   buyer_type: '[data-checkout-field="buyer_type"]',
+  personal_number: '[data-checkout-field="personal_number"]',
   company_name: '[data-checkout-field="company_name"]',
   company_identification_code:
     '[data-checkout-field="company_identification_code"]',
@@ -111,6 +114,7 @@ export const useCheckoutForm = (options?: {
     validationSchema: toTypedSchema(checkoutSchema),
     initialValues: {
       buyer_type: "individual",
+      personal_number: "",
       company_name: "",
       company_identification_code: "",
       company_is_vat_registered: null,
@@ -131,6 +135,7 @@ export const useCheckoutForm = (options?: {
 
   const [firstName, firstNameAttrs] = defineField("first_name");
   const [buyerType] = defineField("buyer_type");
+  const [personalNumber, personalNumberAttrs] = defineField("personal_number");
   const [companyName, companyNameAttrs] = defineField("company_name");
   const [companyIsVatRegistered] = defineField("company_is_vat_registered");
   const [companyIdentificationCode, companyIdentificationCodeAttrs] =
@@ -610,6 +615,12 @@ export const useCheckoutForm = (options?: {
     { immediate: true },
   );
 
+  watch(buyerType, (next, previous) => {
+    if (next !== previous) {
+      setFieldValue("personal_number", "", false);
+      setFieldError("personal_number", undefined);
+    }
+  });
   watch(values, saveFormDraft, { deep: true, flush: "sync" });
 
   watch(
@@ -645,6 +656,8 @@ export const useCheckoutForm = (options?: {
     setErrors,
     setFieldValue,
     buyerType,
+    personalNumber,
+    personalNumberAttrs,
     companyName,
     companyIsVatRegistered,
     companyNameAttrs,

@@ -288,6 +288,7 @@ export type CommerceOrderStatus =
 
 export interface CheckoutPayload {
   buyer_type: CheckoutBuyerType;
+  personal_number?: string;
   company_name?: string;
   company_identification_code?: string;
   company_is_vat_registered?: boolean | null;

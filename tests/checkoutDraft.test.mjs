@@ -155,7 +155,7 @@ test("company VAT choice requires an explicit answer only for legal buyers", () 
   const { useCommerceValidationSchemas } = loadTs("../app/composables/useCommerceValidationSchemas.ts");
   const { checkoutSchema } = useCommerceValidationSchemas();
   const values = {
-    buyer_type: "legal_entity", company_name: "Test LLC", company_identification_code: "123456789",
+    buyer_type: "legal_entity", personal_number: "00000000001", company_name: "Test LLC", company_identification_code: "123456789",
     company_is_vat_registered: null, first_name: "Test", last_name: "Buyer", email: "",
     phone: "555123456", delivery_region_id: 4, delivery_city_id: 4, city: "ბათუმი",
     address_line: "Address 1", note: "", terms_accepted: true, payment_method: "card",
@@ -450,5 +450,33 @@ test("same-day expiry refreshes fast to next working day without switching servi
   assert.equal(current.form.deliveryQuote.value.schedule.estimated_delivery_date, "2026-11-10");
   assert.equal(current.form.deliveryQuote.value.customer_delivery_price, "83.00");
   assert.equal(current.form.deliveryQuoteError.value, null);
+  current.app.unmount();
+});
+
+test("individual personal number is required, preserves zeroes and is never saved in drafts", async () => {
+  const { checkoutSchema } = loadTs("../app/composables/useCommerceValidationSchemas.ts").useCommerceValidationSchemas();
+  const values = {
+    buyer_type: "individual", company_name: "", company_identification_code: "", company_is_vat_registered: null,
+    first_name: "Test", last_name: "Buyer", email: "", phone: "555123456",
+    delivery_region_id: 4, delivery_city_id: 4, city: "ბათუმი", address_line: "Address 1",
+    note: "", terms_accepted: true, payment_method: "card",
+  };
+  for (const personal_number of [undefined, "", "123", "0000000000A", "００００００００００１"]) {
+    const result = checkoutSchema.safeParse({ ...values, personal_number });
+    assert.equal(result.success, false);
+    assert.ok(result.error.issues.some((issue) => issue.path[0] === "personal_number"));
+  }
+  const valid = checkoutSchema.parse({ ...values, personal_number: "00000000001" });
+  assert.equal(valid.personal_number, "00000000001");
+  storage.clear();
+  const current = mountForm();
+  await flush();
+  current.form.setFieldValue("personal_number", "00000000001", false);
+  await flush();
+  assert.doesNotMatch([...storage.values()].join(""), /00000000001|personal_number/);
+  assert.equal(draft.sanitizeCheckoutDraft({ personal_number: "00000000001" }).personal_number, undefined);
+  current.form.setFieldValue("buyer_type", "legal_entity", false);
+  await flush();
+  assert.equal(current.form.personalNumber.value, "");
   current.app.unmount();
 });

@@ -63,6 +63,8 @@ const {
   setErrors,
   setFieldValue,
   buyerType,
+  personalNumber,
+  personalNumberAttrs,
   companyName,
   companyIsVatRegistered,
   companyNameAttrs,
@@ -319,6 +321,8 @@ const buildCheckoutPayload = (
   recaptchaToken: string,
 ): CheckoutPayload => ({
   buyer_type: submittedValues.buyer_type,
+  personal_number: submittedValues.buyer_type === "individual"
+    ? submittedValues.personal_number.trim() : "",
   company_is_vat_registered: submittedValues.buyer_type === "legal_entity"
     ? submittedValues.company_is_vat_registered : null,
   company_name:
@@ -519,6 +523,7 @@ watch(
   () => [
     firstName.value,
     buyerType.value,
+    personalNumber.value,
     companyName.value,
     companyIsVatRegistered.value,
     companyIdentificationCode.value,
@@ -694,6 +699,7 @@ useNoindexPage({
 
               <CheckoutFormSections
                 v-model:buyer-type="buyerType"
+                v-model:personal-number="personalNumber"
                 v-model:company-name="companyName"
                 v-model:company-is-vat-registered="companyIsVatRegistered"
                 v-model:company-identification-code="companyIdentificationCode"
@@ -710,6 +716,7 @@ useNoindexPage({
                 v-model:payment-method="paymentMethod"
                 :disabled="submitPending"
                 :errors="errors"
+                :personal-number-attrs="personalNumberAttrs"
                 :company-name-attrs="companyNameAttrs"
                 :company-identification-code-attrs="companyIdentificationCodeAttrs"
                 :first-name-attrs="firstNameAttrs"
