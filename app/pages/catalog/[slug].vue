@@ -784,7 +784,7 @@ const handleBuyNow = async () => {
 </script>
 
 <template>
-  <section class="pt-2 pb-12 sm:pt-4">
+  <section class="pt-0 pb-12 min-[769px]:pt-4">
     <div class="container-fluid">
       <ProductDetailSkeleton v-if="pending" />
 
@@ -890,7 +890,7 @@ const handleBuyNow = async () => {
               <div
                 v-if="galleryImages.length > 1"
                 ref="thumbnailStripRef"
-                class="product-gallery-thumbnail-strip flex w-full min-w-0 gap-3 overflow-x-auto overflow-y-hidden border-t border-border-default p-4 scroll-smooth snap-x snap-mandatory"
+                class="product-gallery-thumbnail-strip flex w-full min-w-0 gap-1 overflow-x-auto overflow-y-hidden border-t border-border-default p-2 scroll-smooth snap-x snap-mandatory min-[769px]:gap-3 min-[769px]:p-4"
               >
                 <button
                   v-for="(image, index) in galleryImages"
@@ -952,28 +952,22 @@ const handleBuyNow = async () => {
 
           <div class="space-y-6">
             <div
-              class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] md:p-7"
+              class="rounded-[24px] border border-border-default bg-surface p-2 shadow-[0_24px_60px_-38px_var(--shadow-color)] min-[769px]:p-7"
             >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary"
-              >
-                {{ productCategory }}
-              </p>
-
               <h1
-                class="title-under-xs upper mt-3 text-[30px] font-extrabold leading-tight text-text-primary md:text-[38px]"
+                class="upper mt-1 text-lg font-extrabold leading-6 text-text-primary min-[769px]:mt-3 min-[769px]:text-[38px] min-[769px]:leading-tight"
               >
                 {{ productTitle }}
               </h1>
 
               <p
                 v-if="productLead"
-                class="subtitle-under-xs mt-4 text-sm leading-7 text-text-secondary md:text-base"
+                class="mt-1 text-xs leading-4 text-text-secondary min-[769px]:mt-4 min-[769px]:text-base min-[769px]:leading-7"
               >
                 {{ productLead }}
               </p>
 
-              <div class="mt-5 flex flex-wrap items-center gap-[0.25rem]">
+              <div class="mt-3 flex flex-wrap items-center gap-[0.25rem] min-[769px]:mt-5">
                 <span
                   :class="[
                     'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
@@ -1008,7 +1002,7 @@ const handleBuyNow = async () => {
               </div>
 
               <div
-                class="mt-6 rounded-[8px] border border-border-default bg-surface-2 p-2 md:rounded-[20px] md:p-5"
+                class="mt-3 rounded-[8px] border border-border-default bg-surface-2 p-2 md:rounded-[20px] md:p-5 min-[769px]:mt-6"
               >
                 <div class="flex flex-wrap items-center gap-2 md:gap-3">
                   <span
@@ -1142,11 +1136,11 @@ const handleBuyNow = async () => {
                 </p>
               </div>
 
-              <div class="mt-6 space-y-3">
+              <div class="mt-3 space-y-3 min-[769px]:mt-6">
                 <BaseButton
                   type="button"
                   variant="primary"
-                  class="px-6 py-3.5 text-sm upper"
+                  class="px-6 py-3.5 text-sm upper max-[768px]:py-2"
                   :loading="buyNowPending"
                   :disabled="!hasStockForBuyNow"
                   full-width
@@ -1159,7 +1153,7 @@ const handleBuyNow = async () => {
                   v-if="product.in_stock && priceAvailable"
                   type="button"
                   variant="secondary"
-                  class="px-6 py-3.5 text-sm upper"
+                  class="px-6 py-3.5 text-sm upper max-[768px]:py-2"
                   :loading="addToCartPending"
                   :disabled="!canAddSelectedQuantityToCart"
                   full-width

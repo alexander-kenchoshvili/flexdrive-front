@@ -1530,8 +1530,8 @@ useSeoMeta({
   <section class="mx-auto w-full max-w-[1440px] px-4 py-4 md:px-6 md:py-10 lg:px-8 2xl:px-0">
     <AppBreadcrumbs :items="breadcrumbItems" />
 
-    <div class="my-2 md:my-5">
-      <h1 class="text-xl lg:text-2xl font-bold text-text-primary upper">
+    <div class="my-1 min-[769px]:my-5">
+      <h1 class="text-base font-bold leading-6 text-text-primary upper min-[769px]:text-xl min-[769px]:leading-7 lg:text-2xl lg:leading-8">
         {{ title }}
       </h1>
       <p class="text-sm hidden xs:flex md:text-base text-text-secondary">

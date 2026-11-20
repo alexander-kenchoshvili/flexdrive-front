@@ -118,17 +118,17 @@ const switchThumbClass = (isEnabled: boolean) =>
     >
       <section
         v-if="isHydrated && shouldShowCookieBanner && !settingsOpen"
-        class="fixed inset-x-0 bottom-0 z-[70] border-t border-border-default bg-[color:var(--surface)] px-3 py-3 text-text-primary shadow-[0_-18px_44px_-30px_var(--shadow-color)] sm:px-4"
+        class="fixed inset-x-0 bottom-0 z-[70] border-t border-border-default bg-[color:var(--surface)] px-3 py-3 text-text-primary shadow-[0_-18px_44px_-30px_var(--shadow-color)] min-[769px]:px-4"
         aria-label="ქუქიების შეტყობინება"
       >
         <div
-          class="mx-auto flex w-full max-w-[1240px] flex-col gap-3 md:items-center md:gap-4 md:text-center lg:flex-row lg:items-center lg:justify-between lg:gap-5 lg:text-left"
+          class="mx-auto flex w-full max-w-[1240px] flex-col gap-2 min-[769px]:items-center min-[769px]:gap-4 min-[769px]:text-center lg:flex-row lg:items-center lg:justify-between lg:gap-5 lg:text-left"
         >
-          <div class="min-w-0 md:max-w-[700px] lg:max-w-none">
-            <h2 class="upper text-base font-extrabold leading-6 sm:text-lg">
+          <div class="min-w-0 min-[769px]:max-w-[700px] lg:max-w-none">
+            <h2 class="upper text-sm font-semibold leading-5 min-[769px]:text-lg min-[769px]:font-extrabold min-[769px]:leading-6">
               ვებსაიტი იყენებს ქუქი-ფაილებს
             </h2>
-            <p class="mt-1 text-sm leading-6 text-text-secondary">
+            <p class="mt-1 hidden text-sm leading-6 text-text-secondary min-[769px]:block">
               ჩვენ ვიყენებთ ქუქი-ფაილებს მომხმარებლის გამოცდილების
               გასაუმჯობესებლად. შეგიძლიათ წაიკითხოთ მეტი ქუქი ფაილების
               <NuxtLink
@@ -142,12 +142,13 @@ const switchThumbClass = (isEnabled: boolean) =>
           </div>
 
           <div
-            class="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3 md:mx-auto md:w-full md:max-w-[520px] lg:mx-0 lg:w-[440px]"
+            class="grid shrink-0 grid-cols-3 gap-2.5 min-[769px]:gap-2 min-[769px]:mx-auto min-[769px]:w-full min-[769px]:max-w-[520px] lg:mx-0 lg:w-[440px]"
           >
             <BaseButton
               type="button"
               size="sm"
               :full-width="true"
+              class="max-[768px]:whitespace-nowrap max-[768px]:px-1 max-[768px]:text-[10px] max-[768px]:leading-4"
               @click="acceptAllCookies"
             >
               დათანხმება
@@ -158,6 +159,7 @@ const switchThumbClass = (isEnabled: boolean) =>
               variant="secondary"
               size="sm"
               :full-width="true"
+              class="max-[768px]:whitespace-nowrap max-[768px]:px-1 max-[768px]:text-[10px] max-[768px]:leading-4"
               @click="rejectOptionalCookies"
             >
               უარყოფა
@@ -168,6 +170,7 @@ const switchThumbClass = (isEnabled: boolean) =>
               variant="ghost"
               size="sm"
               :full-width="true"
+              class="max-[768px]:whitespace-nowrap max-[768px]:px-1 max-[768px]:text-[10px] max-[768px]:leading-4"
               @click="openSettings"
             >
               პარამეტრები

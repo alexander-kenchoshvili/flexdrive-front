@@ -39,7 +39,7 @@ const trustItems = [
 
 <template>
   <section
-    class="hero-section relative isolate w-full overflow-hidden bg-surface-2"
+    class="hero-section relative isolate aspect-[375/500] w-full overflow-hidden bg-surface-2 md:aspect-[768/470] lg:aspect-[1440/660] min-[1440px]:aspect-[1920/768]"
   >
     <BasePicture
       v-if="hasHeroImage"
@@ -50,7 +50,7 @@ const trustItems = [
       position="center center"
       :lazy="false"
       fetchpriority="high"
-      class="hero-image absolute inset-0 -z-20 h-full w-full"
+      class="hero-image absolute inset-0 -z-20 h-full w-full max-[767px]:[&_img]:!object-bottom"
     />
 
     <div
@@ -74,7 +74,7 @@ const trustItems = [
 
           <h1
             v-if="heroTitle"
-            class="hero-title upper text-[30px] font-extrabold leading-[38px] text-text-primary sm:text-[34px] sm:leading-[42px] lg:text-[44px] lg:leading-[52px] xl:text-[48px] xl:leading-[56px]"
+            class="hero-title upper text-[22px] font-extrabold leading-7 text-text-primary min-[769px]:text-[24px] min-[769px]:leading-8 lg:text-[32px] lg:leading-10 min-[1240px]:text-[44px] min-[1240px]:leading-[52px] xl:text-[48px] xl:leading-[56px]"
           >
             {{ heroTitle }}
           </h1>
@@ -133,10 +133,6 @@ const trustItems = [
   );
 }
 
-.hero-section {
-  aspect-ratio: 375 / 570;
-}
-
 .hero-title {
   max-width: 550px;
 }
@@ -166,24 +162,7 @@ const trustItems = [
     );
 }
 
-@media (min-width: 768px) {
-  .hero-section {
-    aspect-ratio: 768 / 470;
-  }
-}
-
-@media (max-width: 1239px) {
-  .hero-title {
-    font-size: 32px;
-    line-height: 40px;
-  }
-}
-
 @media (min-width: 1024px) {
-  .hero-section {
-    aspect-ratio: 1440 / 660;
-  }
-
   :deep(.hero-image img) {
     object-fit: cover !important;
     object-position: 58% 38% !important;
@@ -193,8 +172,6 @@ const trustItems = [
 @media (max-width: 1023px) {
   .hero-title {
     max-width: 430px;
-    font-size: 24px;
-    line-height: 32px;
   }
 
   .hero-subtitle {
@@ -203,10 +180,6 @@ const trustItems = [
 }
 
 @media (min-width: 1440px) {
-  .hero-section {
-    aspect-ratio: 1920 / 768;
-  }
-
   .hero-title {
     max-width: 620px;
   }

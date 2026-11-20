@@ -202,7 +202,7 @@ const variantBadge = computed(() => {
 
     </NuxtLink>
 
-    <div class="flex flex-1 flex-col p-3 sm:p-4">
+    <div class="flex flex-1 flex-col px-3 py-1 sm:px-4 min-[769px]:py-4">
       <div class="flex min-h-8 items-center justify-between gap-2">
         <p
           class="min-w-0 truncate text-[12px] font-semibold leading-[18px] text-text-muted"
@@ -237,14 +237,14 @@ const variantBadge = computed(() => {
       </h3>
 
       <p
-        class="product-card-subtitle mt-1 min-h-[36px] text-[12px] font-medium leading-[18px] text-text-secondary sm:text-[13px] sm:leading-5"
+        class="product-card-subtitle mt-1.5 min-[769px]:mt-1 min-h-[36px] text-[12px] font-medium leading-[18px] text-text-secondary sm:text-[13px] sm:leading-5"
       >
         {{ product.subtitle || " " }}
       </p>
 
       <div
         v-if="productMetaItems.length || compatibilityBadge || variantBadge"
-        class="mt-2 min-h-[26px] space-y-1"
+        class="mt-1.5 min-[769px]:mt-2 min-h-[26px] space-y-1"
       >
         <p
           v-if="productMetaItems.length"
@@ -263,7 +263,7 @@ const variantBadge = computed(() => {
         <span v-if="variantBadge" class="block text-xs text-text-muted" :title="variantBadge">{{ variantBadge }}</span>
       </div>
 
-      <div class="mt-3 flex items-end justify-between gap-2">
+      <div class="mt-1.5 min-[769px]:mt-3 flex items-end justify-between gap-2">
         <span
           class="min-w-0 text-[20px] font-extrabold leading-none text-accent-primary sm:text-[22px]"
         >

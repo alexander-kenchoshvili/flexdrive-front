@@ -43,7 +43,7 @@ const emit = defineEmits<{
     >
       <button
         type="button"
-        class="relative inline-flex min-h-[46px] items-center gap-2 rounded-[16px] border px-4 py-3 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+        class="relative inline-flex min-h-11 items-center gap-2 rounded-[16px] border px-4 py-1 text-sm min-[769px]:min-h-[46px] min-[769px]:py-3 font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
         :class="
           hasActiveFilters
             ? 'border-accent-primary/45 bg-accent-primary/10 text-accent-primary'
