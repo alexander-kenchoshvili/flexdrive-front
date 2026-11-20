@@ -22,10 +22,25 @@ export type OperationStock = {
   id: number; name: string; sku: string; order_number: string; received_at: string; age_days: number | null;
   received_units: number; remaining_units: number; unit_cost_gross: string | null; value_gross: string | null;
 };
+export type OperationPaymentCheckout = {
+  subtotal: string; delivery: string; total: string; service: "fast" | "standard" | null; service_label: string;
+};
+export type OperationPaymentFailure = { kind: string; code: string | null; label: string; detail: string };
+export type OperationPaymentHistory = {
+  id: number; status: string; status_label: string; amount: string; currency: string;
+  created_at: string; updated_at: string; confirmed_at: string | null; order_number: string | null;
+  settlement_label: string | null; checkout: OperationPaymentCheckout | null; failure: OperationPaymentFailure | null;
+};
+export type OperationPaymentContext = {
+  checkout: OperationPaymentCheckout | null; failure: OperationPaymentFailure | null; bank_order_created: boolean;
+  history: OperationPaymentHistory[]; history_limited: boolean; match_basis: string | null;
+  later_success: OperationPaymentHistory | null;
+};
 export type OperationPayment = {
   id: number; order_number: string | null; action_label: string; status: string; status_label: string;
   amount: string; currency: string; created_at: string; updated_at: string; expires_at: string | null;
   issue: string | null; checked_at: string | null;
+  attempt_context?: OperationPaymentContext | null;
 };
 export type OperationSync = {
   key: string; label: string; last_success_at: string | null;

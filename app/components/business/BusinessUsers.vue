@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BusinessDevices from "./BusinessDevices.vue";
 import { ArrowPathIcon, InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { businessPreset, businessToday, reportDate, reportNumber, type BusinessPeriod } from "~/utils/businessReport";
 import { analyticsHasData, analyticsInsight, analyticsSource } from "~/utils/businessAnalytics";
@@ -57,6 +58,7 @@ watch(() => [route.query.start, route.query.end], () => {
     </form>
     <BusinessSearchConsole :period="searchPeriod" />
     <BusinessPagePerformance :period="searchPeriod" />
+    <BusinessDevices :period="searchPeriod" />
     <p v-if="loading" role="status" class="py-10 text-center text-sm text-text-muted">Google-ის მონაცემები იტვირთება…</p>
     <p v-else-if="errorMessage" role="alert" class="mt-5 rounded-xl border border-border-default bg-surface p-5 text-sm text-error">{{ errorMessage }}</p>
     <template v-else-if="report">

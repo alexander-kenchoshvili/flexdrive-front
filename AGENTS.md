@@ -1,5 +1,26 @@
 # Project Instructions
 
+## Aggregate Device Report And Payment Attempt Context - 2026-11-20
+
+- User requested clear saved-bank failure reasons/history and mobile vs desktop
+  visits/purchases. BusinessOperations now renders the optional backend attempt
+  context: allowlisted translated reason/code, delivery totals, bounded related
+  attempts, later confirmed purchase and explicit causal/identity limits. Older
+  backend responses retain the existing warning. No arbitrary bank text rendered.
+- BusinessUsers adds independent BusinessDevices card for the selected period:
+  GA4 sessions/purchase events, mobile/desktop-laptop/tablet/unknown counts and
+  separate shares. Reuses business private session/date/no-store conventions,
+  abort/generation/auth handling and existing theme tokens. Native scrolling table.
+  Missing/config/unavailable/stale/thresholded data and zero-total shares differ.
+- No new tracking, cookies, purchase sending, per-order device field or historical
+  attribution. GA4 coverage can differ from financial orders; UI says so. Desktop
+  and laptop share one category. Backend also scopes admin display time to Tbilisi.
+-16 actual-SFC/composable device/page/payment checks, scoped ESLint and strict app
+  vue-tsc pass; earlier existing businessOperations checks also passed. Real GA4
+  aggregate read verified in backend. No full build/browser/events/DB write/push/
+  deployment. User owns both deployments; no new migration or ENV for these changes.
+
+
 ## Checkout Personal Number And Accountant Buyer Details - 2026-11-20
 
 - User explicitly requested individual personal number for transport waybills and
