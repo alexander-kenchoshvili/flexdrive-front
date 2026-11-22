@@ -1531,7 +1531,7 @@ useSeoMeta({
     <AppBreadcrumbs :items="breadcrumbItems" />
 
     <div class="my-1 min-[769px]:my-5">
-      <h1 class="text-base font-bold leading-6 text-text-primary upper min-[769px]:text-xl min-[769px]:leading-7 lg:text-2xl lg:leading-8">
+      <h1 class="text-base font-bold leading-6 text-text-primary upper min-[769px]:text-xl min-[769px]:leading-7 lg:text-2xl lg:leading-8" :class="{ 'hidden md:block': !selectedCategory }">
         {{ title }}
       </h1>
       <p class="text-sm hidden xs:flex md:text-base text-text-secondary">

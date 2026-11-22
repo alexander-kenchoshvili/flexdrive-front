@@ -16,6 +16,7 @@ import {
 } from "~/composables/commerce/errorUtils";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useCheckoutIdempotency } from "~/composables/commerce/useCheckoutIdempotency";
+import { useCheckoutProgress } from "~/composables/commerce/useCheckoutProgress";
 import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import { useBuyNowStore } from "~/stores/useBuyNowStore";
 import type {
@@ -151,6 +152,15 @@ const toBuyNowCheckoutAnalyticsItem = (
 
 const buyNowCheckoutAnalyticsItems = computed(() =>
   buyNowStore.summaryItems.map((item) => toBuyNowCheckoutAnalyticsItem(item)),
+);
+
+const { record: recordCheckoutProgress } = useCheckoutProgress(
+  "buy_now",
+  computed(() => isClientReady.value && globalStore.authResolved && buyNowStore.initialized
+    && buyNowStore.hasSession && !checkoutCompleted.value && buyNowCheckoutAnalyticsItems.value.length > 0),
+  computed(() => JSON.stringify(buyNowCheckoutAnalyticsItems.value.map(({ id, price, quantity }) => [id, price, quantity]))),
+  deliveryQuote,
+  deliveryQuoteError,
 );
 
 const buyNowInlineMessage = computed(() => {
@@ -399,7 +409,9 @@ const submitForm = validateSubmit(
       return;
     }
 
+    recordCheckoutProgress("submitted");
     if (!deliveryQuoteReady.value) {
+      if (deliveryQuoteError.value) recordCheckoutProgress("quote_error");
       formError.value =
         deliveryQuoteError.value || "ჯერ გამოთვალეთ მიწოდების ფასი.";
       return;
@@ -478,6 +490,7 @@ const submitForm = validateSubmit(
         submittedValues.payment_method === "card" &&
         isCardProviderError
       ) {
+        if (!failedPayment) recordCheckoutProgress("submit_unconfirmed");
         if (failedPayment) {
           storeReturnContext(failedPayment.payment_token, {
             source: "buy_now",
@@ -513,6 +526,7 @@ const submitForm = validateSubmit(
         code === "buy_now_price_changed" ||
         code === "buy_now_availability_changed"
       ) {
+        recordCheckoutProgress(code === "buy_now_price_changed" ? "price_changed" : "stock_changed");
         formError.value = normalizeApiErrorMessage(
           submitError,
           "სწრაფი ყიდვის გაგრძელება ვერ მოხერხდა. გადაამოწმე განახლებული მონაცემები.",
@@ -544,6 +558,7 @@ const submitForm = validateSubmit(
 
       const nextFieldErrors = extractFieldErrors(submitError);
       setErrors(nextFieldErrors);
+      recordCheckoutProgress(Object.keys(nextFieldErrors).length ? "form_invalid" : "submit_unconfirmed");
 
       if (Object.keys(nextFieldErrors).length) {
         await scrollToFirstInvalidField(nextFieldErrors);
@@ -569,6 +584,8 @@ const submitForm = validateSubmit(
     }
   },
   async ({ errors: invalidErrors }) => {
+    recordCheckoutProgress("submitted");
+    recordCheckoutProgress("form_invalid");
     formError.value = null;
     await scrollToFirstInvalidField(invalidErrors as CheckoutFieldErrors);
   },

@@ -16,6 +16,7 @@ import {
 } from "~/composables/commerce/errorUtils";
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useCheckoutIdempotency } from "~/composables/commerce/useCheckoutIdempotency";
+import { useCheckoutProgress } from "~/composables/commerce/useCheckoutProgress";
 import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import type {
   CommerceCartItem,
@@ -146,6 +147,15 @@ const toCheckoutAnalyticsItem = (item: CommerceCartItem) => ({
 
 const checkoutAnalyticsItems = computed(() =>
   cartStore.items.map((item) => toCheckoutAnalyticsItem(item)),
+);
+
+const { record: recordCheckoutProgress } = useCheckoutProgress(
+  "cart",
+  computed(() => isClientReady.value && globalStore.authResolved && cartStore.initialized
+    && !checkoutCompleted.value && checkoutAnalyticsItems.value.length > 0),
+  computed(() => JSON.stringify(checkoutAnalyticsItems.value.map(({ id, price, quantity }) => [id, price, quantity]))),
+  deliveryQuote,
+  deliveryQuoteError,
 );
 
 const isInitialLoading = computed(
@@ -355,13 +365,16 @@ const submitForm = validateSubmit(
       return;
     }
 
+    recordCheckoutProgress("submitted");
     if (!deliveryQuoteReady.value) {
+      if (deliveryQuoteError.value) recordCheckoutProgress("quote_error");
       formError.value =
         deliveryQuoteError.value || "ჯერ გამოთვალეთ მიწოდების ფასი.";
       return;
     }
 
     if (cartStore.hasPriceChanges) {
+      recordCheckoutProgress("price_changed");
       await scrollToSubmitFeedback();
       return;
     }
@@ -430,6 +443,7 @@ const submitForm = validateSubmit(
         submittedValues.payment_method === "card" &&
         isCardProviderError
       ) {
+        if (!failedPayment) recordCheckoutProgress("submit_unconfirmed");
 
         if (failedPayment) {
           storeReturnContext(failedPayment.payment_token, {
@@ -463,6 +477,7 @@ const submitForm = validateSubmit(
       }
 
       if (isCartPriceChangeError(submitError)) {
+        recordCheckoutProgress("price_changed");
         formError.value = null;
 
         try {
@@ -479,6 +494,7 @@ const submitForm = validateSubmit(
       }
 
       if (isCartAvailabilityError(submitError)) {
+        recordCheckoutProgress("stock_changed");
         formError.value = normalizeApiErrorMessage(
           submitError,
           "შეკვეთის გაფორმება ვერ მოხერხდა. გთხოვ, სცადო ხელახლა.",
@@ -499,6 +515,7 @@ const submitForm = validateSubmit(
 
       const nextFieldErrors = extractFieldErrors(submitError);
       setErrors(nextFieldErrors);
+      recordCheckoutProgress(Object.keys(nextFieldErrors).length ? "form_invalid" : "submit_unconfirmed");
 
       if (Object.keys(nextFieldErrors).length) {
         await scrollToFirstInvalidField(nextFieldErrors);
@@ -514,6 +531,8 @@ const submitForm = validateSubmit(
     }
   },
   async ({ errors: invalidErrors }) => {
+    recordCheckoutProgress("submitted");
+    recordCheckoutProgress("form_invalid");
     formError.value = null;
     await scrollToFirstInvalidField(invalidErrors as CheckoutFieldErrors);
   },

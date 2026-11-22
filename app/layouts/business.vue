@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon, ShieldCheckIcon, HomeIcon, ChartBarIcon, BanknotesIcon, UsersIcon, MegaphoneIcon, CubeIcon, ArrowUpRightIcon } from "@heroicons/vue/24/outline";
+import { ArrowPathIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon, ShieldCheckIcon, HomeIcon, ChartBarIcon, BanknotesIcon, UsersIcon, MegaphoneIcon, CubeIcon, ArrowUpRightIcon, ShoppingCartIcon } from "@heroicons/vue/24/outline";
 import { useMediaQuery } from "@vueuse/core";
 import { BUSINESS_SECTIONS } from "~/utils/businessRouting";
 
@@ -16,7 +16,7 @@ const { isDark, toggleTheme } = useTheme();
 // that render, so use the committed router destination to avoid a logout deadlock.
 const isLogin = computed(() => router.currentRoute.value.path.replace(/\/$/, "") === "/business/login");
 const current = computed(() => BUSINESS_SECTIONS.find((item) => item.path === route.path.replace(/\/$/, "")) || BUSINESS_SECTIONS[0]);
-const icons = { overview: HomeIcon, sales: ChartBarIcon, finance: BanknotesIcon, users: UsersIcon, marketing: MegaphoneIcon, operations: CubeIcon, "vehicle-demand": ChartBarIcon };
+const icons = { overview: HomeIcon, sales: ChartBarIcon, checkout: ShoppingCartIcon, finance: BanknotesIcon, users: UsersIcon, marketing: MegaphoneIcon, operations: CubeIcon, "vehicle-demand": ChartBarIcon };
 const mobile = useMediaQuery("(max-width: 1023px)");
 const menuOpen = ref(false);
 const menuButton = ref<HTMLButtonElement | null>(null);
