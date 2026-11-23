@@ -59,7 +59,7 @@ const hasHeroImage = computed(
       </span>
 
       <h1
-        class="title-under-xs upper mt-3 text-[25px] font-extrabold leading-[1.18] text-text-primary sm:text-[30px] md:text-[36px] lg:text-[40px]"
+        class="title-under-xs upper mt-3 text-[18px] font-extrabold leading-[24px] text-text-primary md:text-[36px] md:leading-[1.18] lg:text-[40px]"
       >
         {{ title }}
       </h1>

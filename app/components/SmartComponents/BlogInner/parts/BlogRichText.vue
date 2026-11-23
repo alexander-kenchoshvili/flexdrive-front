@@ -178,7 +178,8 @@ const content = computed(() => sanitizeRichText(props.html));
 
   .blog-richtext :deep(h2) {
     margin-top: 1.65rem;
-    font-size: 1.35rem;
+    font-size: 18px;
+    line-height: 24px;
   }
 
   .blog-richtext :deep(h3) {
