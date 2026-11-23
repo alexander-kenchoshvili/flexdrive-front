@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { canRetryFacebookEmail } from "~/utils/authErrors";
 const props = withDefaults(
   defineProps<{
     context?: "signin" | "signup";
@@ -16,6 +17,9 @@ const props = withDefaults(
   },
 );
 
+const route = useRoute();
+const emailRetry = computed(() => canRetryFacebookEmail(route.query.facebook_error));
+
 const emit = defineEmits<{
   error: [message: string];
 }>();
@@ -25,10 +29,10 @@ const emit = defineEmits<{
   <SocialAuthButton
     icon-name="facebook"
     icon-container-class="bg-[#1877F2] text-white"
-    label="Facebook-ით გაგრძელება"
+    :label="emailRetry ? 'ელფოსტის გაზიარებით გაგრძელება' : 'Facebook-ით გაგრძელება'"
     loading-label="Facebook-ით მიმდინარეობს..."
     opening-label="Facebook იხსნება..."
-    start-path="/auth/facebook/start"
+    :start-path="emailRetry ? '/auth/facebook/start?rerequest_email=1' : '/auth/facebook/start'"
     error-message="Facebook შესვლის დაწყება ვერ მოხერხდა. სცადეთ თავიდან."
     :disabled="props.disabled"
     :loading="props.loading"
@@ -36,4 +40,7 @@ const emit = defineEmits<{
     :return-path="props.returnPath"
     @error="emit('error', $event)"
   />
+  <p v-if="emailRetry" class="mt-2 text-center text-xs leading-5 text-text-muted">
+    ანგარიშის შესაქმნელად ელფოსტა გვჭირდება. ღილაკზე დაჭერით Facebook ხელახლა გკითხავთ მისი გაზიარების ნებართვას.
+  </p>
 </template>

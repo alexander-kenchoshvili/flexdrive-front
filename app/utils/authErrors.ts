@@ -1,5 +1,13 @@
 // Translate only customer-facing auth errors; keep server validation unchanged.
+export const canRetryFacebookEmail = (message: unknown): boolean =>
+  typeof message === "string" &&
+  ["facebook_email_declined", "facebook_email_expired", "facebook_email_not_granted"].includes(message);
+
 const authErrorRules: Array<[RegExp, string]> = [
+  [/^facebook_email_(?:declined|expired|not_granted)$/, "Facebook-მა ელფოსტის წაკითხვის ნებართვა არ დაგვიბრუნა. გასაგრძელებლად შეგიძლიათ ელფოსტის გაზიარება ხელახლა მოითხოვოთ."],
+  [/^facebook_email_unavailable$/, "Facebook-მა გაზიარების ნებართვის მიუხედავად ელფოსტა არ გადმოგვცა. გამოიყენეთ Google ან ელფოსტით რეგისტრაცია."],
+  [/^facebook_email_retry_failed$/, "ხელახალი მოთხოვნის შემდეგაც Facebook-მა ელფოსტა არ გადმოგვცა. გამოიყენეთ Google ან ელფოსტით რეგისტრაცია."],
+  [/^facebook_email_check_unavailable$/, "Facebook-მა ელფოსტა არ გადმოგვცა და ნებართვის შემოწმება დროებით ვერ მოხერხდა. სცადეთ მოგვიანებით ან გამოიყენეთ შესვლის სხვა მეთოდი."],
   [/invalid credentials|no active account found/i, "ელფოსტა ან პაროლი არასწორია."],
   [/account is not activated/i, "ანგარიში ჯერ არ არის გააქტიურებული. შეამოწმეთ ელფოსტა და გახსენით აქტივაციის ბმული."],
   [/invalid or expired token|invalid.*uuid/i, "ბმული არასწორია ან ვადა გაუვიდა. მოითხოვეთ ახალი ბმული."],
