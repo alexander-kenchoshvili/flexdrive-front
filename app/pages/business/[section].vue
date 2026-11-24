@@ -12,6 +12,10 @@ useSeoMeta({ title: () => `${section.value?.label || "ბიზნესპა�
 
 <template>
   <BusinessReport v-if="section && (section.key === 'sales' || section.key === 'finance')" :key="`report:${section.key}`" :section="section.key" />
+  <BusinessSocial v-else-if="section?.key === 'social'" key="social" />
+  <BusinessDiagnostics v-else-if="section?.key === 'diagnostics'" key="diagnostics" />
+  <BusinessCarts v-else-if="section?.key === 'carts'" key="carts" />
+  <BusinessGoogleSearch v-else-if="section?.key === 'google-search'" key="google-search" />
   <BusinessVehicleDemand v-else-if="section?.key === 'vehicle-demand'" key="vehicle-demand" />
   <BusinessCheckout v-else-if="section?.key === 'checkout'" key="checkout" />
   <BusinessOperations v-else-if="section?.key === 'operations'" key="operations" />

@@ -20,6 +20,7 @@ export type BusinessReport = {
   losses: { order_number: string; date: string; sku: string; name: string; quantity: number; cost_net: string | null }[];
   loss_rows_total: number;
   generated_at: string;
+  payment_attention?: number;
 };
 
 export const businessToday = () => {

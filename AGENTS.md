@@ -1,5 +1,29 @@
 # Project Instructions
 
+## Business Panel Source Reorganization Prepared - 2026-11-25
+
+- Approved ordered20-step implementation documented in backend
+  docs/BUSINESS_PANEL_REORGANIZATION_PLAN.md. Navigation separates shop/Google/
+  Meta/diagnostics; old URLs and payment failure/attempt, checkout, VIN-demand,
+  financial, page/device, source/search and social details remain available.
+- Overview has six linked source-labelled metrics and at most three factual
+  attention items. GA4 has audience/acquisition/pages+devices/internal search/
+  journey tabs; Search Console is separate. New/returning users and daily/first
+  source counts come directly from a new private backend audience report.
+- Carts have current contents/additions/product interest/started-purchase tabs.
+  Existing checkout component is reused. Successful cart requests include optional
+  observation ID only on canonical production host, with analytics consent and
+  internal/business traffic excluded. No extra pixel/GA event or cookie added.
+  Backend confirms mutations and deduplicates observation IDs; no past backfill.
+- Meta campaigns show objective/current status, appropriate result and cost,
+  explicit attribution/currency/timezone; expanded details retain original metrics.
+  Social cards and technical diagnostics moved to their own pages. Missing/stale
+  values do not become zero; configuration is not proof of event delivery.
+-90 business frontend checks, scoped ESLint and strict app vue-tsc pass. Backend49
+  focused checks pass; broader existing failures are documented in backend plan.
+  No full build/browser/live analytics event/commit/push/deploy. User owns both
+  deployments and backend business0004_cart_addition migration. No new ENV.
+
 ## Aggregate Device Report And Payment Attempt Context - 2026-11-20
 
 - User requested clear saved-bank failure reasons/history and mobile vs desktop

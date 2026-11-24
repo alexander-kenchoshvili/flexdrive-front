@@ -3,6 +3,7 @@ import { ArrowPathIcon, InformationCircleIcon } from "@heroicons/vue/24/outline"
 import { businessPreset, businessToday, reportDate, reportNumber, type BusinessPeriod } from "~/utils/businessReport";
 import { marketingInsight, marketingMoney, metaHasData, metaUpdated } from "~/utils/businessMarketing";
 
+const props = withDefaults(defineProps<{ mode?: "campaigns" | "social" }>(), { mode: "campaigns" });
 const route = useRoute();
 const { report, loading, errorMessage, load } = useBusinessMarketing();
 const readPeriod = (): BusinessPeriod => typeof route.query.start === "string" && typeof route.query.end === "string"
@@ -12,7 +13,7 @@ const today = businessToday();
 const ads = computed(() => report.value?.ads);
 const hasAds = computed(() => metaHasData(ads.value) && !!ads.value?.summary);
 const hasChart = computed(() => ads.value?.daily?.some((day) => Number(day.spend) || day.impressions || day.clicks));
-const insight = computed(() => marketingInsight(report.value));
+const insight = computed(() => marketingInsight(report.value, props.mode === "social"));
 const money = (value?: string | number | null) => marketingMoney(value, ads.value?.currency);
 const adMetrics = computed(() => [
   { label: "რეკლამის ხარჯი", value: money(ads.value?.summary?.spend), note: "Meta-ს მიერ აღრიცხული სარეკლამო ხარჯი ანგარიშის ვალუტაში." },
@@ -56,7 +57,7 @@ const applyPeriod = async (period = { start: start.value, end: end.value }) => {
   }
   dateError.value = ""; start.value = period.start; end.value = period.end;
   if (route.query.start === period.start && route.query.end === period.end) await load(period);
-  else await navigateTo({ path: route.path, query: period }, { replace: true });
+  else await navigateTo({ path: route.path, query: { ...route.query, ...period } }, { replace: true });
 };
 onMounted(() => load(readPeriod()));
 watch(() => [route.query.start, route.query.end], () => {
@@ -68,8 +69,8 @@ watch(() => [route.query.start, route.query.end], () => {
   <section aria-labelledby="business-page-title" :aria-busy="loading">
     <div class="mb-6">
       <p class="mb-2 text-[11px] font-bold leading-[18px] text-accent-primary">FLEXDRIVE · მარკეტინგი</p>
-      <h1 id="business-page-title" class="text-[28px] font-extrabold leading-9 min-[1440px]:text-4xl min-[1440px]:leading-[44px]">მარკეტინგის შედეგები</h1>
-      <p class="mt-2 text-[13px] leading-5 text-text-muted">რეკლამის ხარჯი და შედეგები, Facebook-ისა და Instagram-ის აქტივობა.</p>
+      <h1 id="business-page-title" class="text-[28px] font-extrabold leading-9 min-[1440px]:text-4xl min-[1440px]:leading-[44px]">{{ mode === "social" ? "Meta · Facebook და Instagram" : "Meta · რეკლამები და კამპანიები" }}</h1>
+      <p class="mt-2 text-[13px] leading-5 text-text-muted">{{ mode === "social" ? "გვერდებისა და პროფილების აქტივობა; ფასიანი კამპანიების ანგარიში ცალკეა." : "ფასიანი კამპანიების ხარჯი და შესაბამისი შედეგები; პროფილების აქტივობა ცალკე განყოფილებაშია." }}</p>
     </div>
     <form class="rounded-xl border border-border-default bg-surface p-4 md:p-5" @submit.prevent="applyPeriod()">
       <div class="flex flex-wrap items-end gap-3">
@@ -83,19 +84,20 @@ watch(() => [route.query.start, route.query.end], () => {
       </div>
       <p v-if="dateError" role="alert" class="mt-3 text-xs text-error">{{ dateError }}</p>
     </form>
+    <p v-if="end === businessToday()" class="my-3 text-xs leading-6 text-text-muted">დღევანდელი დღე ჯერ არ დასრულებულა. წყაროს დამუშავებაც შეიძლება დაგვიანდეს; თითოეულ ანგარიშთან დროის სარტყელი მითითებულია.</p>
     <p v-if="loading" role="status" class="py-10 text-center text-sm text-text-muted">Meta-ს მონაცემები იტვირთება…</p>
     <p v-else-if="errorMessage" role="alert" class="mt-5 rounded-xl border border-border-default bg-surface p-5 text-sm text-error">{{ errorMessage }}</p>
     <template v-else-if="report">
       <div class="my-5 flex flex-wrap items-center justify-between gap-2 text-[11px] leading-5 text-text-muted"><p>წყარო: Meta · FlexDrive-ის ანგარიშები</p><p>{{ reportDate(report.period.start) }} — {{ reportDate(report.period.end) }}</p></div>
       <p v-if="report.message" role="status" class="mb-5 rounded-xl border border-border-default bg-surface p-5 text-sm leading-6 text-text-secondary">{{ report.message }}</p>
-      <BusinessMetaTechnical :report="report" />
+      <BusinessCampaigns v-if="mode === 'campaigns' && hasAds && ads" :ads="ads" />
       <template v-if="report.status !== 'not_configured'">
-        <BusinessDecisionPanel :period="report.period" source="meta" />
+        <details v-if="mode === 'campaigns'" class="my-5 rounded-xl border border-border-default bg-surface p-5"><summary class="cursor-pointer text-sm font-semibold">შედარება წინა პერიოდთან · Meta</summary><BusinessDecisionPanel :period="report.period" source="meta" compact /></details>
         <section class="mb-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="marketing-analysis-title">
           <h2 id="marketing-analysis-title" class="flex items-center gap-2 text-base font-bold"><InformationCircleIcon class="h-5 w-5 shrink-0 text-accent-primary" aria-hidden="true" /> მარკეტინგის მოკლე ანალიზი</h2>
           <p class="mt-3 text-sm leading-7 text-text-secondary">{{ insight }}</p><p class="mt-3 text-[11px] leading-5 text-text-muted">ავტომატური შეჯამება Meta-ს მიღებული მონაცემებით. ნახვა და დაწკაპუნება შეძენას თავისთავად არ ნიშნავს.</p>
         </section>
-        <section class="mb-6" aria-labelledby="ad-report-title">
+        <section class="mb-6" v-if="mode === 'campaigns'" aria-labelledby="ad-report-title">
           <h2 id="ad-report-title" class="text-lg font-bold">რეკლამის შედეგები</h2>
           <p v-if="ads?.message" role="status" class="mt-3 rounded-lg border border-border-default bg-surface p-4 text-sm leading-6 text-text-secondary">{{ ads.message }}</p>
           <template v-if="hasAds">
@@ -111,14 +113,11 @@ watch(() => [route.query.start, route.query.end], () => {
               <p v-else class="py-10 text-center text-sm text-text-muted">არჩეულ პერიოდში სარეკლამო აქტივობა არ არის.</p>
               <details class="p-5 pt-3"><summary class="cursor-pointer text-xs font-semibold text-text-secondary">დღიური მონაცემების ნახვა ცხრილში</summary><div class="mt-4 max-h-[320px] overflow-auto rounded-lg" :class="scrollClass"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-2 text-text-secondary"><tr><th class="p-3">თარიღი</th><th class="p-3 text-right">ხარჯი</th><th class="p-3 text-right">ჩვენებები</th><th class="p-3 text-right">დაწკაპუნებები</th></tr></thead><tbody><tr v-for="day in ads?.daily" :key="day.date" class="border-t border-border-default"><td class="whitespace-nowrap p-3">{{ reportDate(day.date) }}</td><td class="whitespace-nowrap p-3 text-right tabular-nums">{{ money(day.spend) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(day.impressions) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(day.clicks) }}</td></tr></tbody></table></div></details>
             </section>
-            <section class="mt-5 overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="campaigns-title">
-              <div class="p-5"><h3 id="campaigns-title" class="text-base font-bold">კამპანიები</h3><p class="mt-2 text-xs leading-5 text-text-muted">არჩეულ პერიოდში აქტივობის მქონე კამპანიები, ხარჯის მიხედვით. {{ ads?.campaigns_limited ? 'სია შეზღუდულია პირველი 300 ჩანაწერით; ზედა ჯამები მთელ პერიოდს მოიცავს.' : '' }}</p></div>
-              <div v-if="ads?.campaigns?.length" class="max-h-[420px] overflow-auto" :class="scrollClass"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-2 text-text-secondary"><tr><th class="p-3 pl-5">კამპანია</th><th class="p-3 text-right">ხარჯი</th><th class="p-3 text-right">ჩვენებები</th><th class="p-3 text-right">დაწკაპუნებები</th><th class="p-3 pr-5 text-right">მიწერილი შეძენები</th></tr></thead><tbody><tr v-for="campaign in ads.campaigns" :key="campaign.id" class="border-t border-border-default"><td class="min-w-[180px] max-w-[320px] break-words p-3 pl-5 font-semibold">{{ campaign.name || `კამპანია ${campaign.id}` }}</td><td class="whitespace-nowrap p-3 text-right tabular-nums">{{ money(campaign.spend) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(campaign.impressions) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(campaign.clicks) }}</td><td class="p-3 pr-5 text-right tabular-nums">{{ reportNumber(campaign.website_purchases) }}</td></tr></tbody></table></div>
-              <p v-else class="px-5 pb-8 text-sm text-text-muted">არჩეულ პერიოდში კამპანიების შედეგები არ არის.</p>
-            </section>
+
           </template>
         </section>
         <div class="grid min-w-0 gap-5 xl:grid-cols-2">
+        <template v-if="mode === 'social'">
           <section v-for="platform in social" :key="platform.key" class="min-w-0 rounded-xl border border-border-default bg-surface p-5 md:p-6" :aria-labelledby="`${platform.key}-title`">
             <h2 :id="`${platform.key}-title`" class="text-lg font-bold">{{ platform.title }}</h2><p class="mt-1 text-xs text-text-muted">{{ platform.name }}</p>
             <p v-if="platform.profile?.message" role="status" class="mt-3 text-xs leading-6 text-text-secondary">მიმდინარე პროფილი: {{ platform.profile.message }}</p>
@@ -129,6 +128,7 @@ watch(() => [route.query.start, route.query.end], () => {
             <p class="mt-5 text-[11px] leading-5 text-text-muted">{{ platform.note }}</p>
             <div class="mt-4 border-t border-border-default pt-4 text-[11px] leading-5 text-text-muted"><p v-if="platform.profile?.fetched_at">პროფილი მიღებულია: {{ metaUpdated(platform.profile.fetched_at) }} · თბილისის დრო</p><p v-if="platform.activity?.fetched_at">პერიოდის სტატისტიკა მიღებულია: {{ metaUpdated(platform.activity.fetched_at) }} · თბილისის დრო</p></div>
           </section>
+        <p class="my-4 text-xs leading-6 text-text-muted">ეს გვერდის/პროფილის აქტივობაა. სადაც Meta ფასიან და ორგანულ აქტივობას ცალსახად არ ყოფს, მხოლოდ ორგანულს არ ვუწოდებთ. ეს რიცხვები სარეკლამო კამპანიების შედეგებს არ ემატება.</p></template>
         </div>
         <p class="mt-5 text-[11px] leading-5 text-text-muted">მონაცემები ხელახლა მოითხოვება გახსნის ან განახლებისას, თუ ბოლო მიღებიდან 5 წუთი გავიდა. Meta-ს დამუშავება შეიძლება დაგვიანდეს. პლატფორმების მიღწეული ანგარიშები ერთმანეთს არ ემატება; ერთ ადამიანს ორივე პლატფორმა შეიძლება ჰქონდეს.</p>
       </template>

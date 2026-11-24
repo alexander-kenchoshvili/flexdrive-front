@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ArrowPathIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon, ShieldCheckIcon, HomeIcon, ChartBarIcon, BanknotesIcon, UsersIcon, MegaphoneIcon, CubeIcon, ArrowUpRightIcon, ShoppingCartIcon } from "@heroicons/vue/24/outline";
 import { useMediaQuery } from "@vueuse/core";
-import { BUSINESS_SECTIONS } from "~/utils/businessRouting";
+import { BUSINESS_SECTIONS, BUSINESS_GROUPS } from "~/utils/businessRouting";
 
 const route = useRoute();
 const router = useRouter();
@@ -16,7 +16,10 @@ const { isDark, toggleTheme } = useTheme();
 // that render, so use the committed router destination to avoid a logout deadlock.
 const isLogin = computed(() => router.currentRoute.value.path.replace(/\/$/, "") === "/business/login");
 const current = computed(() => BUSINESS_SECTIONS.find((item) => item.path === route.path.replace(/\/$/, "")) || BUSINESS_SECTIONS[0]);
-const icons = { overview: HomeIcon, sales: ChartBarIcon, checkout: ShoppingCartIcon, finance: BanknotesIcon, users: UsersIcon, marketing: MegaphoneIcon, operations: CubeIcon, "vehicle-demand": ChartBarIcon };
+const sourceLabel = computed(() => current.value.key === "overview" ? "ჩვენი ბაზა · GA4 · Meta — წყაროები ცალ-ცალკეა" : (current.value.key === "users" || current.value.key === "google-search") ? "წყარო: Google" : (current.value.key === "marketing" || current.value.key === "social") ? "წყარო: Meta" : current.value.key === "diagnostics" ? "წყაროების მდგომარეობა" : "წყარო: FlexDrive-ის ბაზა");
+const icons = { social: MegaphoneIcon, diagnostics: ShieldCheckIcon, carts: ShoppingCartIcon, "google-search": ChartBarIcon, overview: HomeIcon, sales: ChartBarIcon, checkout: ShoppingCartIcon, finance: BanknotesIcon, users: UsersIcon, marketing: MegaphoneIcon, operations: CubeIcon, "vehicle-demand": ChartBarIcon };
+const navigation = BUSINESS_GROUPS.map((group) => ({ label: group.label, items: group.keys.map((key) => BUSINESS_SECTIONS.find((item) => item.key === key)!) }));
+const isCurrent = (key: string) => current.value.key === key || current.value.key === "checkout" && key === "carts";
 const mobile = useMediaQuery("(max-width: 1023px)");
 const menuOpen = ref(false);
 const menuButton = ref<HTMLButtonElement | null>(null);
@@ -95,19 +98,21 @@ const refreshPage = () => window.location.reload();
           </button>
         </div>
         <div class="mx-3 mb-[38px] mt-[17px] flex items-center gap-2 text-xs leading-[18px] text-footer-text-muted"><span class="h-1.5 w-1.5 rounded-full bg-brand-primary" /> ბიზნესის პანელი</div>
-        <div class="mb-3 px-3 text-[11px] font-bold text-footer-text-muted">საქმიანობა</div>
         <nav>
+          <section v-for="group in navigation" :key="group.label" class="mb-5">
+          <h2 class="mb-2 px-3 text-[11px] font-bold text-footer-text-muted">{{ group.label }}</h2>
           <NuxtLink
-            v-for="item in BUSINESS_SECTIONS"
+            v-for="item in group.items"
             :key="item.key"
             :to="typeof route.query.start === 'string' && typeof route.query.end === 'string' ? { path: item.path, query: { start: route.query.start, end: route.query.end } } : item.path"
             class="mb-[5px] flex min-h-[48px] items-center gap-3 rounded-lg p-3 text-[13px] font-semibold transition-colors duration-150 hover:bg-footer-hover hover:text-footer-text-primary motion-reduce:transition-none"
-            :class="current.key === item.key ? 'bg-footer-hover text-footer-text-primary shadow-[inset_3px_0_0_var(--brand-primary)]' : 'text-footer-text-secondary'"
-            :aria-current="current.key === item.key ? 'page' : undefined"
+            :class="isCurrent(item.key) ? 'bg-footer-hover text-footer-text-primary shadow-[inset_3px_0_0_var(--brand-primary)]' : 'text-footer-text-secondary'"
+            :aria-current="isCurrent(item.key) ? 'page' : undefined"
           >
-            <component :is="icons[item.key]" class="h-5 w-5 shrink-0" :class="current.key === item.key ? 'text-brand-primary' : ''" aria-hidden="true" />
+            <component :is="icons[item.key]" class="h-5 w-5 shrink-0" :class="isCurrent(item.key) ? 'text-brand-primary' : ''" aria-hidden="true" />
             <span>{{ item.label }}</span>
           </NuxtLink>
+          </section>
         </nav>
         <div class="mt-auto pt-12">
           <a href="/" class="mb-[5px] flex min-h-[48px] items-center gap-3 rounded-lg p-3 text-[13px] font-semibold text-footer-text-secondary hover:bg-footer-hover hover:text-footer-text-primary">
@@ -129,7 +134,7 @@ const refreshPage = () => window.location.reload();
             <button ref="menuButton" type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-transparent text-text-secondary hover:bg-surface-3 lg:hidden" aria-label="მენიუს გახსნა" aria-controls="business-navigation" :aria-expanded="menuOpen" @click="menuOpen = true">
               <Bars3Icon class="h-5 w-5 shrink-0" aria-hidden="true" />
             </button>
-            <span class="hidden md:inline">ბიზნესის პანელი</span><span class="hidden md:inline" aria-hidden="true">/</span><strong class="font-semibold text-text-secondary">{{ current.label }}</strong>
+            <span class="hidden md:inline">ბიზნესის პანელი</span><span class="hidden md:inline" aria-hidden="true">/</span><strong class="font-semibold text-text-secondary">{{ current.label }}</strong><span class="hidden text-[11px] min-[1200px]:inline">{{ sourceLabel }}</span>
           </div>
           <div class="flex shrink-0 items-center gap-0.5 md:gap-1.5">
             <button class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-transparent text-text-secondary hover:bg-surface-3" type="button" aria-label="გვერდის განახლება" title="გვერდის განახლება" @click="refreshPage">

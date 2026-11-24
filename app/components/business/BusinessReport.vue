@@ -3,7 +3,7 @@ import BusinessCourierFinance from "./BusinessCourierFinance.vue";
 import { ArrowPathIcon, CircleStackIcon, InformationCircleIcon, ChartBarIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { BUSINESS_SECTIONS } from "~/utils/businessRouting";
 import { buildBusinessInsights } from "~/utils/businessInsights";
-import { REPORT_METRICS, businessPreset, reportMoney, reportNumber, reportDate, type BusinessPeriod, type ReportSection } from "~/utils/businessReport";
+import { REPORT_METRICS, businessPreset, businessToday, reportMoney, reportNumber, reportDate, type BusinessPeriod, type ReportSection } from "~/utils/businessReport";
 
 const props = defineProps<{ section: ReportSection }>();
 const route = useRoute();
@@ -94,6 +94,7 @@ const profitSteps = computed(() => [
       </div>
       <p v-if="dateError" class="mt-3 text-sm text-error" role="alert">{{ dateError }}</p>
     </form>
+    <p v-if="end === businessToday()" class="my-3 text-xs leading-6 text-text-muted">დღევანდელი დღე ჯერ არ დასრულებულა. წყაროს დამუშავებაც შეიძლება დაგვიანდეს; თითოეულ ანგარიშთან დროის სარტყელი მითითებულია.</p>
 
     <div v-if="errorMessage" class="mt-5 rounded-lg border border-error bg-surface p-4 text-sm text-error" role="alert">{{ errorMessage }} <button type="button" class="ml-2 min-h-[44px] underline underline-offset-4" @click="load(readPeriod())">ხელახლა ცდა</button></div>
     <div v-if="loading" class="my-6 flex min-h-[240px] items-center justify-center gap-3 text-sm text-text-muted" role="status"><ArrowPathIcon class="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" /> რეალური მონაცემები იტვირთება…</div>
@@ -106,16 +107,17 @@ const profitSteps = computed(() => [
       <p v-if="hasIncompleteData" class="mt-4 flex items-start gap-2 rounded-lg border border-border-default bg-surface-2 p-3 text-xs leading-5 text-text-secondary"><InformationCircleIcon class="h-5 w-5 shrink-0" aria-hidden="true" /> ზოგი ჩანაწერის ღირებულება ან თანხის განაწილება არასრულია. შესაბამისი სრული მაჩვენებლის ნაცვლად ნაჩვენებია „—“; მიღებული და დაბრუნებული თანხები დადასტურებული გადახდებიდან ითვლება.</p>
 
       <p class="mt-3 text-[11px] leading-5 text-text-muted">წყარო: ამ გარემოს შენახული ჩანაწერები. არსებული სატესტო შეკვეთებიც ამ ეტაპზე ანგარიშში შედის.</p>
-      <section v-if="section === 'overview' && insights" class="my-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="business-analysis-title">
+
+      <BusinessOverview v-if="section === 'overview'" :period="report.period" :shop="report" />
+      <details v-if="section === 'overview' && insights" class="my-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="business-analysis-title">
+        <summary class="cursor-pointer text-sm font-semibold">ფინანსური შეჯამება · ვრცლად</summary>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 id="business-analysis-title" class="flex items-center gap-2 text-base font-bold"><InformationCircleIcon class="h-5 w-5 shrink-0 text-accent-primary" aria-hidden="true" /> ბიზნესის მოკლე ანალიზი</h2>
           <span class="rounded-md bg-accent-soft px-2 py-1 text-[11px] font-semibold text-accent-primary">ავტომატური შეჯამება</span>
         </div>
         <p class="mt-4 text-sm leading-7 text-text-primary md:text-[15px]">{{ insights.paragraph }}</p>
         <p class="mt-4 border-t border-border-default pt-3 text-[11px] leading-5 text-text-muted">ეფუძნება არჩეული და შესადარებელი პერიოდების შენახულ მონაცემებს. განახლდება პერიოდის შეცვლისა და მონაცემების განახლებისას.</p>
-      </section>
-      <BusinessDecisionPanel v-if="section === 'overview'" :period="report.period" source="all" compact />
-      <BusinessSearchConsole v-if="section === 'overview'" :period="report.period" compact />
+      </details>
       <div v-if="section !== 'overview'" class="my-6 grid grid-cols-2 border-y border-border-default md:mb-7 md:grid-cols-4 md:py-6" aria-label="ძირითადი მაჩვენებლები">
         <article v-for="metric in metrics" :key="metric.key" class="border-b border-r border-border-default px-3.5 py-5 even:border-r-0 [&:nth-last-child(-n+2)]:border-b-0 md:border-b-0 md:px-5 md:py-0 md:first:pl-0 md:even:border-r md:last:border-r-0 md:last:pr-0">
           <h2 class="text-[13px] font-semibold leading-5 text-text-secondary">{{ metric.label }}</h2>
@@ -143,7 +145,7 @@ const profitSteps = computed(() => [
         </aside>
       </div>
 
-      <div v-if="section === 'overview' && insights" class="grid gap-4 md:grid-cols-2">
+      <details v-if="section === 'overview' && insights" class="my-5"><summary class="cursor-pointer text-sm font-semibold">ყველა ფინანსური ფაქტი და წყაროს განმარტება</summary><div class="mt-4 grid gap-4 md:grid-cols-2">
         <section class="rounded-xl border border-border-default bg-surface p-5">
           <h2 class="text-base font-bold">საყურადღებო ფაქტები</h2>
           <ul v-if="insights.facts.length" class="mt-4 divide-y divide-border-default">
@@ -163,7 +165,7 @@ const profitSteps = computed(() => [
             <div class="flex flex-wrap items-start justify-between gap-2 pt-4"><dt class="font-semibold text-text-secondary">Meta-ს ანგარიშები</dt><dd><NuxtLink :to="{ path: '/business/marketing', query: report.period }" class="inline-flex min-h-[44px] items-center font-semibold text-accent-primary underline-offset-4 hover:underline">მარკეტინგის ანგარიშის ნახვა →</NuxtLink></dd></div>
           </dl>
         </section>
-      </div>
+      </div></details>
       <div v-if="section === 'overview'" class="mt-5 flex flex-wrap gap-3">
         <BaseButton as="nuxt-link" variant="secondary" :to="{ path: '/business/sales', query: report.period }">გაყიდვების დეტალები</BaseButton>
         <BaseButton as="nuxt-link" variant="secondary" :to="{ path: '/business/finance', query: report.period }">ფინანსების დეტალები</BaseButton>

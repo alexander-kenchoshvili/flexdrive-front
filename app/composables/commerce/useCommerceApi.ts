@@ -1,3 +1,4 @@
+import { isProductionTrackingHost } from "~/utils/trackingHost";
 import { metaBrowserIdentifierHeaders } from "~/utils/metaBrowserIdentifiers";
 import { apiFetchRaw } from "~/composables/apiFetch";
 import type {
@@ -31,7 +32,8 @@ type CartItemUpdatePayload = {
 };
 
 export const useCommerceApi = () => {
-  const { marketingConsentGranted } = useCookieConsent();
+  const { marketingConsentGranted, analyticsConsentGranted } = useCookieConsent();
+  const { user: businessUser } = useBusinessAuth();
 
   const resolveHeaders = (options?: CommerceRequestOptions) => {
     const nextHeaders = {
@@ -96,9 +98,15 @@ export const useCommerceApi = () => {
   };
 
   const addCartItem = async (payload: CartItemPayload) => {
+    let observation: { analytics_consent: true; analytics_event_id: string } | undefined;
+    if (import.meta.client && typeof window !== "undefined" && analyticsConsentGranted?.value && isProductionTrackingHost(window.location.hostname)) {
+      let internal = !!businessUser.value;
+      try { internal ||= localStorage.getItem("flexdrive-internal-traffic") === "1"; } catch { /* No storage required. */ }
+      if (!internal && globalThis.crypto?.randomUUID) observation = { analytics_consent: true, analytics_event_id: globalThis.crypto.randomUUID() };
+    }
     return apiFetchRaw<CommerceCart>("/commerce/cart/items/", {
       method: "POST",
-      body: payload,
+      body: { ...payload, ...observation },
     });
   };
 

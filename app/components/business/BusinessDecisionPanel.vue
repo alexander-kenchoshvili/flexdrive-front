@@ -4,7 +4,7 @@ import { marketingMoney, metaUpdated } from "~/utils/businessMarketing";
 import { analyticsSource } from "~/utils/businessAnalytics";
 import { reportDate, reportNumber, type BusinessPeriod } from "~/utils/businessReport";
 
-const props = defineProps<{ period: BusinessPeriod; source: "all" | "google" | "meta"; compact?: boolean }>();
+const props = defineProps<{ period: BusinessPeriod; source: "all" | "google" | "meta"; compact?: boolean; view?: "acquisition" | "journey" }>();
 const { report, loading, errorMessage, load } = useBusinessDecisions();
 onMounted(() => load(props.period, props.source));
 watch(() => [props.period.start, props.period.end, props.source], () => load(props.period, props.source));
@@ -21,7 +21,7 @@ const efficiency = computed(() => adEfficiency(ads.value?.summary));
 const oldEfficiency = computed(() => adEfficiency(oldAds.value?.summary));
 const googleCards = computed(() => [
   { label: "ვიზიტები", key: "sessions" as const }, { label: "მომხმარებლები", key: "totalUsers" as const },
-  { label: "Google-ში აღრიცხული შეძენები", key: "ecommercePurchases" as const }, { label: "შეძენების თანხა · GEL", key: "purchaseRevenue" as const },
+  { label: "Google-ში აღრიცხული შეძენები", key: "ecommercePurchases" as const }, { label: "GA4-ში აღრიცხული შეძენების თანხა · GEL", key: "purchaseRevenue" as const },
 ]);
 const adCards = computed(() => [
   { label: "რეკლამის ხარჯი", value: money(ads.value?.summary?.spend), change: decisionChange(ads.value?.summary?.spend, oldAds.value?.summary?.spend, comparableAds.value), note: "Meta-ს სარეკლამო ანგარიშის ვალუტაში." },
@@ -36,7 +36,7 @@ const stateMessage = (state?: DecisionState) => state?.status === "not_configure
 <template>
   <section class="my-6 min-w-0 rounded-xl border border-border-default bg-surface p-4 md:p-6" :aria-busy="loading" aria-label="ტრეფიკი და რეკლამის ეფექტიანობა">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 class="text-lg font-bold">რა შედეგი მოაქვს ვიზიტებსა და რეკლამას</h2><p class="mt-1 text-xs leading-5 text-text-muted">შერჩეული პერიოდი · Google და Meta აღრიცხავენ აქტივობას; ზუსტ გაყიდვებსა და მოგებას ჩვენი ბაზა ითვლის.</p></div>
+      <div><h2 class="text-lg font-bold">{{ source === "google" ? "GA4 · ვიზიტები და ყიდვის გზა" : source === "meta" ? "Meta · რეკლამის ეფექტიანობა" : "ვიზიტები და რეკლამა · წყაროების მიხედვით" }}</h2><p class="mt-1 text-xs leading-5 text-text-muted">შერჩეული პერიოდი · Google და Meta აღრიცხავენ აქტივობას; ზუსტ გაყიდვებსა და მოგებას ჩვენი ბაზა ითვლის.</p></div>
       <button type="button" :disabled="loading" class="min-h-[44px] rounded-lg border border-border-default px-4 py-2 text-xs font-semibold disabled:opacity-50" @click="load(period, source)">განახლება</button>
     </div>
     <p v-if="loading" role="status" class="py-6 text-sm text-text-muted">ანგარიშები იტვირთება…</p>
@@ -44,7 +44,7 @@ const stateMessage = (state?: DecisionState) => state?.status === "not_configure
     <template v-else-if="report">
       <p class="mt-4 text-xs leading-6 text-text-muted">შედარება: {{ reportDate(report.previous_period.start) }} — {{ reportDate(report.previous_period.end) }}. მიმდინარე თვე ედრება წინა თვის შესაბამის ნაწილს; სხვა დიაპაზონი — წინა იმავე რაოდენობის დღეებს. მიმდინარე დღე ჯერ არასრულია.</p>
       <ul v-if="notes.length" class="my-4 space-y-2 rounded-lg bg-surface-2 p-4 text-sm leading-6 text-text-secondary"><li v-for="note in notes" :key="note">{{ note }}</li></ul>
-      <section v-if="google" class="mt-6" aria-label="Google-ის შედეგები">
+      <section v-if="google && view !== 'journey'" class="mt-6" aria-label="Google-ის შედეგები">
         <h3 class="font-bold">Google · ვიზიტიდან შეძენამდე</h3>
         <template v-if="decisionReady(google) && google.current">
           <p class="mt-2 text-xs text-text-muted">მიღებულია: {{ metaUpdated(google.fetched_at) }} · {{ google.timezone || 'წყაროს დროის სარტყელი უცნობია' }} <strong v-if="google.status === 'stale'" class="text-error">· ძველი პასუხი</strong></p>
@@ -58,7 +58,7 @@ const stateMessage = (state?: DecisionState) => state?.status === "not_configure
           <p v-for="warning in google.warnings" :key="warning" class="mt-3 text-xs leading-5 text-text-muted">{{ warning }}</p>
         </template><p v-else role="status" class="mt-3 text-sm leading-6 text-text-muted">{{ stateMessage(google) }}</p>
       </section>
-      <BusinessFunnel v-if="funnel && !compact" :funnel="funnel" />
+      <BusinessFunnel v-if="funnel && !compact && view !== 'acquisition'" :funnel="funnel" />
       <section v-if="ads" class="mt-6" aria-label="რეკლამის ეფექტიანობა">
         <h3 class="font-bold">Meta · რას ვიღებთ სარეკლამო ხარჯით</h3>
         <template v-if="decisionReady(ads) && ads.summary">
@@ -71,7 +71,7 @@ const stateMessage = (state?: DecisionState) => state?.status === "not_configure
           <details v-if="!compact && ads.campaigns?.length" class="mt-4 rounded-lg border border-border-default p-4"><summary class="cursor-pointer text-sm font-semibold">კამპანიების თანხა და ეფექტიანობა</summary><p v-if="ads.campaigns_limited" class="mt-2 text-xs text-text-muted">პირველი 300 კამპანია; ზედა ჯამები მთელ ანგარიშს მოიცავს.</p><div class="mt-3 max-h-[360px] overflow-auto [scrollbar-width:thin]"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-2"><tr><th class="p-3">კამპანია</th><th class="p-3 text-right">ხარჯი</th><th class="p-3 text-right">შეძენები</th><th class="p-3 text-right">მიწერილი თანხა</th><th class="p-3 text-right">ერთი შეძენის ფასი</th><th class="p-3 text-right">უკუგება</th></tr></thead><tbody><tr v-for="campaign in ads.campaigns" :key="campaign.id" class="border-t border-border-default"><td class="min-w-[160px] max-w-[280px] break-words p-3">{{ campaign.name }}</td><td class="whitespace-nowrap p-3 text-right">{{ money(campaign.spend) }}</td><td class="p-3 text-right">{{ reportNumber(campaign.website_purchases) }}</td><td class="whitespace-nowrap p-3 text-right">{{ money(campaign.website_purchase_value) }}</td><td class="whitespace-nowrap p-3 text-right">{{ money(adEfficiency(campaign).cpa) }}</td><td class="p-3 text-right">{{ adEfficiency(campaign).roas === null ? '—' : `${reportNumber(Math.round(adEfficiency(campaign).roas! * 100) / 100)}×` }}</td></tr></tbody></table></div></details>
         </template><p v-else role="status" class="mt-3 text-sm leading-6 text-text-muted">{{ stateMessage(ads) }}</p>
       </section>
-      <div v-if="compact" class="mt-4 flex flex-wrap gap-4 text-sm font-semibold"><NuxtLink :to="{ path: '/business/users', query: report.period }" class="underline underline-offset-4">მომხმარებლის გზის ნახვა</NuxtLink><NuxtLink :to="{ path: '/business/marketing', query: report.period }" class="underline underline-offset-4">მარკეტინგის დეტალები</NuxtLink></div>
+      <div v-if="compact" class="mt-4 flex flex-wrap gap-4 text-sm font-semibold"><NuxtLink :to="{ path: '/business/users', query: { ...report.period, tab: 'journey' } }" class="underline underline-offset-4">მომხმარებლის გზის ნახვა</NuxtLink><NuxtLink :to="{ path: '/business/marketing', query: report.period }" class="underline underline-offset-4">მარკეტინგის დეტალები</NuxtLink></div>
       <p class="mt-5 border-t border-border-default pt-4 text-xs leading-6 text-text-muted">მცირე რაოდენობით მონაცემებზე მკვეთრ დასკვნებს ნუ გამოიტან. თანხმობა, დაბლოკილი აღრიცხვა და წყაროების დამუშავების დრო გავლენას ახდენს შედეგებზე. წყაროები 5 წუთით ინახება; ეს ანგარიში რეალურ დროში არ ახლდება.</p>
     </template>
   </section>

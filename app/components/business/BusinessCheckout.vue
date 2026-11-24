@@ -114,6 +114,7 @@ onBeforeUnmount(() => controller?.abort());
   <div class="min-w-0" :aria-busy="loading">
     <header class="flex flex-wrap items-start justify-between gap-4">
       <div>
+        <NuxtLink :to="{ path: '/business/carts', query: route.query }" class="mb-3 inline-flex min-h-[44px] items-center text-xs font-semibold underline">კალათები და დამატებების ისტორია →</NuxtLink>
         <h1 class="text-2xl font-bold md:text-3xl">დაწყებული ყიდვები</h1>
         <p class="mt-2 max-w-2xl text-sm leading-7 text-text-secondary">ნახე, რომელი პროდუქტის გაფორმება დაიწყეს, რომელ ნაბიჯამდე მივიდნენ და რა შედეგი მოჰყვა გადახდას.</p>
       </div>

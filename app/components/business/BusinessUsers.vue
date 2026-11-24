@@ -5,6 +5,8 @@ import { businessPreset, businessToday, reportDate, reportNumber, type BusinessP
 import { analyticsHasData, analyticsInsight, analyticsSource } from "~/utils/businessAnalytics";
 
 const route = useRoute();
+const tabs = [{ key: "audience", label: "მომხმარებლები" }, { key: "acquisition", label: "შემოსვლის წყაროები" }, { key: "pages", label: "გვერდები და მოწყობილობები" }, { key: "search", label: "საიტის შიდა ძიება" }, { key: "journey", label: "ყიდვის გზა" }];
+const selected = computed(() => tabs.some((tab) => tab.key === route.query.tab) ? String(route.query.tab) : route.hash === "#audience-search-title" ? "search" : "audience");
 const { report, loading, errorMessage, load } = useBusinessAnalytics();
 const readPeriod = (): BusinessPeriod => typeof route.query.start === "string" && typeof route.query.end === "string"
   ? { start: route.query.start, end: route.query.end } : businessPreset("month");
@@ -29,9 +31,12 @@ const applyPeriod = async (period = { start: start.value, end: end.value }) => {
   }
   dateError.value = ""; start.value = period.start; end.value = period.end; searchPeriod.value = { ...period };
   if (route.query.start === period.start && route.query.end === period.end) await load(period);
-  else await navigateTo({ path: route.path, query: period }, { replace: true });
+  else await navigateTo({ path: route.path, query: { ...route.query, ...period } }, { replace: true });
 };
-onMounted(() => load(readPeriod()));
+onMounted(() => {
+  if (route.hash === "#google-search-results") { void navigateTo({ path: "/business/google-search", query: route.query, hash: route.hash }, { replace: true }); return; }
+  void load(readPeriod());
+});
 watch(() => [route.query.start, route.query.end], () => {
   const period = readPeriod(); start.value = period.start; end.value = period.end; searchPeriod.value = { ...period }; void load(period);
 });
@@ -40,9 +45,9 @@ watch(() => [route.query.start, route.query.end], () => {
 <template>
   <section aria-labelledby="business-page-title" :aria-busy="loading">
     <div class="mb-6">
-      <p class="mb-2 text-[11px] font-bold leading-[18px] text-accent-primary">FLEXDRIVE · მომხმარებლები</p>
-      <h1 id="business-page-title" class="text-[28px] font-extrabold leading-9 min-[1440px]:text-4xl min-[1440px]:leading-[44px]">მომხმარებლები და ძებნა</h1>
-      <p class="mt-2 text-[13px] leading-5 text-text-muted">როგორ გვპოულობენ Google-ში, საიდან მოდიან და რას ეძებენ ჩვენს საიტზე.</p>
+      <p class="mb-2 text-[11px] font-bold leading-[18px] text-accent-primary">GOOGLE ANALYTICS · საიტის ანალიტიკა</p>
+      <h1 id="business-page-title" class="text-[28px] font-extrabold leading-9 min-[1440px]:text-4xl min-[1440px]:leading-[44px]">Google · საიტის ანალიტიკა</h1>
+      <p class="mt-2 text-[13px] leading-5 text-text-muted">ვინ შემოდის საიტზე და რას აკეთებს · წყარო: GA4. Google-ის ძიებაში გამოჩენა ცალკე განყოფილებაშია.</p>
     </div>
     <form class="rounded-xl border border-border-default bg-surface p-4 md:p-5" @submit.prevent="applyPeriod()">
       <div class="flex flex-wrap items-end gap-3">
@@ -56,9 +61,11 @@ watch(() => [route.query.start, route.query.end], () => {
       </div>
       <p v-if="dateError" role="alert" class="mt-3 text-xs text-error">{{ dateError }}</p>
     </form>
-    <BusinessSearchConsole :period="searchPeriod" />
-    <BusinessPagePerformance :period="searchPeriod" />
-    <BusinessDevices :period="searchPeriod" />
+    <p v-if="end === businessToday()" class="my-3 text-xs leading-6 text-text-muted">დღევანდელი დღე ჯერ არ დასრულებულა. წყაროს დამუშავებაც შეიძლება დაგვიანდეს; თითოეულ ანგარიშთან დროის სარტყელი მითითებულია.</p>
+    <BusinessTabs :tabs="tabs" :selected="selected" />
+    <BusinessAudience v-if="selected === 'audience'" :period="searchPeriod" />
+    <template v-if="selected === 'pages'"><BusinessPagePerformance :period="searchPeriod" /><BusinessDevices :period="searchPeriod" /></template>
+    <BusinessDecisionPanel v-if="selected === 'acquisition' || selected === 'journey'" :period="searchPeriod" source="google" :view="selected === 'journey' ? 'journey' : 'acquisition'" />
     <p v-if="loading" role="status" class="py-10 text-center text-sm text-text-muted">Google-ის მონაცემები იტვირთება…</p>
     <p v-else-if="errorMessage" role="alert" class="mt-5 rounded-xl border border-border-default bg-surface p-5 text-sm text-error">{{ errorMessage }}</p>
     <template v-else-if="report">
@@ -71,33 +78,32 @@ watch(() => [route.query.start, route.query.end], () => {
         <p class="text-xs leading-5 text-text-muted">პერიოდი: {{ reportDate(report.period.start) }} — {{ reportDate(report.period.end) }} · Google-ის ანგარიშის დროის სარტყელი: {{ report.report_timezone || 'მიუთითებელი' }}</p>
         <p class="mt-2 text-[11px] leading-5 text-text-muted">განახლებისას ახალი პასუხი მოითხოვება, თუ ბოლო წამოღებიდან 5 წუთი გავიდა. დღევანდელი მონაცემები შეიძლება დაგვიანებით დაემატოს; ეს რეალურ დროში ანგარიში არ არის.</p>
         <p v-for="warning in report.warnings" :key="warning" class="mt-3 rounded-lg border border-border-default bg-surface p-3 text-xs leading-5 text-text-secondary">{{ warning }}</p>
-        <div class="my-6 grid grid-cols-2 border-y border-border-default md:grid-cols-4 md:py-6" aria-label="ძირითადი მაჩვენებლები">
+        <div v-if="selected === 'audience' || selected === 'search'" class="my-6 grid grid-cols-2 border-y border-border-default md:grid-cols-4 md:py-6" aria-label="ძირითადი მაჩვენებლები">
           <article v-for="metric in metrics" :key="metric.label" class="border-b border-r border-border-default px-3.5 py-5 even:border-r-0 [&:nth-last-child(-n+2)]:border-b-0 md:border-b-0 md:px-5 md:py-0 md:first:pl-0 md:even:border-r md:last:border-r-0 md:last:pr-0">
             <h2 class="text-[13px] font-semibold leading-5 text-text-secondary">{{ metric.label }}</h2>
             <p class="mt-3 break-words text-2xl font-bold leading-8 tabular-nums text-text-primary min-[1440px]:text-[30px]">{{ reportNumber(metric.value) }}</p>
             <p class="mt-3 text-[11px] leading-5 text-text-muted">{{ metric.note }}</p>
           </article>
         </div>
-        <BusinessDecisionPanel :period="report.period" source="google" />
-        <section class="mb-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="audience-analysis-title">
+        <section v-if="selected === 'audience'" class="mb-6 rounded-xl border border-border-default bg-surface p-5 md:p-6" aria-labelledby="audience-analysis-title">
           <h2 id="audience-analysis-title" class="flex items-center gap-2 text-base font-bold"><InformationCircleIcon class="h-5 w-5 shrink-0 text-accent-primary" aria-hidden="true" /> მომხმარებლების მოკლე ანალიზი</h2>
           <p class="mt-3 text-sm leading-7 text-text-secondary">{{ insight }}</p>
           <p class="mt-3 text-[11px] leading-5 text-text-muted">არჩეული პერიოდის ავტომატური შეჯამება. ეფუძნება Google-ის მიღებულ მონაცემებს.</p>
         </section>
-        <section class="mb-6 overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="audience-chart-title">
+        <section v-if="selected === 'audience'" class="mb-6 overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="audience-chart-title">
           <div class="p-5 pb-2"><h2 id="audience-chart-title" class="text-base font-bold">ვიზიტები და მომხმარებლები დღეების მიხედვით</h2><p class="mt-2 text-xs leading-5 text-text-muted">დღიური მომხმარებლები არ ჯამდება პერიოდის უნიკალურ მომხმარებლებად: ერთი ადამიანი რამდენიმე დღეს შეიძლება გვესტუმროს.</p></div>
           <ClientOnly v-if="hasChart"><LazyBusinessAudienceChart :daily="report.daily || []" /></ClientOnly>
           <p v-else class="py-10 text-center text-sm text-text-muted">არჩეული პერიოდის გრაფიკისთვის მონაცემები არ არის.</p>
           <details class="p-5 pt-3"><summary class="cursor-pointer text-xs font-semibold text-text-secondary">დღიური მონაცემების ნახვა ცხრილში</summary><div class="mt-4 max-h-[320px] overflow-auto rounded-lg" :class="scrollClass"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-2 text-text-secondary"><tr><th class="p-3">თარიღი</th><th class="p-3 text-right">ვიზიტები</th><th class="p-3 text-right">მომხმარებლები</th></tr></thead><tbody><tr v-for="day in report.daily" :key="day.date" class="border-t border-border-default"><td class="p-3">{{ reportDate(day.date) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(day.sessions) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(day.users) }}</td></tr></tbody></table></div></details>
         </section>
-        <section class="mb-6 overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="audience-sources-title">
+        <section v-if="selected === 'acquisition'" class="mb-6 overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="audience-sources-title">
           <div class="p-5"><h2 id="audience-sources-title" class="text-base font-bold">საიდან მოდიან მომხმარებლები</h2><p class="mt-2 text-xs leading-5 text-text-muted">პირველი 20 წყარო ვიზიტების რაოდენობით · სულ {{ reportNumber(report.source_row_count) }} წყარო. წყაროსთან წერია შემოსვლის ტიპიც: organic — საძიებო სისტემა, referral — სხვა საიტის ბმული, cpc — ფასიანი რეკლამა.</p></div>
           <div v-if="report.sources?.length" class="overflow-auto" :class="scrollClass"><table class="w-full text-left text-xs"><thead class="bg-surface-2 text-text-secondary"><tr><th class="p-3 pl-5">შემოსვლის წყარო / ტიპი</th><th class="p-3 text-right">ვიზიტები</th><th class="p-3 pr-5 text-right">ჩართული ვიზიტები</th></tr></thead><tbody><tr v-for="source in report.sources" :key="source.source" class="border-t border-border-default"><td class="min-w-[200px] p-3 pl-5 font-semibold">{{ analyticsSource(source.source) }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(source.sessions) }}</td><td class="p-3 pr-5 text-right tabular-nums">{{ reportNumber(source.engaged_sessions) }}</td></tr></tbody></table></div>
           <p v-else class="px-5 pb-8 text-sm text-text-muted">არჩეულ პერიოდში შემოსვლის წყაროები არ არის.</p>
           <p class="border-t border-border-default p-5 text-[11px] leading-5 text-text-muted">ჩართული ვიზიტი Google-ში ნიშნავს საკმარისი ხანგრძლივობის, მინიმუმ ორი გვერდის ნახვის ან მნიშვნელოვანი მოვლენის მქონე ვიზიტს. ეს შეძენას თავისთავად არ ნიშნავს.</p>
         </section>
-        <section class="overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="audience-search-title">
-          <div class="p-5"><h2 id="audience-search-title" class="text-base font-bold">რას ეძებენ ჩვენს საიტზე</h2><p class="mt-2 text-xs leading-5 text-text-muted">საიტის შიდა საძიებო ველი · Google-ში გამოყენებული საძიებო სიტყვები ზემოთ ცალკე ბლოკშია. პირველი 30 ჩანაწერი შედეგების ნახვის სიხშირით. უშედეგო ძიება ცალკე მონიშნულია.</p></div>
+        <section v-if="selected === 'search'" class="overflow-hidden rounded-xl border border-border-default bg-surface" aria-labelledby="audience-search-title">
+          <div class="p-5"><h2 id="audience-search-title" class="text-base font-bold">რას ეძებენ ჩვენს საიტზე</h2><p class="mt-2 text-xs leading-5 text-text-muted">საიტის შიდა საძიებო ველი · Google-ში გამოყენებული საძიებო სიტყვები „Google · საძიებო სისტემა“ განყოფილებაშია. პირველი 30 ჩანაწერი შედეგების ნახვის სიხშირით. უშედეგო ძიება ცალკე მონიშნულია.</p></div>
           <p v-if="report.search?.status !== 'ready'" class="px-5 pb-8 text-sm leading-6 text-text-muted">{{ report.search?.message || 'ძიების მონაცემები დროებით მიუწვდომელია.' }}</p>
           <div v-else-if="report.search.terms.length" class="overflow-auto" :class="scrollClass"><table class="w-full text-left text-xs"><thead class="bg-surface-2 text-text-secondary"><tr><th class="p-3 pl-5">საძიებო სიტყვა</th><th class="p-3">შედეგი</th><th class="p-3 text-right">ნახვები</th><th class="p-3 pr-5 text-right">ნაპოვნი პროდუქტები საშუალოდ</th></tr></thead><tbody><tr v-for="term in report.search.terms" :key="`${term.term}:${term.outcome}`" class="border-t border-border-default"><td class="min-w-[200px] max-w-[350px] break-words p-3 pl-5 font-semibold">{{ term.term === '(not set)' ? 'სიტყვა მიუთითებელია' : term.term }}</td><td class="min-w-[160px] p-3" :class="term.outcome === 'no_results' ? 'text-error' : 'text-text-secondary'">{{ term.outcome === 'no_results' ? 'პროდუქტი ვერ მოიძებნა' : 'პროდუქტი მოიძებნა' }}</td><td class="p-3 text-right tabular-nums">{{ reportNumber(term.count) }}</td><td class="p-3 pr-5 text-right tabular-nums">{{ reportNumber(Math.round(term.average_results * 10) / 10) }}</td></tr></tbody></table></div>
           <p v-else class="px-5 pb-8 text-sm text-text-muted">არჩეულ პერიოდში ახალი წესით აღრიცხული ძიების შედეგები არ არის.</p>

@@ -217,7 +217,7 @@ test("logout renders the login slot before Nuxt's delayed page route updates", a
       }, {
         ...mocks,
         "@vueuse/core": { useMediaQuery: () => vue.ref(false) },
-      }, "exports.controls = { route, user, isLogin, current, icons, mobile, menuOpen, menuButton, sidebar, signingOut, logoutError, isDark, toggleTheme, closeMenu, trapMenuFocus, signOut, refreshPage };");
+      }, "exports.controls = { route, user, isLogin, current, sourceLabel, navigation, isCurrent, icons, mobile, menuOpen, menuButton, sidebar, signingOut, logoutError, isDark, toggleTheme, closeMenu, trapMenuFocus, signOut, refreshPage };");
       controls = result.controls;
       return { ...require("@heroicons/vue/24/outline"), ...controls, BUSINESS_SECTIONS: routing.BUSINESS_SECTIONS };
     },

@@ -52,7 +52,7 @@ const lists = computed(() => [
             <p v-else class="mt-3 text-sm text-text-muted">ამ პერიოდში Google-ს ჩანაწერები არ დაუბრუნებია.</p>
           </section>
         </template>
-        <NuxtLink v-else :to="{ path: '/business/users', query: report.requested_period, hash: '#google-search-results' }" class="mt-4 inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4">საძიებო სიტყვებისა და გვერდების ნახვა</NuxtLink>
+        <NuxtLink v-else :to="{ path: '/business/google-search', query: report.requested_period, hash: '#google-search-results' }" class="mt-4 inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4">საძიებო სიტყვებისა და გვერდების ნახვა</NuxtLink>
         <p class="mt-5 border-t border-border-default pt-4 text-xs leading-6 text-text-muted">Search Console-ის დაწკაპუნება, Analytics-ის ვიზიტი და ჩვენი შეკვეთა სხვადასხვა მაჩვენებელია; ერთმანეთს არ ემატება. ცხრილების შეჯამება მთელ დომენთან ზუსტად შეიძლება არ ემთხვეოდეს. ეს ბლოკი აჩვენებს ძიების შედეგებს; ინდექსაციის შეცდომები და sitemap თავად Search Console-ში მოწმდება.</p>
       </template>
     </template>
