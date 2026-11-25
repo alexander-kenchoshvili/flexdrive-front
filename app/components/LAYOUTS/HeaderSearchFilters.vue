@@ -5,6 +5,7 @@ import type { BaseSelectOption } from "~/components/common/BaseSelect.vue";
 
 const props = defineProps<{
   embedded?: boolean;
+  hideActions?: boolean;
   make: string;
   model: string;
   year: string;
@@ -97,7 +98,7 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
         @update:selected-values="updateCategories"
       />
     </div>
-    <div v-if="selectedOptions.length || canClear" class="mt-3 flex min-w-0 items-center justify-between gap-3" :class="embedded && !selectedOptions.length ? 'hidden' : ''">
+    <div v-if="selectedOptions.length || (canClear && !hideActions)" class="mt-3 flex min-w-0 items-center justify-between gap-3" :class="!selectedOptions.length ? (embedded ? 'hidden' : 'max-[768px]:hidden') : ''">
       <ul v-if="selectedOptions.length" class="flex min-w-0 flex-1 flex-wrap gap-2" aria-label="არჩეული კატეგორიები">
         <li v-for="option in selectedOptions" :key="option.value" class="min-w-0 max-w-full">
           <button
@@ -111,13 +112,14 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
           </button>
         </li>
       </ul>
-      <BaseButton v-if="canClear" class="ml-auto shrink-0" :class="embedded ? 'hidden' : ''" variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
+      <BaseButton v-if="canClear && !hideActions" class="ml-auto shrink-0" :class="embedded ? 'hidden' : 'hidden min-[769px]:inline-flex'" variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
     </div>
     <div v-if="error" class="mt-3 flex flex-wrap items-center gap-2 text-sm text-warning" role="status">
       <p>{{ error }}</p>
       <button type="button" class="min-h-11 font-semibold underline" @click="emit('retry')">ხელახლა ცდა</button>
     </div>
-    <div v-if="!embedded" class="mt-4 flex justify-end border-t border-border-default pt-4 min-[769px]:hidden">
+    <div v-if="!embedded && !hideActions" class="mt-4 flex items-center justify-end gap-3 border-t border-border-default pt-4 min-[769px]:hidden">
+      <BaseButton v-if="canClear" variant="ghost" size="sm" @click="emit('clear')">გასუფთავება</BaseButton>
       <BaseButton :disabled="!canSubmit" @click="emit('search')">ძებნა</BaseButton>
     </div>
   </section>

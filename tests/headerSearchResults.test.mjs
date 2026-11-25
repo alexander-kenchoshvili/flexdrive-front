@@ -156,7 +156,7 @@ for (const mobile of [false, true]) {
 }
 
 
-test("compact inline template has one query form, opens one filter sheet and retains filters until explicit search", async (t) => {
+test("compact mobile trigger opens a single shared query input and retains drafts until one explicit search", async () => {
   for (const width of [375, 768, 769]) {
     const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/:pathMatch(.*)*", component: slotComponent }] });
     await router.push("/checkout");
@@ -168,9 +168,9 @@ test("compact inline template has one query form, opens one filter sheet and ret
       navigateTo: (target) => router.push(target),
       window: { localStorage: { removeItem() {} }, requestAnimationFrame() {} },
     };
-    const filters = vue.defineComponent({ props: ["make", "model", "year"], setup: (props, { emit }) => () => vue.h("div", { "data-filters": "true", "data-car": `${props.make}:${props.model}:${props.year}` }, [
+    const filters = vue.defineComponent({ props: ["make", "model", "year", "hideActions"], setup: (props, { emit }) => () => vue.h("div", { "data-filters": "true", "data-car": `${props.make}:${props.model}:${props.year}` }, [
       ...[["make", "subaru"], ["model", "forester"], ["year", "2018"]].map(([key, value]) => vue.h("button", { type: "button", "data-pick": key, onClick: () => emit(key, value) }, value)),
-      vue.h("button", { type: "button", "data-apply": "true", onClick: () => emit("search") }, "ძებნა"),
+      ...(!props.hideActions ? [vue.h("button", { type: "button", "data-apply": "true", onClick: () => emit("search") }, "ძებნა")] : []),
     ]) });
     const header = compile("../app/components/LAYOUTS/HeaderSearch.vue", {
       "~/composables/catalog/useVinSearchMarketing": { useVinSearchMarketing: () => ({ track() {} }) },
@@ -182,7 +182,7 @@ test("compact inline template has one query form, opens one filter sheet and ret
       "~/composables/catalog/useCatalogApi": { useCatalogApi: () => ({ getCatalogCategoriesRaw: async () => [], getCatalogProductSuggestions: async () => [], getVehicleMakes: async () => [{ name: "Subaru", slug: "subaru" }], getVehicleModels: async () => [{ name: "Forester", slug: "forester" }], getVehicleYears: async () => [{ year: 2018 }] }) },
       "~/composables/catalog/useCatalogPlaceholderMedia": { useCatalogPlaceholderMedia: () => ({ cardPlaceholderImage: {} }) },
       "~/utils/routePaths": { getCatalogCategorySlugFromPath: () => null }, "~/utils/pageScrollCoordinator": { waitForPageReady: async () => {} },
-    }, globals, (source) => source.replace(/defineExpose\(\{\s*openMobileSheet,/, "defineExpose({ searchText, openMobileSheet,"));
+    }, globals, (source) => source.replace(/<Teleport\b[^>]*>/g, "<div>").replace(/<\/Teleport>/g, "</div>").replace(/defineExpose\(\{\s*openMobileSheet,/, "defineExpose({ searchText, openMobileSheet,"));
     const root = node("root"), app = renderer().createApp(header, { inline: true, collapseMobileFilters: true });
     app.use(router);
     app.component("BaseButton", { setup: (_, { slots }) => () => vue.h("button", { type: "button" }, slots.default?.()) });
@@ -192,20 +192,30 @@ test("compact inline template has one query form, opens one filter sheet and ret
     const vm = app.mount(root);
     try {
       await flush();
-      assert.equal(all(root).filter((el) => el.tag === "input").length, 1);
+      assert.equal(all(root).filter((el) => el.tag === "input").length, width <= 768 ? 0 : 1);
       const trigger = all(root).find((el) => el.props["aria-haspopup"] === "dialog");
       if (width > 768) { assert.equal(trigger, undefined); assert.equal(all(root).filter((el) => el.props["data-filters"]).length, 1); continue; }
       assert.ok(trigger); assert.equal(trigger.props.type, "button");
       assert.equal(all(root).filter((el) => el.props["data-filters"]).length, 0);
-      vm.searchText = "კაპოტი"; await flush(); await trigger.props.onClick(); await flush();
+      await trigger.props.onClick(); await flush();
+      const queryInput = all(root).find((el) => el.tag === "input");
+      assert.ok(queryInput);
+      queryInput.props["onUpdate:modelValue"]("კაპოტი"); await flush();
       assert.equal(all(root).filter((el) => el.props["data-filters"]).length, 1);
-      assert.equal(all(root).filter((el) => el.tag === "form").length, 1, "The detail sheet must not create a checkout or second query form");
+      assert.equal(all(root).filter((el) => el.tag === "input").length, 1, "Only the panel has an editable query field");
+      assert.equal(all(root).filter((el) => el.props.role === "search").length, 1);
+      assert.equal(all(root).filter((el) => el.props["data-apply"]).length, 0, "The filter child must not add a second submit action");
       for (const key of ["make", "model", "year"]) { await all(root).find((el) => el.props["data-pick"] === key).props.onClick(); await flush(); }
       await all(root).find((el) => el.props["aria-label"] === "ძიების დახურვა").props.onClick(); await flush();
       assert.equal(navigations.length, 0); assert.equal(vm.searchText, "კაპოტი");
+      assert.equal(all(root).filter((el) => el.tag === "input").length, 0);
+      assert.match(text(all(root).find((el) => el.props["aria-haspopup"] === "dialog")), /კაპოტი/);
       await trigger.props.onClick(); await flush();
       assert.equal(all(root).find((el) => el.props["data-filters"]).props["data-car"], "subaru:forester:2018");
-      await all(root).find((el) => el.props["data-apply"]).props.onClick(); await flush();
+      const dialog = all(root).find((el) => el.props["data-dialog"]);
+      const apply = all(dialog).filter((el) => el.tag === "button" && text(el) === "ძებნა");
+      assert.equal(apply.length, 1);
+      await apply[0].props.onClick(); await flush();
       await navigation; await flush();
       assert.equal(navigations.length, 1); assert.equal(router.currentRoute.value.path, "/catalog");
       assert.deepEqual(router.currentRoute.value.query, { q: "კაპოტი", make: "subaru", model: "forester", year: "2018" });

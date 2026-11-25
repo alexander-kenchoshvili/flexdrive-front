@@ -1,5 +1,22 @@
 # Project Instructions
 
+## Unified Mobile Search And Compact Catalog Chips - 2026-11-25
+
+- User approved changes only0–768px. Outside home/catalog listing, one button
+  styled as a search field opens a full-height existing HeadlessUI dialog with
+  the sole editable query, existing filters and one fixed footer submit. Shared
+  text/state/handlers/VIN/route builder retained; close preserves drafts and focus
+  targets the query. Old separate detail trigger removed;769+ layout unchanged.
+- Mobile catalog retains direct header text search and its own filter sheet.
+  Duplicate query/clear banner is hidden only0–768; compact query and existing
+  filter chips emit individual removal, no global clear in the results toolbar.
+  Query removal clears shared text and resets pagination while preserving other
+  conditions; vehicle removal reuses the original grouped-car reset. Badge counts
+  filter groups plus nondefault sorting, excluding the separate query chip.
+-106 focused header/catalog checks pass, including one editable query/submit,
+  open-close draft retention, VIN and query removal/Back. No full build/browser
+  visual check, backend/schema/ENV/provider change, push or deploy. Frontend only.
+
 ## Checkout Mobile Typography And Report Date Layout - 2026-11-25
 
 - User requested styling only0–768px inclusive. Both cart/Buy Now checkout hide

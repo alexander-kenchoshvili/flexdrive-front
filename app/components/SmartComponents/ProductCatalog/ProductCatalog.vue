@@ -1369,6 +1369,12 @@ const handleClearCatalogState = async () => {
   await pushQueryAndScrollToResults({ resetPage: true });
 };
 
+const handleRemoveSearch = async () => {
+  searchQuery.value = "";
+  searchDraft.value = "";
+  await pushQueryAndScrollToResults({ resetPage: true });
+};
+
 const handleRemoveActiveFilter = async (key: CatalogActiveFilterKey) => {
   if (key === "vehicle") {
     clearDraftVehicleFilter();
@@ -1540,7 +1546,7 @@ useSeoMeta({
 
       <div
         v-if="hasActiveSearch"
-        class="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-secondary"
+        class="mt-4 hidden flex-wrap items-center gap-3 rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-secondary min-[769px]:flex"
       >
         <span
           class="inline-flex items-center rounded-full bg-accent-primary/10 px-3 py-1 font-semibold text-accent-primary"
@@ -1642,10 +1648,15 @@ useSeoMeta({
             <CatalogMobileToolbar
               :result-count="resultCount"
               :vehicle-label="selectedVehicleLabel"
+              :search-query="normalizedSearchQuery"
+              :active-filters="activeFilterChips"
+              :active-filter-count="activeFilterChips.length + (selectedSort !== 'recommended' ? 1 : 0)"
               :has-active-filters="hasActiveMobileSheetControls"
               :disabled="productsPending"
               @open-filters="openMobileFilterSheet"
               @remove-vehicle="handleRemoveActiveFilter('vehicle')"
+              @remove-search="handleRemoveSearch"
+              @remove-filter="handleRemoveActiveFilter"
             />
           </div>
 

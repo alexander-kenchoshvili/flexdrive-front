@@ -52,7 +52,7 @@ async function catalog(t, location, facets = {}, options = {}) {
   const { descriptor } = parse(readFileSync(new URL("../app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", import.meta.url), "utf8"));
   const output = ts.transpileModule(descriptor.scriptSetup.content.replaceAll("import.meta.client", String(Boolean(options.client))), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest, handleDesktopVehicleMakeUpdate, handleDesktopVehicleModelUpdate, handleDesktopVehicleYearUpdate, handleDraftVehicleMakeUpdate, handleDraftVehicleModelUpdate, handleDraftVehicleYearUpdate, draftVehicle, loadVehicleOptionsForDraft, vehicleModelsResponse, vehicleYearsResponse, vehicleOptionsError, desktopFiltersDisabled };`)(
+  const controls = await new AsyncFunction("require", "exports", ...Object.keys(globals), `${output}\nreturn { handleRemoveSearch, handleRemoveActiveFilter, buildParamsFromControls, buildRouteQueryFromControls, buildRoutePathFromControls, selectedCategoryLabel, setSelectedCategorySlugs, selectedSort, handleMobileFilterApply, handleResetFilters, loadCategories, activeFilterChips, hasActiveMobileSheetControls, vehicleMakesResponse, vehicleMakesPending, vehicleMakesError, vehicleMakesRequest, handleDesktopVehicleMakeUpdate, handleDesktopVehicleModelUpdate, handleDesktopVehicleYearUpdate, handleDraftVehicleMakeUpdate, handleDraftVehicleModelUpdate, handleDraftVehicleYearUpdate, draftVehicle, loadVehicleOptionsForDraft, vehicleModelsResponse, vehicleYearsResponse, vehicleOptionsError, desktopFiltersDisabled };`)(
     (name) => mocks[name] ?? (name.endsWith(".vue") ? {} : require(name)), {}, ...Object.values(globals),
   );
   return { ...controls, requests, categoryRequests, router, useSearchText, unmount: () => unmountCallbacks.forEach((callback) => callback()) };
@@ -410,3 +410,25 @@ for (const [field, expected] of [
     assert.equal(c.router.currentRoute.value.query.variant, undefined);
   });
 }
+
+test("removing the search chip clears the shared word only, resets pagination and Back restores it", async (t) => {
+  const c = await catalog(t, "/catalog?q=კაპოტი&make=subaru&model=forester&year=2018&variant=sport&brand=tyc&in_stock=true&ordering=price_asc&page=3");
+  const original = c.router.currentRoute.value.fullPath;
+  const headerText = c.useSearchText();
+  await c.handleRemoveSearch(); await vue.nextTick();
+  assert.equal(c.router.currentRoute.value.query.q, undefined);
+  assert.equal(headerText.value, "");
+  assert.deepEqual(c.router.currentRoute.value.query, { make: "subaru", model: "forester", year: "2018", variant: "sport", brand: "tyc", in_stock: "true", ordering: "price_asc" });
+  assert.equal(c.buildParamsFromControls().q, undefined);
+  const returned = new Promise((resolve) => { const stop = c.router.afterEach(() => { stop(); resolve(); }); });
+  c.router.back(); await returned; await vue.nextTick();
+  assert.equal(c.router.currentRoute.value.fullPath, original);
+  assert.equal(headerText.value, "კაპოტი");
+});
+
+test("removing the vehicle chip preserves the word, category and refinement filters", async (t) => {
+  const c = await catalog(t, "/catalog?q=კაპოტი&make=subaru&model=forester&year=2018&variant=sport&categories=lights&brand=tyc&page=3");
+  await c.handleRemoveActiveFilter("vehicle"); await vue.nextTick();
+  assert.deepEqual(c.router.currentRoute.value.query, { q: "კაპოტი", categories: "lights", brand: "tyc" });
+  assert.equal(c.useSearchText().value, "კაპოტი");
+});

@@ -1,16 +1,25 @@
 <script setup lang="ts">
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 
+type ActiveFilterKey = "vehicle" | "category" | "brand" | "placement" | "side" | "price" | "in_stock" | "on_sale";
+type ActiveFilter = { key: ActiveFilterKey; label: string; value?: string };
+
 const props = withDefaults(
   defineProps<{
     resultCount?: number;
     vehicleLabel?: string;
+    searchQuery?: string;
+    activeFilters?: ActiveFilter[];
+    activeFilterCount?: number;
     hasActiveFilters?: boolean;
     disabled?: boolean;
   }>(),
   {
     resultCount: 0,
     vehicleLabel: "",
+    searchQuery: "",
+    activeFilters: () => [],
+    activeFilterCount: 0,
     hasActiveFilters: false,
     disabled: false,
   },
@@ -19,6 +28,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: "open-filters"): void;
   (e: "remove-vehicle"): void;
+  (e: "remove-search"): void;
+  (e: "remove-filter", key: ActiveFilterKey): void;
 }>();
 </script>
 
@@ -29,7 +40,7 @@ const emit = defineEmits<{
     <button
       v-if="vehicleLabel"
       type="button"
-      class="mb-3 flex min-h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-border-default bg-accent-soft px-3 py-2 text-center text-xs font-semibold leading-relaxed text-accent-primary transition-colors duration-200 hover:border-accent-primary hover:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+      class="mb-3 hidden min-[769px]:flex min-h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-border-default bg-accent-soft px-3 py-2 text-center text-xs font-semibold leading-relaxed text-accent-primary transition-colors duration-200 hover:border-accent-primary hover:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
       :disabled="disabled"
       :aria-label="`${vehicleLabel} — მანქანის ფილტრის მოხსნა`"
       @click="emit('remove-vehicle')"
@@ -54,9 +65,12 @@ const emit = defineEmits<{
       >
         <AdjustmentsHorizontalIcon class="h-5 w-5" aria-hidden="true" />
         <span>ფილტრი და დალაგება</span>
+        <span v-if="activeFilterCount" class="ml-auto inline-flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft px-1.5 text-xs text-accent-primary min-[769px]:hidden">
+          <span class="sr-only">აქტიური ფილტრების რაოდენობა: </span>{{ activeFilterCount }}
+        </span>
         <span
           v-if="hasActiveFilters"
-          class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-surface bg-accent-primary"
+          class="absolute right-2 top-2 hidden min-[769px]:block h-2.5 w-2.5 rounded-full border-2 border-surface bg-accent-primary"
           aria-hidden="true"
         />
       </button>
@@ -68,6 +82,26 @@ const emit = defineEmits<{
         }}</span>
         პროდუქტი
       </p>
+    </div>
+    <div v-if="searchQuery || activeFilters.length" class="mt-2 flex min-w-0 flex-wrap gap-2 min-[769px]:hidden" aria-label="არჩეული ძიება და ფილტრები">
+      <button
+        v-if="searchQuery" type="button"
+        class="inline-flex min-h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-border-default bg-accent-soft px-3 py-1 text-left text-xs font-semibold text-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary disabled:opacity-60"
+        :disabled="disabled" :aria-label="`${searchQuery} — საძიებო სიტყვის მოხსნა`"
+        @click="emit('remove-search')"
+      >
+        <span class="min-w-0 [overflow-wrap:anywhere]">{{ searchQuery }}</span>
+        <XMarkIcon class="h-4 w-4 shrink-0" aria-hidden="true" />
+      </button>
+      <button
+        v-for="filter in activeFilters" :key="filter.key" type="button"
+        class="inline-flex min-h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-border-default bg-accent-soft px-3 py-1 text-left text-xs font-semibold text-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary disabled:opacity-60"
+        :disabled="disabled" :aria-label="`${filter.label}: ${filter.value || filter.label} — მოხსნა`"
+        @click="emit('remove-filter', filter.key)"
+      >
+        <span class="min-w-0 [overflow-wrap:anywhere]">{{ filter.value || filter.label }}</span>
+        <XMarkIcon class="h-4 w-4 shrink-0" aria-hidden="true" />
+      </button>
     </div>
   </div>
 </template>
