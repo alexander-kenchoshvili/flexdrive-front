@@ -66,3 +66,42 @@ export const operationsDate = (value: string | null) => value ? new Intl.DateTim
   timeZone: "Asia/Tbilisi", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
 }).format(new Date(value)) : "—";
 export const operationsMoney = (value: string | null, currency = "GEL") => currency === "GEL" ? reportMoney(value) : `${reportNumber(value)} ${currency}`;
+
+
+export type OperationPaymentGroup = {
+  payment: OperationPayment; ids: number[];
+  statuses: { label: string; count: number }[];
+  amounts: { amount: string; currency: string }[];
+};
+
+// Reuse only the backend's complete, identical checkout history on this page.
+// Missing, overlapping or truncated histories stay separate; totals stay attempts.
+export const groupPaymentAttempts = (payments: OperationPayment[]): OperationPaymentGroup[] => {
+  const groups = new Map<string, OperationPayment[]>();
+  for (const payment of payments) {
+    const context = payment.attempt_context;
+    const ids = context?.history.map((entry) => entry.id).sort((a, b) => a - b) || [];
+    const matched = payment.status === "failed" && !payment.order_number && context?.match_basis === "same_checkout_and_basket_24h"
+      && !context.history_limited && ids.length > 1 && ids.includes(payment.id);
+    const key = matched ? `history:${ids.join(",")}` : `payment:${payment.id}`;
+    const group = groups.get(key);
+    if (group) group.push(payment); else groups.set(key, [payment]);
+  }
+  return [...groups.values()].map((rows) => {
+    const statuses = new Map<string, { label: string; count: number }>();
+    const amounts = new Map<string, { amount: string; currency: string }>();
+    for (const row of rows) {
+      const status = statuses.get(row.status);
+      if (status) status.count++; else statuses.set(row.status, { label: row.status_label, count: 1 });
+      amounts.set(`${row.currency}:${row.amount}`, { amount: row.amount, currency: row.currency });
+    }
+    return { payment: rows[0]!, ids: rows.map((row) => row.id).sort((a, b) => a - b), statuses: [...statuses.values()], amounts: [...amounts.values()] };
+  });
+};
+
+export const paymentOrderNote = (payment: OperationPayment, count = 1): string => {
+  if (payment.order_number) return `შეკვეთა ${payment.order_number}`;
+  if (payment.attempt_context && payment.status === "failed") return count > 1 ? "ამ მცდელობებით შეკვეთა არ შექმნილა" : "ამ მცდელობით შეკვეთა არ შექმნილა";
+  if (payment.attempt_context && payment.status === "paid") return "გადახდა მიღებულია — შეკვეთა შესამოწმებელია";
+  return "ამ ჩანაწერზე შეკვეთის ნომერი არ არის";
+};

@@ -1,7 +1,7 @@
 import { resolveHttpStatusCode } from "~/utils/httpError";
 import type { OperationsQuery, OperationsReport } from "~/utils/businessOperations";
 
-export const useBusinessOperations = () => {
+export const useBusinessOperations = (returnPath: "/business/operations" | "/business/payments" = "/business/operations") => {
   const report = shallowRef<OperationsReport | null>(null);
   const loading = ref(false);
   const errorMessage = ref("");
@@ -22,11 +22,11 @@ export const useBusinessOperations = () => {
       const status = resolveHttpStatusCode(error);
       if (status === 401 || status === 403) {
         user.value = null;
-        await navigateTo({ path: "/business/login", query: { next: "/business/operations", ...(status === 403 ? { reason: "denied" } : {}) } }, { replace: true });
+        await navigateTo({ path: "/business/login", query: { next: returnPath, ...(status === 403 ? { reason: "denied" } : {}) } }, { replace: true });
       } else {
         errorMessage.value = status === 400 ? "შეამოწმეთ სიის ფილტრი ან გვერდის ნომერი."
           : status === 429 ? "მოთხოვნები დროებით შეზღუდულია. ცოტა ხანში სცადეთ ხელახლა."
-          : "ოპერაციების მონაცემების წამოღება ვერ მოხერხდა. სცადეთ ხელახლა.";
+          : "ანგარიშის მონაცემების წამოღება ვერ მოხერხდა. სცადეთ ხელახლა.";
       }
     } finally {
       if (request === generation) loading.value = false;

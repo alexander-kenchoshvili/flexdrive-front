@@ -34,7 +34,7 @@ type="radio" class="sr-only" :name="name" :value="value" :checked="selected"
         <span v-if="price" class="shrink-0 text-base font-extrabold tabular-nums text-text-primary">{{ price }}</span>
       </span>
       <span v-if="badge" class="mt-1.5 inline-flex rounded-full border border-border-default bg-surface px-2.5 py-1 text-[11px] font-semibold text-text-secondary">{{ badge }}</span>
-      <span v-if="description" class="mt-1.5 block break-words text-sm leading-6 text-text-secondary">{{ description }}</span>
+      <span v-if="description" data-choice-description class="mt-1.5 block break-words text-sm leading-6 text-text-secondary">{{ description }}</span>
       <slot />
     </span>
     <span

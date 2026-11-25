@@ -2,7 +2,7 @@
 import { ArrowUpRightIcon, ChartBarIcon, CircleStackIcon, LinkIcon, ShieldCheckIcon, XMarkIcon, InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { BUSINESS_SECTIONS, type BusinessSectionKey } from "~/utils/businessRouting";
 
-const props = defineProps<{ section: Exclude<BusinessSectionKey, "checkout" | "google-search" | "carts" | "social" | "diagnostics"> }>();
+const props = defineProps<{ section: Exclude<BusinessSectionKey, "meta-events" | "payments" | "checkout" | "google-search" | "carts" | "social" | "diagnostics"> }>();
 const current = computed(() => BUSINESS_SECTIONS.find((item) => item.key === props.section) || BUSINESS_SECTIONS[0]);
 const metrics = computed(() => ({
   overview: ["მიღებული თანხა", "გადახდილი შეკვეთები", "გაყიდული ერთეულები", "პროდუქტების მოგება"],

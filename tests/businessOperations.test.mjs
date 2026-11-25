@@ -16,7 +16,7 @@ const execute = (path, globals = {}, mocks = {}) => {
 const reports = execute("app/utils/businessReport.ts");
 const utils = execute("app/utils/businessOperations.ts", {}, { "./businessReport": reports });
 const http = execute("app/utils/httpError.ts");
-const context = () => {
+const context = (returnPath) => {
   const calls = [], navigations = [];
   const user = vue.ref({ id: 7 }), customer = vue.ref({ id: 9 });
   let unmount;
@@ -33,7 +33,7 @@ const context = () => {
       return (path, input) => new Promise((resolve, reject) => calls.push({ path, input, resolve, reject }));
     } },
   }, { "~/utils/httpError": http });
-  return { ...module.useBusinessOperations(), calls, navigations, user, customer, unmount: () => unmount() };
+  return { ...module.useBusinessOperations(returnPath), calls, navigations, user, customer, unmount: () => unmount() };
 };
 
 test("operations defaults are independent, missing amounts remain unknown and dates use Tbilisi", () => {
@@ -74,14 +74,14 @@ test("failed refresh clears old operational values and never substitutes zeros",
 });
 
 test("expired or revoked operations access only clears business login and returns to operations", async () => {
-  for (const status of [401, 403]) {
-    const c = context(), pending = c.load(utils.operationsQuery());
+  for (const returnPath of ["/business/operations", "/business/payments"]) for (const status of [401, 403]) {
+    const c = context(returnPath), pending = c.load(utils.operationsQuery());
     c.calls[0].reject({ statusCode: status }); await pending;
     assert.equal(c.report.value, null);
     assert.equal(c.user.value, null);
     assert.equal(c.customer.value.id, 9);
     assert.equal(c.navigations[0].target.path, "/business/login");
-    assert.equal(c.navigations[0].target.query.next, "/business/operations");
+    assert.equal(c.navigations[0].target.query.next, returnPath);
     assert.equal(c.navigations[0].target.query.reason, status === 403 ? "denied" : undefined);
   }
 });
@@ -92,4 +92,37 @@ test("leaving operations aborts pending requests and prevents private data from 
   assert.equal(c.calls[0].input.signal.aborted, true);
   c.calls[0].resolve({ payments: { items: [{ id: 1 }] } }); await pending;
   assert.equal(c.report.value, null);
+});
+
+
+test("the payment route renders only payment diagnostics; operations links to it without duplicating the list", async () => {
+  const { parse, compileScript } = require("@vue/compiler-sfc");
+  const { renderToString } = require("vue/server-renderer");
+  const input = readFileSync(new URL("../app/components/business/BusinessOperations.vue", import.meta.url), "utf8");
+  const compiled = compileScript(parse(input).descriptor, { id: "operations-modes", inlineTemplate: true }).content;
+  const code = ts.transpileModule(compiled, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const page = { items: [], total: 0, page: 1, pages: 1, page_size: 20 };
+  for (const mode of ["payments", "operations"]) {
+    const report = { generated_at: "2026-11-25T06:00:00Z", returns: { ...page, summary: {} }, stock: { ...page, summary: {} }, shipments: page, payments: { ...page, items: [{ id: 6 }], summary: { failed: 3, pending: 0, issues: 4 } }, syncs: [] };
+    let returnPath;
+    const globals = { reactive: vue.reactive, computed: vue.computed, onMounted() {}, useBusinessOperations: (path) => { returnPath = path; return { report: vue.ref(report), loading: vue.ref(false), errorMessage: vue.ref(""), load() {} }; } };
+    const mocks = {
+      "~/utils/businessOperations": utils, "~/utils/businessReport": reports,
+      "./BusinessShipments.vue": { default: () => vue.h("div", { "data-shipments": "true" }) },
+      "./BusinessPaymentList.vue": { default: { props: ["payments"], setup: (props) => () => vue.h("div", { "data-payments": "true" }, props.payments.map((row) => `#${row.id}`).join(",")) } },
+    };
+    const component = new Function("require", "exports", ...Object.keys(globals), `${code}; return exports.default;`)((name) => mocks[name] ?? require(name), {}, ...Object.values(globals));
+    const app = vue.createSSRApp(component, { mode });
+    for (const name of ["BaseButton", "BaseSelect"]) app.component(name, { setup: (_, { slots }) => () => vue.h("div", slots.default?.()) });
+    app.component("NuxtLink", { props: ["to"], setup: (props, { slots }) => () => vue.h("a", { href: props.to }, slots.default?.()) });
+    const html = await renderToString(app);
+    assert.equal(returnPath, `/business/${mode}`);
+    if (mode === "payments") {
+      assert.match(html, /გადახდის პრობლემები/); assert.match(html, /data-payments/);
+      assert.doesNotMatch(html, /data-shipments|დაბრუნებული და დასაბრუნებელი ნივთები|ჩვენი მარაგი — დარჩენილი ნივთები|სინქრონიზაციების ბოლო შენახული შედეგები/);
+    } else {
+      assert.match(html, /href="\/business\/payments"/); assert.match(html, /data-shipments/);
+      assert.doesNotMatch(html, /data-payments/);
+    }
+  }
 });

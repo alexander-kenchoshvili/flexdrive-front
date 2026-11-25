@@ -29,22 +29,25 @@ const props = withDefaults(
     sheetOnly?: boolean;
     inline?: boolean;
     hideVehicleFilters?: boolean;
+    collapseMobileFilters?: boolean;
   }>(),
   {
     hideMobileTrigger: false,
     sheetOnly: false,
     inline: false,
     hideVehicleFilters: false,
+    collapseMobileFilters: false,
   },
 );
 
 const route = useRoute();
 const router = useRouter();
-// Match the parent Header mobile trigger and desktop input at the md breakpoint.
-const isMobileViewport = useMediaQuery("(max-width: 767px)");
+// This presentation change includes 768px; wider layouts retain their existing controls.
+const isMobileViewport = useMediaQuery("(max-width: 768px)");
 const isCompactHeader = useMediaQuery("(max-width: 1088px)");
 const compactSearchMounted = ref(false);
-const searchInToolbar = computed(() => isCompactHeader.value && (!isMobileViewport.value || props.hideVehicleFilters));
+const compactMobileFilters = computed(() => props.inline && props.collapseMobileFilters && isMobileViewport.value);
+const searchInToolbar = computed(() => isCompactHeader.value && (!isMobileViewport.value || props.hideVehicleFilters || compactMobileFilters.value));
 const feedbackInToolbar = computed(() => searchInToolbar.value && (isMobileViewport.value || props.hideVehicleFilters));
 const { getCatalogCategoriesRaw, getCatalogProductSuggestions, getVehicleMakes, getVehicleModels, getVehicleYears, decodeVehicleVin } =
   useCatalogApi();
@@ -164,6 +167,12 @@ const makeOptions = computed(() => [{ label: "ყველა მარკა", 
 const modelOptions = computed(() => [{ label: "ყველა მოდელი", value: "" }, ...models.value.map((model) => ({ label: model.name, value: model.slug }))]);
 const yearOptions = computed(() => [{ label: "ყველა წელი", value: "" }, ...[...years.value].reverse().map(({ year }) => ({ label: String(year), value: String(year) }))]);
 const canSubmit = computed(() => !vinPending.value && normalizedSearchText.value.length !== 1 && normalizedSearchText.value.length <= 255);
+const mobileFilterLabel = computed(() => {
+  const make = makeOptions.value.find((option) => option.value === selectedMake.value)?.label || selectedMake.value;
+  const model = modelOptions.value.find((option) => option.value === selectedModel.value)?.label || selectedModel.value;
+  const car = [selectedMake.value ? make : "", selectedModel.value ? model : "", selectedYear.value].filter(Boolean).join(" · ");
+  return car ? `${car} — შეცვლა` : "დეტალური ძებნა";
+});
 const canClear = computed(() => Boolean(
   normalizedSearchText.value || selectedMake.value || selectedModel.value || selectedYear.value || selectedCategories.value.length,
 ));
@@ -338,6 +347,7 @@ const openMobileSheet = async () => {
   if (isMobileOpen.value) return;
   emit("open-mobile-search");
   isMobileOpen.value = true;
+  if (compactMobileFilters.value) isDesktopOpen.value = false;
   activeSuggestionIndex.value = -1;
   void ensureFiltersLoaded();
   if (normalizedSearchText.value.length >= 2) {
@@ -346,7 +356,7 @@ const openMobileSheet = async () => {
     await ensureCategoriesLoaded();
   }
   await nextTick();
-  if (normalizedSearchText.value) mobileInputRef.value?.focus();
+  if (normalizedSearchText.value && !props.inline) mobileInputRef.value?.focus();
 };
 
 let latestResultsScrollId = 0;
@@ -565,7 +575,10 @@ watch(headerRouteKey, syncSearchTextFromRoute);
 
 watch(isMobileViewport, (isMobile) => {
   activeSuggestionIndex.value = -1;
-  if (props.inline) return;
+  if (props.inline) {
+    if (!isMobile) closeMobileSheet();
+    return;
+  }
   if (isMobile) {
     closeDesktopPanel();
     return;
@@ -613,7 +626,7 @@ defineExpose({
         :id="searchInputId + '-form'"
         role="search"
         class="grid min-w-0 grid-cols-1 items-start gap-x-2 md:grid-cols-[minmax(0,1fr)_auto] gap-y-4 max-[639px]:gap-y-2.5 sm:gap-x-3 md:rounded-2xl md:border md:border-header-border md:bg-header-surface/40 md:p-4 min-[1248px]:gap-4"
-        :class="props.hideVehicleFilters ? 'min-[1248px]:grid-cols-[minmax(0,1fr)_auto]' : 'min-[1248px]:grid-cols-[minmax(0,2fr)_minmax(16rem,1.1fr)_auto]'"
+        :class="[props.hideVehicleFilters ? 'min-[1248px]:grid-cols-[minmax(0,1fr)_auto]' : 'min-[1248px]:grid-cols-[minmax(0,2fr)_minmax(16rem,1.1fr)_auto]', compactMobileFilters ? '!border-0 !bg-transparent !p-0' : '']"
         @submit.prevent="submitSearch"
       >
         <Teleport to="#header-compact-search" :disabled="!compactSearchMounted || !searchInToolbar">
@@ -637,7 +650,7 @@ defineExpose({
         </Teleport>
         <div class="contents">
           <HeaderSearchFilters
-            v-if="!props.hideVehicleFilters"
+            v-if="!props.hideVehicleFilters && !compactMobileFilters"
             embedded
             class="order-2 min-w-0 md:order-1 md:col-span-2 min-[1248px]:col-span-1"
             :make="selectedMake" :model="selectedModel" :year="selectedYear"
@@ -650,12 +663,13 @@ defineExpose({
             @categories="selectedCategories = $event" @search="submitSearch"
             @clear="clearFilters" @retry="ensureFiltersLoaded"
           />
-          <div class="order-3 grid md:max-[1088px]:hidden max-[659px]:!grid-rows-[2.5rem] max-[639px]:!grid-rows-[2rem]" :class="props.hideVehicleFilters ? 'grid-rows-[3rem]' : 'grid-rows-[3rem] md:grid-rows-[1.25rem_3rem] md:gap-2'">
+          <div v-show="!compactMobileFilters" class="order-3 grid md:max-[1088px]:hidden max-[659px]:!grid-rows-[2.5rem] max-[639px]:!grid-rows-[2rem]" :class="props.hideVehicleFilters ? 'grid-rows-[3rem]' : 'grid-rows-[3rem] md:grid-rows-[1.25rem_3rem] md:gap-2'">
             <button v-if="canClear && !props.hideVehicleFilters" type="button" class="hidden h-5 items-center justify-start rounded text-sm font-semibold text-text-secondary transition-colors hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary min-[1089px]:inline-flex" @click="clearFilters">გასუფთავება</button>
             <BaseButton type="submit" :disabled="!canSubmit" class="h-12 shrink-0 rounded-xl px-4 sm:min-w-[112px] sm:px-6 min-[1248px]:min-w-[132px] min-[1248px]:px-7 max-[767px]:w-full max-[767px]:text-base max-[659px]:h-10 max-[659px]:!min-h-0 max-[659px]:!py-2 max-[659px]:text-sm max-[639px]:h-8 max-[639px]:!py-1 max-[639px]:text-xs" :class="props.hideVehicleFilters ? 'row-start-1' : 'row-start-1 md:row-start-2'">ძებნა</BaseButton>
           </div>
         </div>
       </form>
+      <button v-if="compactMobileFilters" type="button" aria-haspopup="dialog" :aria-expanded="isMobileOpen" class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg text-left text-xs font-semibold text-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary" @click="openMobileSheet"><span class="min-w-0 truncate">{{ mobileFilterLabel }}</span><span aria-hidden="true">⌄</span></button>
       <Teleport to="#header-mobile-suggestions" :disabled="!compactSearchMounted || !feedbackInToolbar">
         <div v-if="isVinQuery && vinMessage" class="mt-3 rounded-xl border border-header-border bg-header-surface px-4 py-3 text-sm leading-6 max-[767px]:mb-3" role="status" aria-live="polite">
 
@@ -664,7 +678,7 @@ defineExpose({
         <div
           v-if="isDesktopOpen && normalizedSearchText && !isVinQuery"
           :id="searchInputId + '-suggestions'"
-          :class="!props.hideVehicleFilters ? 'max-[767px]:top-12 max-[639px]:top-10' : ''"
+          :class="!props.hideVehicleFilters && !compactMobileFilters ? 'max-[767px]:top-12 max-[639px]:top-10' : ''"
           class="header-search-scroll absolute inset-x-0 top-full z-50 mt-3 max-h-[min(28rem,55dvh)] overflow-y-auto overscroll-contain rounded-2xl border border-header-border bg-surface p-3 shadow-[0_24px_60px_-20px_var(--shadow-color)] sm:p-4" aria-live="polite" :aria-busy="suggestionsPending">
           <p v-if="showTypingHint" class="text-sm text-text-muted">ჩაწერე მინიმუმ 2 სიმბოლო.</p>
           <p v-else-if="suggestionsPending" class="text-sm text-text-muted">იტვირთება…</p>
@@ -800,18 +814,18 @@ defineExpose({
       <span class="min-w-0 truncate">{{ mobileTriggerLabel }}</span>
     </button>
 
-    <Dialog :open="isMobileOpen && !props.inline" class="relative z-50 md:hidden" @close="closeMobileSheet">
+    <Dialog :open="isMobileOpen && (!props.inline || compactMobileFilters)" class="relative z-[70] min-[769px]:hidden" @close="closeMobileSheet">
       <div class="fixed inset-0 bg-text-primary/40" aria-hidden="true" />
-      <div class="fixed inset-0 flex">
-        <DialogPanel class="flex h-[100dvh] w-full min-w-0 flex-col bg-surface">
+      <div class="fixed inset-0 flex" :class="compactMobileFilters ? 'items-end' : ''">
+        <DialogPanel class="flex w-full min-w-0 flex-col bg-surface" :class="compactMobileFilters ? 'max-h-[85dvh] rounded-t-2xl' : 'h-[100dvh]'">
           <div class="shrink-0 border-b border-header-border px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
             <div class="mb-3 flex items-center justify-between gap-3">
-              <DialogTitle class="text-base font-bold text-text-primary">ძებნა</DialogTitle>
+              <DialogTitle class="text-base font-bold text-text-primary">{{ compactMobileFilters ? "დეტალური ძებნა" : "ძებნა" }}</DialogTitle>
               <BaseButton variant="ghost" aria-label="ძიების დახურვა" @click="closeMobileSheet">
                 <span aria-hidden="true" class="text-2xl leading-none">×</span>
               </BaseButton>
             </div>
-            <form role="search" class="header-search-control flex items-center gap-2 rounded-lg border border-header-border bg-header-surface px-3 focus-within:border-accent-primary" @submit.prevent="submitSearch">
+            <form v-if="!compactMobileFilters" role="search" class="header-search-control flex items-center gap-2 rounded-lg border border-header-border bg-header-surface px-3 focus-within:border-accent-primary" @submit.prevent="submitSearch">
               <BaseIcon name="search" :size="18" class="shrink-0 text-text-muted" />
               <input
                 :id="searchInputId + '-mobile'" name="q"
@@ -822,6 +836,7 @@ defineExpose({
                 @keydown="handleInputKeydown"
               />
             </form>
+            <p v-if="compactMobileFilters && normalizedSearchText" class="break-words text-sm text-text-secondary">ჩაწერილია: {{ normalizedSearchText }}</p>
           </div>
           <div class="header-search-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
             <HeaderSearchFilters

@@ -39,7 +39,7 @@ async function mountSearch(location, options = {}) {
     "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
     "@vueuse/core": {
-      onClickOutside() {}, useMediaQuery: (query) => query.includes("1088") ? (options.compactViewport ?? vue.ref(false)) : (options.mobileViewport ?? vue.ref(false)), useDebounceFn: options.debounce ?? ((fn) => fn),
+      onClickOutside() {}, useMediaQuery: (query) => options.width != null ? vue.ref(options.width <= Number(/max-width: (\d+)px/.exec(query)[1])) : query.includes("1088") ? (options.compactViewport ?? vue.ref(false)) : (options.mobileViewport ?? vue.ref(false)), useDebounceFn: options.debounce ?? ((fn) => fn),
     },
     "~/components/common/BasePicture.vue": {},
     "./HeaderSearchFilters.vue": {},
@@ -67,7 +67,7 @@ async function mountSearch(location, options = {}) {
   const app = renderer.createApp({
     setup() {
       search = new Function("require", "exports", ...Object.keys(globals),
-        `${outputText}\nreturn { selectedVariant, updateYear, vinPending, vinMessage, isVinQuery, searchText, clearFilters, selectedMake, selectedModel, selectedYear, selectedCategories, updateMake, updateModel, models, years, vehiclePending, filterError, ensureFiltersLoaded, handleInputKeydown, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
+        `${outputText}\nreturn { compactMobileFilters, searchInToolbar, isMobileOpen, selectedVariant, updateYear, vinPending, vinMessage, isVinQuery, searchText, clearFilters, selectedMake, selectedModel, selectedYear, selectedCategories, updateMake, updateModel, models, years, vehiclePending, filterError, ensureFiltersLoaded, handleInputKeydown, submitSearch, goToSuggestion, openDesktopPanel, closeDesktopPanel, openMobileSheet, closeMobileSheet, suggestions, suggestionsPending, suggestionsError, showSuggestionList, showNoResults, lastCompletedQuery };`,
       )((name) => mocks[name] ?? require(name), {}, ...Object.values(globals));
       return () => null;
     },
@@ -836,3 +836,41 @@ for (const path of ["/", "/catalog"]) {
     });
   }
 }
+
+
+test("compact mobile detail and checkout search keeps draft/filters across open, close and resize before one submit", async (t) => {
+  for (const path of ["/catalog/FD-01-0001", "/checkout", "/buy-now/checkout"]) {
+    const mobile = vue.ref(true);
+    const c = await mountSearch(path, { props: { inline: true, collapseMobileFilters: true }, mobileViewport: mobile, compactViewport: vue.ref(true) });
+    try {
+      assert.equal(c.search.compactMobileFilters.value, true);
+      await c.input("კაპოტი"); c.search.updateMake("subaru"); c.search.updateModel("forester"); c.search.updateYear("2018");
+      c.search.selectedVariant.value = "sport"; c.search.selectedCategories.value = ["body"];
+      await c.search.openMobileSheet(); await c.search.closeMobileSheet(); await c.search.openMobileSheet();
+      assert.equal(c.router.currentRoute.value.path, path);
+      mobile.value = false; await flush();
+      assert.equal(c.search.isMobileOpen.value, false);
+      mobile.value = true; await flush();
+      assert.equal(c.search.searchText.value, "კაპოტი"); assert.equal(c.search.selectedVariant.value, "sport");
+      await c.search.handleInputKeydown({ key: "Enter", preventDefault() {} });
+      assert.deepEqual(c.router.currentRoute.value.query, { q: "კაპოტი", make: "subaru", model: "forester", year: "2018", variant: "sport", categories: "body" });
+    } finally { c.app.unmount(); }
+  }
+  for (const width of [320, 768, 769, 1280]) {
+    const c = await mountSearch("/catalog/FD-01-0001", { width, props: { inline: true, collapseMobileFilters: true } });
+    assert.equal(c.search.compactMobileFilters.value, width <= 768); c.app.unmount();
+  }
+  for (const [path, props] of [["/", { inline: true }], ["/catalog", { inline: true, hideVehicleFilters: true }]]) {
+    const c = await mountSearch(path, { width: 375, props }); assert.equal(c.search.compactMobileFilters.value, false); c.app.unmount();
+  }
+});
+
+test("compact checkout VIN uses the existing decoder once and opens the same filtered catalog", async (t) => {
+  let decodes = 0;
+  const c = await mountSearch("/checkout", { width: 375, props: { inline: true, collapseMobileFilters: true }, decodeVin: async () => { decodes++; return matchedVin; } });
+  t.after(() => c.app.unmount());
+  await c.input(sampleVin); await c.search.openMobileSheet(); await c.search.closeMobileSheet();
+  await c.search.submitSearch();
+  assert.equal(decodes, 1); assert.equal(c.router.currentRoute.value.path, "/catalog");
+  assert.deepEqual(c.router.currentRoute.value.query, matchedVin.filters);
+});

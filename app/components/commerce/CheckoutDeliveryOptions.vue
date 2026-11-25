@@ -37,7 +37,7 @@ v-for="option in options" :key="option.service_slug" name="delivery_service_slug
         <template #icon><component :is="option.service_slug === 'fast' ? BoltIcon : TruckIcon" class="h-5 w-5" aria-hidden="true" /></template>
       </BaseChoiceCard>
     </div>
-    <p id="delivery-service-note" class="mt-3 text-xs leading-5 text-text-muted">
+    <p id="delivery-service-note" class="checkout-copy mt-3 text-xs leading-5 text-text-muted">
       ვადები ითვლება სამუშაო დღეებით. შაბათსა და კვირას მიწოდება არ ხორციელდება.
     </p>
   </fieldset>

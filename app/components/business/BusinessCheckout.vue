@@ -121,7 +121,7 @@ onBeforeUnmount(() => controller?.abort());
       <button type="button" class="min-h-[44px] rounded-lg border border-border-default px-4 font-semibold disabled:opacity-50" :disabled="loading" @click="load(report?.page, selectedProduct, report?.detail?.page)">განახლება</button>
     </header>
 
-    <form class="mt-6 grid gap-3 rounded-xl border border-border-default bg-surface p-4 sm:grid-cols-2 xl:grid-cols-[repeat(2,minmax(0,1fr))_minmax(0,1.5fr)_minmax(0,1.5fr)_auto]" @submit.prevent="apply">
+    <form class="business-period-controls mt-6 grid gap-3 rounded-xl border border-border-default bg-surface p-4 sm:grid-cols-2 xl:grid-cols-[repeat(2,minmax(0,1fr))_minmax(0,1.5fr)_minmax(0,1.5fr)_auto]" @submit.prevent="apply">
       <label class="grid gap-2 text-xs font-semibold">
         საწყისი თარიღი
         <input v-model="form.start" type="date" required :max="today" class="min-h-[44px] min-w-0 rounded-lg border border-border-default bg-bg-primary px-3 text-sm" />
@@ -180,6 +180,9 @@ onBeforeUnmount(() => controller?.abort());
                 <div><h3 class="font-bold">{{ time(entry.started_at) }}</h3><p class="text-xs text-text-muted">{{ entry.source }} · {{ entry.quantity }} ცალი × {{ reportMoney(entry.unit_price) }}</p></div>
                 <span class="rounded-md border px-2 py-1 text-xs font-semibold" :class="badgeClass(entry.result)">{{ entry.label }}</span>
               </header>
+              <div v-for="lastStep in entry.steps.slice(-1)" :key="lastStep.at" class="mt-3 rounded-lg border border-accent-primary/25 bg-accent-soft p-3">
+                <p class="text-xs text-text-muted">ბოლო აღრიცხული ნაბიჯი</p><p class="mt-1 font-semibold">{{ lastStep.label }}</p><time :datetime="lastStep.at" class="mt-1 block text-xs text-text-muted">{{ time(lastStep.at) }}</time>
+              </div>
               <p v-if="entry.reason" class="mt-3 font-semibold text-error">{{ entry.reason }}</p>
               <p v-else-if="entry.result === 'before_bank'" class="mt-3 text-text-secondary">დაფიქსირებულია ბოლო ნაბიჯი. მიზეზი დაუდგენელია.</p>
               <p class="mt-3 text-xs text-text-muted">პროდუქტების ჯამი {{ reportMoney(entry.basket_subtotal) }} · შენახული გადახდის მცდელობები {{ entry.payment_attempts }}</p>

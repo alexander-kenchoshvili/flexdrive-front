@@ -5,6 +5,7 @@ import { useMediaQuery } from "@vueuse/core";
 
 const route = useRoute();
 const isCatalogListing = computed(() => /^\/catalog(?:\/category\/[^/]+)?\/?$/.test(route.path));
+const collapseMobileSearch = computed(() => !isCatalogListing.value && route.path !== "/");
 const menuStore = useMenu();
 const globalStore = useGlobalStore();
 const cartStore = useCartStore();
@@ -13,7 +14,7 @@ const { logout } = useAuth();
 const { isDark, toggleTheme } = useTheme();
 
 // Move only presentation after hydration; the same search/filter instance stays alive.
-const isPhoneViewport = useMediaQuery("(max-width: 767px)");
+const isPhoneViewport = useMediaQuery("(max-width: 768px)");
 const headerMounted = ref(false);
 const filtersInMobileFlow = ref(false);
 // Finish the search's inner relocation first, then move its outer container.
@@ -228,7 +229,7 @@ onBeforeUnmount(() => {
     class="sticky top-0 z-40 border-b border-header-border bg-header-bg shadow-[0_14px_34px_-24px_var(--shadow-color)]"
   >
     <div class="container-fluid px-3 py-2 sm:px-4 sm:py-2.5">
-      <div class="flex min-h-[58px] flex-wrap items-center gap-2 sm:gap-3 md:flex-nowrap lg:gap-4">
+      <div class="flex min-h-[58px] flex-wrap items-center gap-2 sm:gap-3 md:flex-nowrap max-[768px]:!flex-wrap lg:gap-4">
         <NuxtLink
           to="/"
           class="site-logo-link order-1 inline-flex shrink-0 items-center no-underline"
@@ -275,12 +276,12 @@ onBeforeUnmount(() => {
 
         <div
           id="header-compact-search"
-          class="order-3 grid w-full min-w-0 grid-cols-1 items-start md:order-2 md:w-auto md:flex-1 min-[1089px]:hidden"
-          :class="isCatalogListing ? '' : 'max-[767px]:!hidden'"
+          class="order-3 grid w-full min-w-0 grid-cols-1 items-start md:order-2 md:w-auto md:flex-1 max-[768px]:!order-3 max-[768px]:!w-full max-[768px]:!flex-none min-[1089px]:hidden"
+          :class="isCatalogListing || collapseMobileSearch ? '' : 'max-[768px]:!hidden'"
         />
 
         <div
-          class="header-action-cluster order-2 ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:order-3 md:gap-2 lg:gap-2"
+          class="header-action-cluster order-2 max-[768px]:!order-2 ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3 md:order-3 md:gap-2 lg:gap-2"
         >
           <button
             type="button"
@@ -376,21 +377,21 @@ onBeforeUnmount(() => {
       <Teleport to="#header-mobile-filters" :disabled="!headerMounted || !filtersInMobileFlow">
         <div class="relative z-30 border-t border-header-border bg-header-bg" :class="isCatalogListing ? 'max-[1088px]:hidden' : ''">
           <div class="container-fluid px-3 py-2 sm:px-4 sm:py-3 md:py-4">
-            <HeaderSearch inline :hide-vehicle-filters="isCatalogListing" :hide-mobile-trigger="true" @open-mobile-search="closeMobileMenu" />
+            <HeaderSearch inline :collapse-mobile-filters="collapseMobileSearch" :hide-vehicle-filters="isCatalogListing" :hide-mobile-trigger="true" @open-mobile-search="closeMobileMenu" />
           </div>
         </div>
       </Teleport>
       <template #fallback>
         <div class="border-t border-header-border bg-header-bg" :class="isCatalogListing ? 'max-[1088px]:hidden' : ''" aria-hidden="true">
           <div class="container-fluid px-3 py-2 sm:px-4 md:py-4">
-            <div :class="isCatalogListing ? 'h-12 md:h-20' : 'h-[264px] min-[440px]:h-[180px] sm:h-[220px] md:h-[108px] min-[1089px]:h-[200px] min-[1248px]:h-[108px]'" />
+            <div :class="isCatalogListing ? 'h-12 md:h-20' : collapseMobileSearch ? 'h-11 min-[769px]:h-[108px] min-[1089px]:h-[200px] min-[1248px]:h-[108px]' : 'h-[264px] min-[440px]:h-[180px] sm:h-[220px] md:h-[108px] min-[1089px]:h-[200px] min-[1248px]:h-[108px]'" />
           </div>
         </div>
       </template>
     </ClientOnly>
   </header>
 
-  <div id="header-mobile-filters" class="relative z-30 md:hidden" />
+  <div id="header-mobile-filters" class="relative z-30 min-[769px]:hidden" />
 
   <HeaderAccountDialog
     :show="isAccountDialogOpen"

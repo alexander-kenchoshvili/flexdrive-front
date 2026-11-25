@@ -95,10 +95,10 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
   >
     <div class="flex min-w-0 items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary">
+        <p class="checkout-copy text-xs font-semibold uppercase tracking-[0.12em] text-accent-primary">
           შეკვეთა
         </p>
-        <h2 class="mt-1.5 break-words text-[22px] font-extrabold leading-tight text-text-primary sm:mt-2 sm:text-[18px]">
+        <h2 class="checkout-section-title mt-1.5 break-words text-[22px] font-extrabold leading-tight text-text-primary sm:mt-2 sm:text-[18px]">
           შეკვეთის დეტალები
         </h2>
       </div>
@@ -132,7 +132,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
           <p class="truncate text-[13px] font-bold text-text-primary">
             {{ item.name }}
           </p>
-          <p class="mt-1 text-xs text-text-muted">
+          <p class="checkout-copy mt-1 text-xs text-text-muted">
             {{ item.quantity }} ცალი
           </p>
 
@@ -143,7 +143,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
             <p class="break-words text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
               {{ priceChangeLabel(item) }}
             </p>
-            <p class="mt-1 break-words text-[11px] leading-5 text-text-secondary">
+            <p class="checkout-copy mt-1 break-words text-[11px] leading-5 text-text-secondary">
               იყო {{ formatMoney(item.price_snapshot) }}, ახლა
               {{ formatMoney(item.price) }}
             </p>
@@ -159,12 +159,12 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
     </div>
 
     <div class="mt-4 space-y-2.5 rounded-[20px] border border-border-default bg-surface-2 p-3 sm:mt-6 sm:space-y-3 sm:p-4">
-      <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
+      <div class="checkout-copy flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
         <span>პროდუქტები</span>
         <span class="shrink-0">{{ formatMoney(subtotal) }}</span>
       </div>
 
-      <div class="flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
+      <div class="checkout-copy flex min-w-0 items-center justify-between gap-3 text-sm text-text-secondary">
         <span>{{ deliveryLabel || "მიწოდება" }}</span>
         <span
           class="shrink-0 font-semibold"
@@ -186,7 +186,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
 
       <p
         v-if="deliveryError"
-        class="break-words text-xs leading-5 text-error"
+        class="checkout-copy break-words text-xs leading-5 text-error"
       >
         {{ deliveryError }}
       </p>
@@ -199,7 +199,7 @@ const priceChangeLabel = (item: CommerceCheckoutSummaryItem) => {
       </div>
       <div
         v-if="showVat"
-        class="flex min-w-0 items-baseline justify-between gap-3 text-xs leading-5 text-text-secondary"
+        class="checkout-copy flex min-w-0 items-baseline justify-between gap-3 text-xs leading-5 text-text-secondary"
       >
         <span class="min-w-0 break-words">მათ შორის დღგ (18%)</span>
         <span class="shrink-0 tabular-nums">

@@ -678,7 +678,7 @@ useNoindexPage({
 </script>
 
 <template>
-  <main class="py-4 pb-16 md:py-10 md:pb-36 lg:pb-12">
+  <main class="checkout-page py-4 pb-16 md:py-10 md:pb-36 lg:pb-12">
     <div class="container-fluid">
       <div class="space-y-4 md:space-y-8">
         <AppBreadcrumbs
@@ -688,7 +688,7 @@ useNoindexPage({
 
         <section
           v-if="!isInitialLoading && buyNowStore.hasSession"
-          class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
+          class="checkout-intro flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
         >
           <div class="max-w-3xl">
             <h1
@@ -879,12 +879,12 @@ useNoindexPage({
 
               <div class="min-w-0 flex-1">
                 <p
-                  class="text-xs font-medium uppercase tracking-[0.12em] text-text-muted"
+                  class="checkout-mobile-total-label text-xs font-medium uppercase tracking-[0.12em] text-text-muted"
                 >
                   სულ
                 </p>
                 <p
-                  class="mt-1 text-[22px] font-extrabold leading-none text-accent-primary md:text-2xl"
+                  class="checkout-mobile-total mt-1 text-[22px] font-extrabold leading-none text-accent-primary md:text-2xl"
                 >
                   {{ checkoutTotal }} GEL
                 </p>

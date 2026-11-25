@@ -18,12 +18,12 @@ function compile(path, mocks, globals, transform = (source) => source) {
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   new Function("require", "exports", ...Object.keys(globals), output)(
-    (name) => name === "vue" ? { ...vue, Transition: slotComponent, vModelText: {} } : mocks[name] ?? require(name), exports, ...Object.values(globals),
+    (name) => name === "vue" ? { ...vue, Transition: slotComponent, Teleport: slotComponent, vModelText: {} } : mocks[name] ?? require(name), exports, ...Object.values(globals),
   );
   return exports.default;
 }
 
-const node = (tag, text = "") => ({ tag, text, props: {}, children: [], parent: null, focus() {} });
+const node = (tag, text = "") => ({ tag, text, props: {}, style: {}, children: [], parent: null, focus() {} });
 function renderer() {
   const remove = (child) => {
     if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1);
@@ -154,3 +154,61 @@ for (const mobile of [false, true]) {
     assert.deepEqual(warnings, []);
   });
 }
+
+
+test("compact inline template has one query form, opens one filter sheet and retains filters until explicit search", async (t) => {
+  for (const width of [375, 768, 769]) {
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/:pathMatch(.*)*", component: slotComponent }] });
+    await router.push("/checkout");
+    const navigations = [];
+    const originalPush = router.push.bind(router);
+    let navigation = Promise.resolve();
+    router.push = (target) => { navigations.push(target); navigation = originalPush(target); return navigation; };
+    const globals = { ...vue, useRoute, useRouter, useEcommerceAnalytics: () => ({ trackSearchSelection() {} }),
+      navigateTo: (target) => router.push(target),
+      window: { localStorage: { removeItem() {} }, requestAnimationFrame() {} },
+    };
+    const filters = vue.defineComponent({ props: ["make", "model", "year"], setup: (props, { emit }) => () => vue.h("div", { "data-filters": "true", "data-car": `${props.make}:${props.model}:${props.year}` }, [
+      ...[["make", "subaru"], ["model", "forester"], ["year", "2018"]].map(([key, value]) => vue.h("button", { type: "button", "data-pick": key, onClick: () => emit(key, value) }, value)),
+      vue.h("button", { type: "button", "data-apply": "true", onClick: () => emit("search") }, "ძებნა"),
+    ]) });
+    const header = compile("../app/components/LAYOUTS/HeaderSearch.vue", {
+      "~/composables/catalog/useVinSearchMarketing": { useVinSearchMarketing: () => ({ track() {} }) },
+      "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture: async () => {} }) },
+      "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(useRoute) },
+      "@vueuse/core": { onClickOutside() {}, useMediaQuery: (query) => vue.ref(width <= Number(/max-width: (\d+)px/.exec(query)[1])), useDebounceFn: (fn) => fn },
+      "@headlessui/vue": { Dialog: vue.defineComponent({ props: { open: Boolean }, setup: (props, { slots }) => () => props.open ? vue.h("section", { "data-dialog": "true" }, slots.default?.()) : null }), DialogPanel: slotComponent, DialogTitle: slotComponent },
+      "./HeaderSearchFilters.vue": { default: filters }, "~/components/common/BasePicture.vue": { default: slotComponent },
+      "~/composables/catalog/useCatalogApi": { useCatalogApi: () => ({ getCatalogCategoriesRaw: async () => [], getCatalogProductSuggestions: async () => [], getVehicleMakes: async () => [{ name: "Subaru", slug: "subaru" }], getVehicleModels: async () => [{ name: "Forester", slug: "forester" }], getVehicleYears: async () => [{ year: 2018 }] }) },
+      "~/composables/catalog/useCatalogPlaceholderMedia": { useCatalogPlaceholderMedia: () => ({ cardPlaceholderImage: {} }) },
+      "~/utils/routePaths": { getCatalogCategorySlugFromPath: () => null }, "~/utils/pageScrollCoordinator": { waitForPageReady: async () => {} },
+    }, globals, (source) => source.replace(/defineExpose\(\{\s*openMobileSheet,/, "defineExpose({ searchText, openMobileSheet,"));
+    const root = node("root"), app = renderer().createApp(header, { inline: true, collapseMobileFilters: true });
+    app.use(router);
+    app.component("BaseButton", { setup: (_, { slots }) => () => vue.h("button", { type: "button" }, slots.default?.()) });
+    app.component("BaseIcon", slotComponent); app.component("NuxtLink", slotComponent);
+    // Teleport is a slot stub in this renderer; only its known slot-normalization warning is expected.
+    app.config.warnHandler = (message) => assert.match(message, /Non-function value encountered for default slot/);
+    const vm = app.mount(root);
+    try {
+      await flush();
+      assert.equal(all(root).filter((el) => el.tag === "input").length, 1);
+      const trigger = all(root).find((el) => el.props["aria-haspopup"] === "dialog");
+      if (width > 768) { assert.equal(trigger, undefined); assert.equal(all(root).filter((el) => el.props["data-filters"]).length, 1); continue; }
+      assert.ok(trigger); assert.equal(trigger.props.type, "button");
+      assert.equal(all(root).filter((el) => el.props["data-filters"]).length, 0);
+      vm.searchText = "კაპოტი"; await flush(); await trigger.props.onClick(); await flush();
+      assert.equal(all(root).filter((el) => el.props["data-filters"]).length, 1);
+      assert.equal(all(root).filter((el) => el.tag === "form").length, 1, "The detail sheet must not create a checkout or second query form");
+      for (const key of ["make", "model", "year"]) { await all(root).find((el) => el.props["data-pick"] === key).props.onClick(); await flush(); }
+      await all(root).find((el) => el.props["aria-label"] === "ძიების დახურვა").props.onClick(); await flush();
+      assert.equal(navigations.length, 0); assert.equal(vm.searchText, "კაპოტი");
+      await trigger.props.onClick(); await flush();
+      assert.equal(all(root).find((el) => el.props["data-filters"]).props["data-car"], "subaru:forester:2018");
+      await all(root).find((el) => el.props["data-apply"]).props.onClick(); await flush();
+      await navigation; await flush();
+      assert.equal(navigations.length, 1); assert.equal(router.currentRoute.value.path, "/catalog");
+      assert.deepEqual(router.currentRoute.value.query, { q: "კაპოტი", make: "subaru", model: "forester", year: "2018" });
+    } finally { app.unmount(); }
+  }
+});

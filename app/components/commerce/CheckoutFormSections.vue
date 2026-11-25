@@ -132,7 +132,7 @@ const lastNameLabel = computed(() =>
           <span class="block text-sm font-semibold text-text-primary">
             {{ option.title }}
           </span>
-          <span class="mt-1 block text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">
+          <span class="checkout-buyer-description mt-1 block text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">
             {{ option.description }}
           </span>
         </span>
@@ -292,7 +292,7 @@ const lastNameLabel = computed(() =>
     class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="2" title="მიწოდების მისამართი" />
-    <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
+    <p class="checkout-copy mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
       აირჩიე რეგიონი და ქალაქი ან სოფელი, შემდეგ მიუთითე სრული მისამართი.
     </p>
 
@@ -370,12 +370,12 @@ v-if="deliveryOptions?.length" v-model="deliveryServiceSlug"
     class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="3" title="წესები და პირობები" />
-    <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
+    <p class="checkout-copy mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
       შეკვეთის დადასტურებამდე აუცილებელია დაეთანხმო წესებსა და პირობებს.
     </p>
 
     <label
-      class="mt-4 flex items-start gap-3 rounded-[18px] border border-border-default/80 bg-surface-2 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-200 sm:mt-6 sm:px-4 sm:py-3"
+      class="checkout-copy mt-4 flex items-start gap-3 rounded-[18px] border border-border-default/80 bg-surface-2 px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors duration-200 sm:mt-6 sm:px-4 sm:py-3"
       :class="errors.terms_accepted ? 'border-error/40 text-error' : ''"
     >
       <input
@@ -418,7 +418,7 @@ v-if="deliveryOptions?.length" v-model="deliveryServiceSlug"
     class="rounded-[24px] border border-border-default bg-surface p-4 shadow-[0_24px_60px_-38px_var(--shadow-color)] sm:p-6 md:p-7"
   >
     <CheckoutSectionHeader :step="4" title="გადახდა" />
-    <p class="mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
+    <p class="checkout-copy mt-4 text-sm leading-6 text-text-secondary sm:mt-6">
       აირჩიე შენთვის მოსახერხებელი გადახდის მეთოდი.
     </p>
 

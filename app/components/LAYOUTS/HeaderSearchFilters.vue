@@ -117,7 +117,7 @@ const selectedOptions = computed(() => props.selectedCategories.map((value) => (
       <p>{{ error }}</p>
       <button type="button" class="min-h-11 font-semibold underline" @click="emit('retry')">ხელახლა ცდა</button>
     </div>
-    <div v-if="!embedded" class="mt-4 flex justify-end border-t border-border-default pt-4 md:hidden">
+    <div v-if="!embedded" class="mt-4 flex justify-end border-t border-border-default pt-4 min-[769px]:hidden">
       <BaseButton :disabled="!canSubmit" @click="emit('search')">ძებნა</BaseButton>
     </div>
   </section>

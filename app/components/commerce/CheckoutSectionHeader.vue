@@ -17,7 +17,7 @@ defineProps<{
       </span>
 
       <h2
-        class="text-[20px] font-extrabold leading-tight text-text-primary sm:text-[22px] md:text-[24px]"
+        class="checkout-section-title text-[20px] font-extrabold leading-tight text-text-primary sm:text-[22px] md:text-[24px]"
       >
         {{ title }}
       </h2>

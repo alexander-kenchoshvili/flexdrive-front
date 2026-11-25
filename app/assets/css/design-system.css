@@ -123,3 +123,71 @@ html.theme-changing *::after {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Shared checkout typography: only the requested phone/tablet range. */
+@media (max-width: 768px) {
+  .checkout-page .checkout-intro,
+  .checkout-page .checkout-buyer-description {
+    display: none;
+  }
+
+  .checkout-page .checkout-section-title {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .checkout-page .checkout-copy,
+  .checkout-page p[id$="-hint"],
+  .checkout-page [data-choice-description] {
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  /* The action bar has a fixed navy surface in both themes. */
+  html:not(.dark) .checkout-page .checkout-mobile-total {
+    color: #b7dd66;
+  }
+
+  html:not(.dark) .checkout-page .checkout-mobile-total-label {
+    color: #dce7f3;
+  }
+}
+
+
+/* Shared report-period layout keeps native date controls within their columns. */
+@media (max-width: 768px) {
+  .business-period-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .business-period-controls > label,
+  .business-period-controls input[type="date"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .business-period-controls > button {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .business-period-controls > span {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .business-period-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .business-period-controls > label {
+    grid-column: 1 / -1;
+  }
+}

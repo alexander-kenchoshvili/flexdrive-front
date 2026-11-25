@@ -26,6 +26,6 @@ name="payment_method" :value="method" :model-value="selected ? method : ''"
     <span v-if="brands.length" class="mt-2 flex flex-wrap gap-1.5">
       <span v-for="brand in brands" :key="brand" class="inline-flex rounded-full border border-border-default bg-surface px-2.5 py-1 text-[11px] font-bold leading-none text-text-secondary">{{ brand }}</span>
     </span>
-    <span v-if="supportingText" class="mt-3 block border-t border-border-default/80 pt-3 text-xs font-medium leading-5 text-text-muted">{{ supportingText }}</span>
+    <span v-if="supportingText" class="checkout-copy mt-3 block border-t border-border-default/80 pt-3 text-xs font-medium leading-5 text-text-muted">{{ supportingText }}</span>
   </BaseChoiceCard>
 </template>

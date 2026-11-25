@@ -82,7 +82,7 @@ const profitSteps = computed(() => [
     </div>
 
     <form class="rounded-xl border border-border-default bg-surface p-4 md:p-5" @submit.prevent="applyPeriod()">
-      <div class="flex flex-wrap items-end gap-3">
+      <div class="business-period-controls flex flex-wrap items-end gap-3">
         <label class="flex min-w-0 flex-1 flex-col gap-2 text-xs font-semibold text-text-secondary md:flex-none">საწყისი თარიღი<input v-model="start" type="date" required class="min-h-[44px] min-w-0 rounded-lg border border-border-default bg-bg-primary px-3 py-2 text-sm text-text-primary [color-scheme:light] dark:[color-scheme:dark]"></label>
         <label class="flex min-w-0 flex-1 flex-col gap-2 text-xs font-semibold text-text-secondary md:flex-none">საბოლოო თარიღი<input v-model="end" type="date" required class="min-h-[44px] min-w-0 rounded-lg border border-border-default bg-bg-primary px-3 py-2 text-sm text-text-primary [color-scheme:light] dark:[color-scheme:dark]"></label>
         <BaseButton type="submit" :disabled="loading">ჩვენება</BaseButton>
