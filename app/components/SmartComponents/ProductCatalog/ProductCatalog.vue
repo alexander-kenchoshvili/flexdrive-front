@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { markPagePending, markPageReady } from "~/utils/pageScrollCoordinator";
 import { useMediaQuery } from "@vueuse/core";
-import { storeToRefs } from "pinia";
 import type { LocationQuery, LocationQueryValue } from "vue-router";
 import AppBreadcrumbs from "~/components/common/AppBreadcrumbs.vue";
 import { publicPageError } from "~/utils/publicPageError";
@@ -66,8 +65,6 @@ const props = defineProps<{
 const route = useRoute();
 const router = useRouter();
 const config = useRuntimeConfig();
-const siteSettingsStore = useSiteSettings();
-const { settings } = storeToRefs(siteSettingsStore);
 const {
   getCatalogProducts,
   getCatalogProductsRaw,
@@ -355,12 +352,6 @@ const categoryCanonicalPath = computed(() => {
 const siteUrl = computed(() =>
   normalizeUrl(String(config.public.siteUrl || "https://localhost:3000")),
 );
-const defaultSeoImage = computed(
-  () =>
-    String(
-      settings.value?.default_seo_image || config.public.defaultSeoImage || "",
-    ) || undefined,
-);
 const categoryCanonicalUrl = computed(() =>
   toAbsoluteUrl(siteUrl.value, categoryCanonicalPath.value),
 );
@@ -390,9 +381,6 @@ const categorySeoDescription = computed(() => {
     `დაათვალიერე ${selectedCategory.value.name} კატეგორიის ხარისხიანი ავტონაწილები FlexDrive-ზე.`
   );
 });
-const categorySeoImage = computed(
-  () => selectedCategorySeo.value?.image || defaultSeoImage.value,
-);
 const { robots: categoryRobots } = useIndexingPolicy({
   pageNoindex: computed(() => Boolean(selectedCategorySeo.value?.noindex) || selectedCategory.value?.product_count === 0),
 });
@@ -1524,11 +1512,9 @@ useSeoMeta({
     selectedCategorySeo.value?.noindex || selectedCategory.value?.product_count === 0 ? categoryRobots.value : undefined,
   ogTitle: () => categorySeoTitle.value,
   ogDescription: () => categorySeoDescription.value,
-  ogImage: () => categorySeoImage.value,
   ogUrl: () => categoryCanonicalUrl.value,
   twitterTitle: () => categorySeoTitle.value,
   twitterDescription: () => categorySeoDescription.value,
-  twitterImage: () => categorySeoImage.value,
 });
 </script>
 

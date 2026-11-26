@@ -217,7 +217,38 @@ export interface CommerceDeliveryQuote {
   quote_token: string;
 }
 
-export type CheckoutPaymentMethod = "cash_on_delivery" | "card";
+export type CheckoutPaymentMethod = "cash_on_delivery" | "card" | "credo_installment" | "credo_dayavi";
+export type CommerceStoredPaymentMethod = "cash_on_delivery" | "card" | "credo";
+export type CredoOffer = "installment" | "dayavi";
+export interface CommerceCredoAvailability {
+  enabled: boolean;
+  provider: "credo";
+  currency: "GEL";
+  offers: CredoOffer[];
+  redirect_checkout: boolean;
+}
+export interface CommerceCredoApplication {
+  application_token: string;
+  stage: "identification" | "processing" | "approved" | "awaiting_signature"
+    | "ready_to_ship" | "funding_completed" | "rejected" | "cancelled" | "review" | "start_failed";
+  label: string;
+  amount: string;
+  currency: "GEL";
+  requested_offer: CredoOffer;
+  source: "cart" | "buy_now";
+  ready_to_ship: boolean;
+  funding_completed: boolean;
+  can_restart_checkout: boolean;
+  redirect_url: string | null;
+  order_public_token: string | null;
+  order_number: string | null;
+  checked_at: string | null;
+  updated_at: string;
+}
+export type CredoCheckoutPayload = Omit<CheckoutPayload, "payment_method"> & {
+  payment_method: "credo";
+  requested_offer: CredoOffer;
+};
 export type CommerceCardPaymentResult =
   | CommercePaymentStatus
   | "verification_pending";
@@ -336,6 +367,7 @@ export interface CommerceOrderLookupItem {
 }
 
 export interface CommerceOrderSummary extends CommerceReceiptAccess {
+  purchase_eligible?: boolean;
   receipt_available?: boolean;
   id: number;
   public_token: string;
@@ -344,7 +376,7 @@ export interface CommerceOrderSummary extends CommerceReceiptAccess {
   company_name: string;
   company_identification_code: string;
   company_is_vat_registered: boolean | null;
-  payment_method: CheckoutPaymentMethod;
+  payment_method: CommerceStoredPaymentMethod;
   payment_status: CommercePaymentStatus;
   refund_summary?: CommerceRefundSummary | null;
   delivery_summary?: CommerceDeliverySummary | null;
@@ -374,7 +406,7 @@ export interface CommerceOrderLookupSummary extends CommerceReceiptAccess {
   payment_status: CommercePaymentStatus;
   refund_summary?: CommerceRefundSummary | null;
   delivery_summary?: CommerceDeliverySummary | null;
-  payment_method: CheckoutPaymentMethod;
+  payment_method: CommerceStoredPaymentMethod;
   checkout_source: "cart" | "buy_now";
   total: string;
   created_at: string;
@@ -387,7 +419,7 @@ export interface OwnedOrderListItem {
   public_token: string;
   order_number: string;
   status: CommerceOrderStatus;
-  payment_method: CheckoutPaymentMethod;
+  payment_method: CommerceStoredPaymentMethod;
   payment_status: CommercePaymentStatus;
   refund_summary?: CommerceRefundSummary | null;
   delivery_summary?: CommerceDeliverySummary | null;

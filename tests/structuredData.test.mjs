@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { socialImageRuntime, socialImages } from "./helpers/socialImage.mjs";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
@@ -68,6 +69,8 @@ function context(t, path, { query = {}, props = {}, client = false } = {}) {
   };
   const policy = execute("app/composables/useIndexingPolicy.ts", globals, { "~/utils/seoIndexing": indexing });
   const mocks = {
+    "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture() {} }) },
+    "~/composables/useSocialImage": socialImageRuntime(globals),
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(() => route) },
     pinia: { storeToRefs: (store) => store },
     "swiper/css": {}, "swiper/vue": {},
@@ -93,7 +96,7 @@ async function schemas(head) {
   return { headTags, data };
 }
 
-async function productContext(t, overrides = {}, client = false) {
+async function productContext(t, overrides = {}, client = false, withDefaults = false) {
   const c = context(t, "/catalog/part-fd-02-0001", { client });
   const product = vue.reactive({
     id: 1, name: "სარკის ხუფი", sku: "FD-02-0001", price: "120.50",
@@ -117,6 +120,7 @@ async function productContext(t, overrides = {}, client = false) {
   const preloadMocks = { "../media/useCloudinaryImage": media, vue: { ...vue, onMounted() {}, onBeforeUnmount() {} } };
   c.mocks["~/composables/catalog/useProductGalleryPreload"] = execute("app/composables/catalog/useProductGalleryPreload.ts", {}, preloadMocks);
   c.mocks["~/composables/catalog/useProductZoomPreload"] = execute("app/composables/catalog/useProductZoomPreload.ts", {}, preloadMocks);
+  if (withDefaults) addSocialDefaults(c);
   await setup("app/pages/catalog/[slug].vue", c.globals, c.mocks, "", "const retryLoad =");
   return { ...c, product };
 }
@@ -255,4 +259,133 @@ test("script-closing strings cannot escape JSON-LD and round-trip unchanged", as
   assert.equal(product.description, text);
   assert.doesNotMatch(headTags, /<script id="unexpected">/);
   assert.equal((headTags.match(/<script type="application\/ld\+json"/g) || []).length, 2);
+});
+
+// Render actual Nuxt SEO sources with Unhead: crawlers see these initial tags.
+function addSocialDefaults(c) {
+  c.mocks["~/utils/seoTitle"] = execute("app/utils/seoTitle.ts");
+  execute("app/composables/useSeoDefaults.ts", c.globals, c.mocks).useSeoDefaults(c.settingsStore);
+}
+function assertSocialPreview(headTags, url, common = false) {
+  const tags = [...headTags.matchAll(/<meta\b[^>]*>/g)].map(([tag]) => tag);
+  for (const [attribute, key] of [["property", "og:image"], ["name", "twitter:image"]]) {
+    const matches = tags.filter((tag) => tag.includes(`${attribute}="${key}"`));
+    assert.equal(matches.length, 1, `${key} must have one authoritative image`);
+    assert.ok(matches[0].includes(`content="${url}"`), matches[0]);
+  }
+  for (const [key, expected] of [["width", "1200"], ["height", "630"], ["type", "image/jpeg"]]) {
+    const matches = tags.filter((tag) => tag.includes(`property="og:image:${key}"`));
+    assert.equal(matches.length, common ? 1 : 0, `wrong inherited image ${key}`);
+    if (common) assert.ok(matches[0].includes(`content="${expected}"`), matches[0]);
+  }
+}
+
+test("home, catalog/search, categories, blog listing and ordinary pages share the bundled banner despite saved CMS images", async (t) => {
+  for (const path of ["/", "/catalog", "/catalog/category/lights", "/blogs", "/contact", "/terms"]) {
+    await t.test(path, async (subtest) => {
+      const c = context(subtest, path, { query: path === "/catalog" ? { q: "Subaru" } : {} });
+      c.settingsStore.settings.value.default_seo_image = "/old-site-image.jpg";
+      c.globals.useRuntimeConfig = () => ({ public: {
+        siteUrl: "https://flexdrive.ge", defaultSeoImage: "/favicon.ico",
+      } });
+      c.globals.useGlobalStore = () => ({
+        pageSeo: vue.ref({ title: "CMS title", image: "/old-page-image.jpg" }),
+        components: {}, isSingleView: false,
+      });
+      c.mocks["~/composables/useSocialImage"] = socialImageRuntime(c.globals);
+      addSocialDefaults(c);
+      await setup("app/pages/[...slug].vue", c.globals, c.mocks);
+      const { headTags } = await schemas(c.head);
+      assertSocialPreview(headTags, `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`, true);
+      assert.doesNotMatch(headTags, /old-site-image|old-page-image|favicon/);
+    });
+  }
+});
+
+test("category component cannot replace the common banner with a category photo", async (t) => {
+  const c = context(t, "/catalog/category/lights");
+  addSocialDefaults(c);
+  const category = { id: 1, slug: "lights", name: "ფარები", product_count: 1, seo: { image: "/old-category.jpg" } };
+  c.mocks["~/composables/catalog/useCatalogSearchAnalytics"] = { useCatalogSearchAnalytics: () => ({ captureSearch: () => ({}), recordSearchResults() {} }) };
+  c.mocks["~/composables/catalog/useCatalogApi"] = { useCatalogApi: () => ({
+    getCatalogProducts: async () => ({ data: vue.ref({ count: 1, results: [], total_pages: 1, page_size: 15, facets: {} }), error: vue.ref(null) }),
+    getCatalogCategories: async () => ({ data: vue.ref([category]), error: vue.ref(null) }),
+    getCatalogCategory: async () => ({ data: vue.ref(category), error: vue.ref(null) }),
+    getVehicleMakes: async () => [],
+  }) };
+  await setup("app/components/SmartComponents/ProductCatalog/ProductCatalog.vue", c.globals, c.mocks);
+  const { headTags } = await schemas(c.head);
+  assertSocialPreview(headTags, `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`, true);
+  assert.doesNotMatch(headTags, /old-category/);
+});
+
+test("a real product SEO photo survives default metadata without inheriting the banner dimensions", async (t) => {
+  const c = await productContext(t, {}, false, true);
+  assertSocialPreview((await schemas(c.head)).headTags, "https://flexdrive.ge/real-product.jpg");
+});
+
+test("actual product primary/tablet-only photos stay dynamic and missing photos use the common banner", async (t) => {
+  const photo = { id: 1, is_primary: true, image: { desktop: null, tablet: "/real-tablet.webp", mobile: null } };
+  const withPhoto = await productContext(t, { seo: {}, images: [photo] });
+  assertSocialPreview((await schemas(withPhoto.head)).headTags, "https://flexdrive.ge/real-tablet.webp");
+  const withoutPhoto = await productContext(t, { seo: {}, images: [] });
+  const { headTags, data } = await schemas(withoutPhoto.head);
+  assertSocialPreview(headTags, `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`, true);
+  // A marketing banner must not become fabricated Product schema photography.
+  assert.equal("image" in data.find((item) => item["@type"] === "Product"), false);
+});
+
+test("article photos remain dynamic, and reused CMS navigation restores the common banner and correct dimensions", async (t) => {
+  const c = context(t, "/blogs/1-article", { client: true });
+  const state = vue.shallowReactive({
+    isSingleView: true,
+    pageSeo: vue.ref({ title: "სტატია", image: "/article-cover.jpg" }),
+    components: { article: { conf: { componentName: "BlogInner" } } },
+  });
+  c.globals.useGlobalStore = () => state;
+  addSocialDefaults(c);
+  await setup("app/pages/[...slug].vue", c.globals, c.mocks);
+  assertSocialPreview((await schemas(c.head)).headTags, "https://flexdrive.ge/article-cover.jpg");
+
+  c.route.path = "/contact";
+  state.isSingleView = false;
+  state.components = {};
+  state.pageSeo.value = { title: "კონტაქტი", image: "/old-contact.jpg" };
+  await vue.nextTick();
+  assertSocialPreview((await schemas(c.head)).headTags, `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`, true);
+
+  c.route.path = "/blogs/2-next";
+  state.isSingleView = true;
+  state.components = { article: { conf: { componentName: "BlogInner" } } };
+  state.pageSeo.value = { title: "სხვა სტატია", image: "https://media.example.test/second.webp" };
+  await vue.nextTick();
+  assertSocialPreview((await schemas(c.head)).headTags, "https://media.example.test/second.webp");
+  state.pageSeo.value = { title: "უსურათო სტატია", image: null };
+  await vue.nextTick();
+  assertSocialPreview((await schemas(c.head)).headTags, `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`, true);
+});
+
+test("each environment has an absolute common image URL without an image ENV or CMS setting", async (t) => {
+  for (const siteUrl of ["https://flexdrive.ge", "https://localhost:3000/", "https://staging.example.test/"]) {
+    const c = context(t, "/");
+    c.globals.useRuntimeConfig = () => ({ public: { siteUrl } });
+    const runtime = socialImageRuntime(c.globals);
+    runtime.useSocialImage();
+    assertSocialPreview((await schemas(c.head)).headTags, new URL(socialImages.DEFAULT_SOCIAL_IMAGE.path, siteUrl).href, true);
+  }
+});
+
+test("initial article HTML keeps the API-selected photo while a non-blog single view uses the common banner", async (t) => {
+  for (const componentName of ["BlogInner", "OtherInner"]) {
+    const c = context(t, "/blogs/1-article");
+    c.globals.useGlobalStore = () => ({
+      isSingleView: true, pageSeo: vue.ref({ title: "სტატია", image: "/api-article-photo.webp" }),
+      components: { item: { conf: { componentName } } },
+    });
+    addSocialDefaults(c);
+    await setup("app/pages/[...slug].vue", c.globals, c.mocks);
+    const article = componentName === "BlogInner";
+    assertSocialPreview((await schemas(c.head)).headTags,
+      article ? "https://flexdrive.ge/api-article-photo.webp" : `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`, !article);
+  }
 });

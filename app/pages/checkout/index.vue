@@ -17,6 +17,8 @@ import {
 import { useCommerceApi } from "~/composables/commerce/useCommerceApi";
 import { useCheckoutIdempotency } from "~/composables/commerce/useCheckoutIdempotency";
 import { useCheckoutProgress } from "~/composables/commerce/useCheckoutProgress";
+import { useCredoPaymentFlow } from "~/composables/commerce/useCredoPaymentFlow";
+import { isCredoMethod, credoOfferForMethod } from "~/utils/credoCheckout";
 import { useCardPaymentFlow } from "~/composables/commerce/useCardPaymentFlow";
 import type {
   CommerceCartItem,
@@ -37,7 +39,7 @@ definePageMeta({
 
 const globalStore = useGlobalStore();
 const cartStore = useCartStore();
-const { checkoutOrder, startCartCardPayment } = useCommerceApi();
+const { checkoutOrder, startCartCardPayment, startCredoApplication } = useCommerceApi();
 const { storeReceiptAccess } = useOrderReceipt();
 const { getOrCreateKey, clearKey } = useCheckoutIdempotency("cart");
 const {
@@ -47,6 +49,7 @@ const {
   redirectToProvider,
   storeReturnContext,
 } = useCardPaymentFlow();
+const { credoPaymentEnabled, credoPaymentLoading, activeCredoApplicationPath, openCredoApplication } = useCredoPaymentFlow("cart");
 const { executeRecaptcha } = useRecaptcha();
 const { trackAddPaymentInfo, trackBeginCheckout } = useEcommerceAnalytics();
 
@@ -391,6 +394,20 @@ const submitForm = validateSubmit(
         recaptchaToken,
       );
 
+      if (isCredoMethod(submittedValues.payment_method)) {
+        if (!credoPaymentEnabled.value) {
+          formError.value = "კრედოს დაფინანსება ამჟამად მიუწვდომელია.";
+          return;
+        }
+        const application = await startCredoApplication("cart", {
+          ...checkoutPayload, payment_method: "credo",
+          requested_offer: credoOfferForMethod(submittedValues.payment_method),
+        }, getOrCreateKey());
+        await syncProfileBackfill(submittedValues);
+        await openCredoApplication(application, true);
+        return;
+      }
+
       if (submittedValues.payment_method === "card") {
         const payment = await startCartCardPayment(
           checkoutPayload,
@@ -430,6 +447,14 @@ const submitForm = validateSubmit(
       await cartStore.refreshCart();
       await navigateTo(`/checkout/success/${order.public_token}`);
     } catch (submitError) {
+      if (isCredoMethod(submittedValues.payment_method)) {
+        const payload = extractApiErrorPayload(submitError) as { application?: import("~/types/commerce").CommerceCredoApplication } | null;
+        if (payload?.application?.application_token) {
+          await openCredoApplication(payload.application);
+          return;
+        }
+        // Keep the same key after an uncertain response; never blindly create again.
+      }
       const paymentError =
         submittedValues.payment_method === "card"
           ? extractPaymentError(submitError)
@@ -716,6 +741,9 @@ useNoindexPage({
                 {{ cartStore.error }}
               </div>
 
+              <p v-if="activeCredoApplicationPath" class="mb-4 rounded-xl border border-border-default bg-surface p-4 text-sm text-text-primary">
+                <NuxtLink :to="activeCredoApplicationPath" class="font-semibold underline underline-offset-4">კრედოს განაცხადის ნახვა</NuxtLink>
+              </p>
               <CheckoutFormSections
                 v-model:buyer-type="buyerType"
                 v-model:personal-number="personalNumber"
@@ -751,6 +779,8 @@ useNoindexPage({
                 :delivery-locations-error="deliveryLocationsError"
                 :address-line-attrs="addressLineAttrs"
                 :note-attrs="noteAttrs"
+                :credo-payment-enabled="credoPaymentEnabled"
+                :credo-payment-loading="credoPaymentLoading"
                 :card-payment-enabled="cardPaymentEnabled"
                 :card-payment-loading="cardPaymentAvailabilityPending"
                 @select-payment-method="selectPaymentMethod"

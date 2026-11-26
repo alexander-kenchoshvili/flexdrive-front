@@ -3,6 +3,9 @@ import { metaBrowserIdentifierHeaders } from "~/utils/metaBrowserIdentifiers";
 import { apiFetchRaw } from "~/composables/apiFetch";
 import type {
   CheckoutPayload,
+  CredoCheckoutPayload,
+  CommerceCredoApplication,
+  CommerceCredoAvailability,
   CommerceBuyNowSession,
   CommerceCardPayment,
   CommerceCardPaymentAvailability,
@@ -226,6 +229,21 @@ export const useCommerceApi = () => {
     );
   };
 
+  const getCredoAvailability = async () => apiFetchRaw<CommerceCredoAvailability>(
+    "/commerce/payments/credo/availability/", { retry: 0 },
+  );
+  const startCredoApplication = async (
+    source: "cart" | "buy_now", payload: CredoCheckoutPayload, idempotencyKey: string,
+  ) => apiFetchRaw<CommerceCredoApplication>(
+    `/commerce/payments/credo/${source === "cart" ? "cart" : "buy-now"}/start/`, {
+      method: "POST", body: payload, retry: 0,
+      headers: { ...resolveMarketingConsentHeaders(), "Idempotency-Key": idempotencyKey },
+    },
+  );
+  const getCredoApplicationStatus = async (token: string) => apiFetchRaw<CommerceCredoApplication>(
+    `/commerce/payments/credo/${token}/`, { retry: 0 },
+  );
+
   const getCardPaymentStatus = async (paymentToken: string) => {
     return apiFetchRaw<CommerceCardPayment>(
       `/commerce/payments/card/${paymentToken}/`,
@@ -298,6 +316,9 @@ export const useCommerceApi = () => {
     checkoutOrder,
     checkoutBuyNow,
     getCardPaymentAvailability,
+    getCredoAvailability,
+    startCredoApplication,
+    getCredoApplicationStatus,
     startCartCardPayment,
     startBuyNowCardPayment,
     getCardPaymentStatus,

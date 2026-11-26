@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { socialImageRuntime, socialImages } from "./helpers/socialImage.mjs";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
@@ -43,6 +44,8 @@ function context(path = "/catalog", query = {}) {
   };
   const policy = execute("app/composables/useIndexingPolicy.ts", globals, { "~/utils/seoIndexing": indexing });
   const mocks = {
+    "~/composables/catalog/useVehicleInterestTracking": { useVehicleInterestTracking: () => ({ capture() {} }) },
+    "~/composables/useSocialImage": socialImageRuntime(globals),
     "~/composables/catalog/useCatalogSearchText": { useCatalogSearchText: catalogSearchTextRuntime(() => route) },
     pinia: { storeToRefs: (store) => store }, "swiper/vue": {}, "swiper/css": {},
     "@vueuse/core": { useMediaQuery: () => vue.ref(false), watchDebounced() {} },
@@ -167,5 +170,5 @@ test("Product schema ignores gallery/site placeholders while genuine mobile-only
   }), error: vue.ref(null) }));
   assert.equal("image" in c.productSchema.value, false);
   assert.equal(c.galleryImages.value[0].id, -1);
-  assert.match(c.productSeoImage.value, /fallback-product|brand-logo/);
+  assert.equal(c.productSeoImage.value, `https://flexdrive.ge${socialImages.DEFAULT_SOCIAL_IMAGE.path}`);
 });

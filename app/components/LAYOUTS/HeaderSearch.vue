@@ -838,7 +838,7 @@ defineExpose({
                 ref="mobileInputRef" v-model="searchText" type="search"
                 :placeholder="searchPlaceholder" :aria-label="searchPlaceholder"
                 autocomplete="off" spellcheck="false" maxlength="255"
-                class="header-search-input h-12 min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
+                class="header-search-input h-12 min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted placeholder:text-[13px] focus:outline-none"
                 @keydown="handleInputKeydown"
               />
             </form>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useSocialImage } from "~/composables/useSocialImage";
 import { storeToRefs } from "pinia";
 import { resolveCmsCollectionSeoPolicy } from "~/utils/cmsCollectionSeo";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
@@ -60,14 +61,13 @@ const robots = computed(() => {
 
 const seoTitle = computed(() => pageSeo.value?.title || undefined);
 const seoDescription = computed(() => pageSeo.value?.description || undefined);
-const seoImage = computed(() => {
-  const image =
-    pageSeo.value?.image ||
-    settings.value?.default_seo_image ||
-    String(config.public.defaultSeoImage || "");
-  if (!image) return undefined;
-  return toAbsoluteUrl(siteUrl.value, image);
+// A CMS SEO image may override the common banner only for a real blog article.
+const articleSeoImage = computed(() => {
+  const isArticle = globalStore.isSingleView && Object.values(globalStore.components || {})
+    .some((component) => component.conf.componentName === "BlogInner");
+  return isArticle ? pageSeo.value?.image : undefined;
 });
+useSocialImage(articleSeoImage, () => pageSeo.value?.title);
 
 useHead(() => ({
   link: [{ rel: "canonical", href: canonicalUrl.value }],
@@ -81,10 +81,8 @@ useSeoMeta({
   ogUrl: () => canonicalUrl.value,
   ogTitle: () => seoTitle.value,
   ogDescription: () => seoDescription.value,
-  ogImage: () => seoImage.value,
   twitterTitle: () => seoTitle.value,
   twitterDescription: () => seoDescription.value,
-  twitterImage: () => seoImage.value,
 });
 </script>
 

@@ -42,7 +42,7 @@ const checkoutSchema = z
     terms_accepted: z.boolean().refine((value) => value, {
       message: "შეკვეთის დასადასტურებლად დაეთანხმეთ წესებსა და პირობებს.",
     }),
-    payment_method: z.enum(["cash_on_delivery", "card"]),
+    payment_method: z.enum(["cash_on_delivery", "card", "credo_installment", "credo_dayavi"]),
   })
   .superRefine((values, context) => {
     if (values.buyer_type !== "legal_entity") {

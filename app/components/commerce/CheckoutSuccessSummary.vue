@@ -117,8 +117,16 @@ const miniItemMeta = (item: CommerceOrderItem) =>
           <p
             class="subtitle-under-xs mt-4 max-w-2xl text-sm leading-7 text-text-secondary md:text-base"
           >
-            შეკვეთის დეტალები ქვემოთ დაგხვდება. საჭიროების შემთხვევაში ჩვენი
-            გუნდი შეკვეთას გადაამოწმებს და მიწოდების პროცესს დაგიდასტურებს.
+            <template
+              v-if="order.payment_method === 'credo' && ['pending', 'paid'].includes(order.payment_status) && ['new', 'confirmed', 'processing'].includes(order.status)"
+            >
+              განვადება წარმატებით გაფორმდა და თქვენი შეკვეთა მიღებულია.
+              შეკვეთას მიწოდებისთვის მოვამზადებთ. გადახდები განახორციელეთ კრედოსთან შეთანხმებული გრაფიკით.
+            </template>
+            <template v-else>
+              შეკვეთის დეტალები ქვემოთ დაგხვდება. საჭიროების შემთხვევაში ჩვენი
+              გუნდი შეკვეთას გადაამოწმებს და მიწოდების პროცესს დაგიდასტურებს.
+            </template>
           </p>
 
           <div class="mt-5 flex flex-wrap items-center gap-2">

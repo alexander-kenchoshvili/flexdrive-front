@@ -1,3 +1,5 @@
+import { DEFAULT_SOCIAL_IMAGE } from "./app/utils/socialImage";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const env =
   ((globalThis as { process?: { env?: Record<string, string | undefined> } })
@@ -89,7 +91,7 @@ export default defineNuxtConfig({
       defaultSeoDescription:
         env.NUXT_PUBLIC_DEFAULT_SEO_DESCRIPTION ||
         "შეიძინე ხარისხიანი ავტონაწილები FlexDrive-ზე. მოძებნე ნაწილი OEM-ით, SKU-ით ან კატეგორიით და შეუკვეთე ონლაინ მარტივად.",
-      defaultSeoImage: env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || "/favicon.ico",
+      defaultSeoImage: env.NUXT_PUBLIC_DEFAULT_SEO_IMAGE || DEFAULT_SOCIAL_IMAGE.path,
       recaptchaSiteKey: env.NUXT_PUBLIC_RECAPTCHA_SITE_KEY,
       googleClientId: env.NUXT_PUBLIC_GOOGLE_CLIENT_ID,
       gtmId: env.NUXT_PUBLIC_GTM_ID || "",

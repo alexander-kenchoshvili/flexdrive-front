@@ -1,5 +1,129 @@
 # Project Instructions
 
+## Customer Credo Confirmation Copy Clarified - 2026-11-26
+
+- Owner rejected showing merchant settlement wait to customers. Shared public
+  order/profile/tracking presentation now labels Credo pending AND paid as
+  "განვადება გაფორმებულია"; cancellation/refund/card wording stays unchanged.
+- Active initial Credo success description confirms purchase received, preparation
+  for delivery and repayment per agreed Credo schedule. Shipped/delivered/cancelled
+  states retain existing description. No internal payment/order state changed.
+- Existing46 checkout checks updated/passed; scoped ESLint and app vue-tsc checked.
+  No backend/ENV/DB/provider action/server/browser/deploy. Prior return/closure
+  handoff remains; full create URL/return config still awaited from bank.
+
+## Credo Local Pilot Return Flow Prepared - 2026-11-26
+
+- Owner requested local test preparation; real bank loan not created. Full create
+  POST URL still absent in public docs. Owner asked bank for it and return/success
+  configuration; awaiting reply. Backend local flags still OFF/test mode ON.
+- Status page now keeps the local tab open; explicit safe bank link opens a new
+  tab via native anchor/noopener/noreferrer with instructions. On trusted12/5 and
+  valid order UUID it automatically replaces route with order success. Review and
+  malformed tokens cannot become success. Legacy continue query is consumed with
+  no automatic bank navigation/re-POST. No invented return URL parameter.
+- Focus/visibility refresh reads local state immediately; coalesces overlapping
+  requests and cleans listeners. Pending Credo uses existing awaiting-settlement
+  label, never paid. Both cart and BuyNow share this flow; BOG preserved.
+-46 checkout checks pass (new automatic order routing, pending label, focus/cleanup
+  cases). Scoped ESLint and strict app vue-tsc passed main UI change. Backend has
+  87 regression +12 final local-only pilot checks; closure/watch commands prepared
+  but not running. See backend docs/CREDO_INTEGRATION_PLAN.md dated update.
+- No server/browser/full build, bank/Wingo/tracking request, ENV/working DB change,
+  production migration or deploy. Keep OG/social/HeaderSearch/compact cards intact.
+
+## Shared Social Preview Banner Prepared - 2026-11-26
+
+- Owner approved the generated modern champagne-silver car/headlight/mirror/grille
+  image. It is bundled at public/images/social/flexdrive-og-modern-v1.jpg:
+  1200x630 JPEG,166103 bytes; visually inspected after export. No page hero changed.
+- Shared useSocialImage + utils/socialImage own OG/Twitter image URLs, alt and
+  known banner dimensions/type. URLs use existing siteUrl for each environment.
+  Genuine product SEO/primary/gallery photos and real CMS BlogInner article API
+  seo.image stay dynamic. Every other page uses this one banner, including home,
+  catalog/category/search, blog listing/contact/legal. Old CMS/ENV preview images
+  cannot override that rule; category's separate image override was removed.
+- Missing real photos use the banner; no Product JSON-LD photo is fabricated.
+  Dynamic photos do not inherit banner dimensions/type. Reactive getters follow
+  Nuxt4 useSeoMeta docs and restore metadata across reused CMS navigation.
+- Existing organization/publisher image settings remain available to those
+  consumers; their runtime code fallback now points to the bundled image.
+  Titles/canonicals/robots/access/tracking and visible shopping flows unchanged.
+-90 frontend source/SSR/client-head/catalog/product checks, scoped ESLint, strict
+  app vue-tsc and whitespace pass. Test harnesses now supply missing existing
+  vehicle-interest dependency (no event/HTTP). No browser/full build/server start,
+  backend/DB/ENV/migration/provider/cache-refresh/commit/push/deploy action.
+- Owner handles frontend push/deploy only; no new ENV/CMS upload/migration.
+  docs/SOCIAL_PREVIEW_IMAGE.md has source rules and post-deploy checks. Actual
+  Facebook/Messenger/Telegram preview delivery remains to verify after deploy.
+  Prior checkout/Credo/HeaderSearch and all unrelated edits were preserved.
+
+## Compact Desktop Checkout Payment Choices - 2026-11-26
+
+- User approved mobile appearance and requested compact elegant desktop payment
+  cards. Shared checkout payment grid now uses three equal minmax columns only
+  at769px+. Cards have124px minimum (not fixed) height,16px padding/radius,14px
+  titles/12px descriptions,28px max logo height and bottom-aligned logos/brands.
+- Duplicate card icon/status badge hidden only in desktop payment scope; card
+  availability description remains. Enabled Credo terms appear once below the
+  desktop grid; full per-radio descriptions remain screen-reader accessible.
+  Mobile0–768 and other BaseChoiceCard uses retain layout/styles. Common card
+  gained data hooks only; native controls/events/disabled/selected unchanged.
+- Both cart/BuyNow inherit the shared form. No prices/payment/validation/API/
+  backend/ENV/DB changes.43 existing checkout checks, scoped ESLint, strict app
+  vue-tsc, PostCSS syntax and whitespace pass. No new tests/full build/browser/
+  server start/deploy. Final desktop visual review remains with owner. Existing
+  HeaderSearch.vue edits and all ongoing Credo integration work preserved.
+
+## Credo Local Backend Schema Applied - 2026-11-25
+
+- User explicitly authorized local backend DB migrations. commerce0047/0048 now
+  applied to workspace db.sqlite3 after a verified ignored SQLite backup, in one
+  transaction. Independent READ ONLY verifies exact new empty tables/columns,
+  unchanged original business rows/schema/metadata, only expected migration,
+  content-type and permission additions. No user permissions were granted.
+- Fresh backend ORM/check passes; zero pending local migrations. This supersedes
+  older local-migration-pending notes. Production DB/ENV/deploy remain untouched.
+  Both bank request flags OFF/test mode ON; no bank/Wingo/tracking requests.
+- Next owner review/controlled-test access/configuration precedes an agreed
+  deployment and first real bank request. No frontend/browser server started.
+
+## Credo Checkout And Georgian Payment Choices Prepared - 2026-11-25
+
+- User authorized phased Credo integration; canonical plan is backend
+  docs/CREDO_INTEGRATION_PLAN.md. Both checkout paths now use two Georgian choices
+  with official public/payments SVGs, server availability, shared start API and
+  /checkout/credo/<uuid> status page. One Shop ID, one bank environment; requested
+  offer is local intent, no undocumented initial slider/term parameter or promise.
+- Backend now maps Credo settings and stores user-authorized credentials ONLY
+  in ignored/untracked backend .env. Never repeat/copy values to frontend/docs/Git.
+  New starts OFF/status HTTP OFF/test mode ON. No bank/Wingo API request,
+  schedule, production migration or deploy. Existing BOG/COD handlers retained.
+  Credential presence alone cannot enable requests;79 focused config checks pass.
+  Backend commerce0047/0048 are now applied locally; still required before the new production backend.
+- Financed total includes delivery. Owner RESOLVED pricing: merchant absorbs3%
+  for BOTH offers, customer surcharge0; continue financial step9. COD is retained
+  legacy code, unused; current active payment is card only.
+  Backend freezes merchant-paid3% and customer surcharge0; cash/fee/net are
+  separately recorded from a statement. Browser Purchase requires server
+  purchase_eligible; preserves original value/event ID and excludes test/review.
+  Credo receipt needs actual payment and scoped owner proof.
+  Production keys/configuration and real activation remain later agreed stages; never read/store secrets
+  in tracked files or browser. Source-only work is authorized, not live tests.
+- Local status GET is owner-bound/no-store. Start returns a signed HttpOnly access
+  cookie; session recovery stores only UUID plus source/account context, no bank
+  link/buyer number/secret. Replace local continue flag before external navigation;
+  Back/reload does not re-POST or redirect-loop. Exact bank origin/path allowlist.
+  API failure never means rejection; server controls when checkout can restart.
+- Read-only backend Credo admin, safe Wingo signed12/pending fulfillment and blocked
+  cross-provider cancellation/returns are prepared. Step9 accounting/Purchase is
+  now prepared: bank5 enables real consented Purchase, actual cash still needs
+  explicit statement confirmation. Signature/return alone never means Purchase.
+-43 checkout checks (20 new Credo +23 existing), scoped ESLint and strict app
+  vue-tsc pass. Backend broad381/focused131 checks pass in isolated memory SQLite.
+  No browser/full build or PostgreSQL concurrency proof. HeaderSearch.vue was
+  already modified before this task; preserve that unrelated change.
+
 ## Unified Mobile Search And Compact Catalog Chips - 2026-11-25
 
 - User approved changes only0–768px. Outside home/catalog listing, one button

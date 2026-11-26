@@ -31,8 +31,8 @@ export const sanitizeCheckoutDraft = (input: unknown): Partial<CheckoutFormValue
     }
   }
   if (typeof data.terms_accepted === "boolean") result.terms_accepted = data.terms_accepted;
-  if (data.payment_method === "card" || data.payment_method === "cash_on_delivery") {
-    result.payment_method = data.payment_method;
+  if (["card", "cash_on_delivery", "credo_installment", "credo_dayavi"].includes(String(data.payment_method))) {
+    result.payment_method = data.payment_method as CheckoutFormValues["payment_method"];
   }
   return result;
 };

@@ -16,6 +16,7 @@ import ProductFitments from "~/components/catalog/ProductFitments.vue";
 import ProductImageLightbox from "~/components/catalog/ProductImageLightbox.vue";
 import WishlistToggleButton from "~/components/commerce/WishlistToggleButton.vue";
 import ProductCard from "~/components/SmartComponents/ProductCatalog/parts/ProductCard.vue";
+import { useSocialImage } from "~/composables/useSocialImage";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
 import { useCatalogApi } from "~/composables/catalog/useCatalogApi";
 import { useProductGalleryPreload } from "~/composables/catalog/useProductGalleryPreload";
@@ -585,17 +586,7 @@ const relatedProducts = computed<CatalogProductCardData[]>(() =>
   })),
 );
 
-const primarySeoImage = computed(
-  () =>
-    product.value?.seo?.image ||
-    activeImage.value?.image?.desktop ||
-    activeImage.value?.image?.tablet ||
-    activeImage.value?.image?.mobile ||
-    settings.value?.default_seo_image ||
-    String(config.public.defaultSeoImage || "") ||
-    cardPlaceholderImage.desktop ||
-    undefined,
-);
+const primarySeoImage = computed(() => productSchemaImage(product.value));
 const productSeoTitle = computed(
   () => sanitizeText(product.value?.seo?.title) || productTitle.value,
 );
@@ -615,11 +606,7 @@ const productCanonicalPath = computed(
 const productCanonicalUrl = computed(() =>
   toAbsoluteUrl(siteUrl.value, productCanonicalPath.value),
 );
-const productSeoImage = computed(() => {
-  const image = primarySeoImage.value;
-  if (!image) return undefined;
-  return toAbsoluteUrl(siteUrl.value, image);
-});
+const productSeoImage = useSocialImage(primarySeoImage, productSeoTitle);
 const { robots: productRobots } = useIndexingPolicy({
   pageNoindex: computed(() => Boolean(product.value?.seo?.noindex)),
 });
@@ -686,10 +673,8 @@ useSeoMeta({
   ogUrl: () => productCanonicalUrl.value,
   ogTitle: () => productSeoTitle.value,
   ogDescription: () => productSeoDescription.value,
-  ogImage: () => productSeoImage.value,
   twitterTitle: () => productSeoTitle.value,
   twitterDescription: () => productSeoDescription.value,
-  twitterImage: () => productSeoImage.value,
 });
 
 const retryLoad = async () => {

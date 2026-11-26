@@ -1,3 +1,4 @@
+import { useSocialImage } from "~/composables/useSocialImage";
 import { formatSeoTitle } from "~/utils/seoTitle";
 import { storeToRefs } from "pinia";
 import { useIndexingPolicy } from "~/composables/useIndexingPolicy";
@@ -33,9 +34,6 @@ export const useSeoDefaults = (siteSettingsStore: ReturnType<typeof useSiteSetti
     config.public.defaultSeoDescription ||
       "შეიძინე ხარისხიანი ტაივანური ანალოგი ავტონაწილები FlexDrive-ზე. მოძებნე საჭირო ნაწილი და შეუკვეთე ბარათით გადახდით.",
   );
-  const fallbackDefaultImage = String(
-    config.public.defaultSeoImage || "/favicon.ico",
-  );
 
   const siteName = computed(
     () => String(settings.value?.site_name || fallbackSiteName),
@@ -52,12 +50,9 @@ export const useSeoDefaults = (siteSettingsStore: ReturnType<typeof useSiteSetti
         settings.value?.default_seo_description || fallbackDefaultDescription,
       ),
   );
-  const defaultImage = computed(
-    () => String(settings.value?.default_seo_image || fallbackDefaultImage),
-  );
 
   const canonicalUrl = computed(() => toAbsoluteUrl(siteUrl, route.path || "/"));
-  const ogImageUrl = computed(() => toAbsoluteUrl(siteUrl, defaultImage.value));
+  useSocialImage();
 
   useHead(() => ({
     titleTemplate: (titleChunk) => {
@@ -76,11 +71,9 @@ export const useSeoDefaults = (siteSettingsStore: ReturnType<typeof useSiteSetti
     ogLocale: "ka_GE",
     ogTitle: () => defaultTitle.value,
     ogDescription: () => defaultDescription.value,
-    ogImage: () => ogImageUrl.value,
     ogUrl: () => canonicalUrl.value,
     twitterCard: "summary_large_image",
     twitterTitle: () => defaultTitle.value,
     twitterDescription: () => defaultDescription.value,
-    twitterImage: () => ogImageUrl.value,
   });
 };

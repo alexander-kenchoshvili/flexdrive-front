@@ -1,5 +1,6 @@
 import type {
   CheckoutPaymentMethod,
+  CommerceStoredPaymentMethod,
   CommercePaymentStatus,
   CommerceOrderStatus,
 } from "~/types/commerce";
@@ -12,9 +13,12 @@ type TrackingStep = {
   state: TrackingStepState;
 };
 
-const paymentLabels: Record<CheckoutPaymentMethod, string> = {
+const paymentLabels: Record<CheckoutPaymentMethod | CommerceStoredPaymentMethod, string> = {
   cash_on_delivery: "ნაღდი ანგარიშსწორება",
   card: "ბარათით გადახდა",
+  credo: "კრედოს დაფინანსება",
+  credo_installment: "კრედოს განვადება",
+  credo_dayavi: "დაყავი",
 };
 
 const paymentStatusLabels: Record<CommercePaymentStatus, string> = {
@@ -102,15 +106,20 @@ export const useCommercePresentation = () => {
     statusBadgeClasses[status] ??
     "border-border-default bg-surface-2 text-text-secondary";
 
-  const getPaymentMethodLabel = (method: CheckoutPaymentMethod) =>
+  const getPaymentMethodLabel = (method: CheckoutPaymentMethod | CommerceStoredPaymentMethod) =>
     paymentLabels[method] ?? method;
 
   const getPaymentStatusLabel = (
     status: CommercePaymentStatus,
-    method?: CheckoutPaymentMethod,
+    method?: CheckoutPaymentMethod | CommerceStoredPaymentMethod,
   ) => {
     if (method === "cash_on_delivery" && status === "pending") {
       return "გადახდა ჩაბარებისას";
+    }
+
+    // Customer purchase confirmation does not depend on merchant settlement.
+    if (method === "credo" && (status === "pending" || status === "paid")) {
+      return "განვადება გაფორმებულია";
     }
 
     return paymentStatusLabels[status] ?? status;

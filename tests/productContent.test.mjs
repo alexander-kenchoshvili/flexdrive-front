@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { socialImageRuntime } from "./helpers/socialImage.mjs";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
@@ -101,6 +102,7 @@ async function page(overrides = {}, initialTab = "description") {
     useHead: (input) => headApi.useHead(input, { head }), useSeoMeta: (input) => headApi.useSeoMeta(input, { head }),
   };
   const mocks = {
+    "~/composables/useSocialImage": socialImageRuntime(globals),
     pinia: { storeToRefs: (store) => store }, "swiper/css": {}, "swiper/vue": { Swiper: stub, SwiperSlide: stub },
     "~/components/catalog/ProductFitments.vue": { default: fitmentsComponent },
     "~/utils/publicPageError": publicErrors, "~/utils/productSchemaImage": schemaImages,

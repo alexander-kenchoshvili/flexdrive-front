@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { socialImageRuntime } from "./helpers/socialImage.mjs";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
@@ -36,13 +37,15 @@ test("manual branding at the beginning and site names with punctuation are prese
 test("actual global title template renders automatic and manual product titles once", async () => {
   for (const title of ["Subaru Forester 2012–2018 — სარკის მარჯვენა ხუფი", "ჩემი სათაური | FlexDrive", "ჩემი სათაური | FlexDrive | FlexDrive"]) {
     const head = createHead({ disableDefaults: true });
-    const defaults = execute("app/composables/useSeoDefaults.ts", {
+    const globals = {
       ...vue, useRoute: () => ({ path: "/catalog/part-fd-02-0001" }),
       useRuntimeConfig: () => ({ public: { siteUrl: "https://flexdrive.ge", siteName: "FlexDrive" } }),
       useSiteSettings: () => ({ settings: vue.ref({ site_name: "FlexDrive" }) }),
       useHead: (input) => headApi.useHead(input, { head }),
       useSeoMeta: (input) => headApi.useSeoMeta(input, { head }),
-    }, {
+    };
+    const defaults = execute("app/composables/useSeoDefaults.ts", globals, {
+      "~/composables/useSocialImage": socialImageRuntime(globals),
       pinia: { storeToRefs: (store) => store },
       "~/utils/seoTitle": titles,
       "~/composables/useIndexingPolicy": { useIndexingPolicy: () => ({ robots: vue.ref("noindex, nofollow") }) },

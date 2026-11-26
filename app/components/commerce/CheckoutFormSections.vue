@@ -9,6 +9,7 @@ import type { CommerceDeliveryOption, DeliveryServiceSlug,
   CheckoutBuyerType,
   CheckoutPaymentMethod } from "~/types/commerce";
 import CheckoutPaymentMethodCard from "~/components/commerce/CheckoutPaymentMethodCard.vue";
+import CheckoutCredoPaymentMethods from "~/components/commerce/CheckoutCredoPaymentMethods.vue";
 import CheckoutSectionHeader from "~/components/commerce/CheckoutSectionHeader.vue";
 import {
   CHECKOUT_CASH_ON_DELIVERY_ENABLED,
@@ -19,6 +20,8 @@ import {
 defineProps<{
   disabled?: boolean;
   cardPaymentEnabled?: boolean;
+  credoPaymentEnabled?: boolean;
+  credoPaymentLoading?: boolean;
   cardPaymentLoading?: boolean;
   errors: CheckoutFieldErrors;
   personalNumberAttrs?: Record<string, unknown>;
@@ -154,7 +157,7 @@ const lastNameLabel = computed(() =>
         data-checkout-field="company_name"
         label="კომპანიის დასახელება *"
         autocomplete="organization"
-        placeholder="მაგალითად: შპს FlexDrive"
+        placeholder="მაგალითად: შპს ფლექსდრაივი"
         :error="errors.company_name"
         :disabled="disabled"
         required
@@ -422,9 +425,10 @@ v-if="deliveryOptions?.length" v-model="deliveryServiceSlug"
       აირჩიე შენთვის მოსახერხებელი გადახდის მეთოდი.
     </p>
 
-    <div class="mt-4 grid gap-3 sm:mt-6 sm:gap-4">
+    <div class="checkout-payment-options mt-4 grid gap-3 sm:mt-6 sm:gap-4">
       <CheckoutPaymentMethodCard
         v-if="CHECKOUT_CASH_ON_DELIVERY_ENABLED"
+        class="checkout-payment-option"
         method="cash_on_delivery"
         title="ნაღდი ანგარიშსწორება"
         description="დროებითი სატესტო რეჟიმი — თანხა გადაიხდება შეკვეთის მიღებისას."
@@ -434,6 +438,7 @@ v-if="deliveryOptions?.length" v-model="deliveryServiceSlug"
       />
 
       <CheckoutPaymentMethodCard
+        class="checkout-payment-option checkout-payment-option--card"
         method="card"
         title="ბარათით გადახდა"
         :description="
@@ -455,7 +460,20 @@ v-if="deliveryOptions?.length" v-model="deliveryServiceSlug"
         :disabled="disabled || cardPaymentLoading || !cardPaymentEnabled"
         @select="emit('selectPaymentMethod', $event)"
       />
+      <CheckoutCredoPaymentMethods
+        :model-value="paymentMethod" :enabled="credoPaymentEnabled"
+        :loading="credoPaymentLoading" :disabled="disabled"
+        @select="emit('selectPaymentMethod', $event)"
+      />
     </div>
+
+    <p
+      v-if="credoPaymentEnabled && !credoPaymentLoading"
+      class="checkout-credo-desktop-note"
+      aria-hidden="true"
+    >
+      საბოლოო პირობებს ირჩევთ კრედოს გვერდზე. დამტკიცებას წყვეტს კრედო.
+    </p>
 
     <p v-if="errors.payment_method" class="mt-3 text-sm text-error">
       {{ errors.payment_method }}
