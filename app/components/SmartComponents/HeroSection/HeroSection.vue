@@ -11,6 +11,9 @@ const props = defineProps<{
 }>();
 
 const heroTitle = computed(() => sanitizeText(props.data?.title));
+const heroTitleParts = computed(() => heroTitle.value
+  .split(/(თანხის\s+გაყოფ(?:ით|ა)|განვად(?:ებით|ება))/giu)
+  .map((text, index) => ({ text, accent: index % 2 === 1 })));
 const heroSubtitle = computed(() => sanitizeText(props.data?.subtitle));
 const heroPrimaryCtaText = computed(() => sanitizeText(props.data?.buttonText));
 
@@ -74,9 +77,13 @@ const trustItems = [
 
           <h1
             v-if="heroTitle"
-            class="hero-title upper text-[22px] font-extrabold leading-7 text-text-primary min-[769px]:text-[24px] min-[769px]:leading-8 lg:text-[32px] lg:leading-10 min-[1240px]:text-[44px] min-[1240px]:leading-[52px] xl:text-[48px] xl:leading-[56px]"
+            class="hero-title upper text-[22px] font-extrabold leading-[24px] text-text-primary min-[769px]:text-[24px] min-[769px]:leading-8 lg:text-[32px] lg:leading-10 min-[1240px]:text-[44px] min-[1240px]:leading-[52px] xl:text-[48px] xl:leading-[56px]"
           >
-            {{ heroTitle }}
+            <span
+              v-for="(part, index) in heroTitleParts"
+              :key="index"
+              :class="{ 'text-accent-primary': part.accent }"
+            >{{ part.text }}</span>
           </h1>
 
           <p
@@ -216,7 +223,6 @@ const trustItems = [
   }
 
   .hero-copy {
-    padding-top: 28px;
     padding-bottom: 24px;
   }
 
@@ -256,6 +262,11 @@ const trustItems = [
 
   :global(.dark) .hero-subtitle {
     color: color-mix(in srgb, var(--text-primary) 92%, var(--surface));
+  }
+}
+@media (max-width: 768px) {
+  .hero-copy {
+    padding-top: 4px;
   }
 }
 </style>

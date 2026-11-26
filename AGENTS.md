@@ -1,5 +1,21 @@
 # Project Instructions
 
+## Homepage Financing Title Accents Prepared - 2026-11-26
+
+- Owner adds wording in existing admin Hero title. HeroSection splits only
+  თანხის გაყოფით/თანხის გაყოფა and განვადებით/განვადება (case-insensitive)
+  into escaped inline spans with existing text-accent-primary. Light/dark token
+  colors apply automatically; no CMS markup, hard-coded title or v-html.
+-0–768px inclusive: hero-copy padding-top4px, H1 line-height24px. Existing769+
+  typography/spacing and the remaining hero image/overlay/CTA layout preserved.
+-7 actual Vue SSR cases verify wording, repeated/uppercase phrases, plain titles,
+  empty titles and HTML escaping. Generated Tailwind/scoped CSS inspected at
+  0/375/767/768/769; accent-vs-surface token contrast5.79light/11.47dark.
+  Scoped ESLint, strict app vue-tsc and whitespace pass. No new tracked tests,
+  browser/full build/server start, CMS/backend/DB/ENV/provider/commit/push/deploy.
+- Frontend deploy only. Owner can enter: ისარგებლე თანხის გაყოფით ან განვადებით.
+  Existing content remains admin-owned; no title/text was saved to the database.
+
 ## Shared Existing Payment Cron And Owner Refresh Prepared - 2026-11-26
 
 - Owner rejected paid worker/new cron; updated frontend status composable calls
