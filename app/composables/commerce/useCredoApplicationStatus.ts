@@ -5,13 +5,19 @@ import type { CommerceCredoApplication } from "~/types/commerce";
 
 const settled = new Set(["ready_to_ship", "funding_completed", "rejected", "cancelled", "start_failed", "review"]);
 export const useCredoApplicationStatus = (token: Ref<string>) => {
-  const { getCredoApplicationStatus } = useCommerceApi();
+  const { refreshCredoApplication } = useCommerceApi();
   const application = ref<CommerceCredoApplication | null>(null);
   const pending = ref(false);
   const error = ref<string | null>(null);
   let mounted = false;
   let generation = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const scheduleRefresh = () => {
+    timer = setTimeout(() => {
+      if (typeof document !== "undefined" && document.hidden) scheduleRefresh();
+      else void refresh();
+    }, 8000);
+  };
   const refresh = async () => {
     if (!mounted || pending.value) return;
     clearTimeout(timer);
@@ -19,7 +25,9 @@ export const useCredoApplicationStatus = (token: Ref<string>) => {
     const readGeneration = generation;
     pending.value = true;
     try {
-      const result = await getCredoApplicationStatus(token.value);
+      // Owner/CSRF-protected POST asks our server to refresh from the bank.
+      // Server enforces a shared 30-second cooldown across tabs and cron.
+      const result = await refreshCredoApplication(token.value);
       if (!mounted || generation !== readGeneration) return;
       application.value = result;
       error.value = null;
@@ -30,10 +38,7 @@ export const useCredoApplicationStatus = (token: Ref<string>) => {
       if (mounted && generation === readGeneration) {
         pending.value = false;
         if (!application.value || !settled.has(application.value.stage)) {
-          timer = setTimeout(() => {
-            if (typeof document === "undefined" || !document.hidden) void refresh();
-            else timer = setTimeout(() => void refresh(), 8000);
-          }, 8000);
+          scheduleRefresh();
         }
       }
     }

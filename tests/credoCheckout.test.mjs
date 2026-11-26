@@ -69,7 +69,7 @@ function mountStatus(api) {
   const timers = new Map(); let next = 0; let state;
   const value = vue.ref(token);
   const module = evaluate(read("app/composables/commerce/useCredoApplicationStatus.ts"), {
-    "~/composables/commerce/useCommerceApi": { useCommerceApi: () => ({ getCredoApplicationStatus: api }) },
+    "~/composables/commerce/useCommerceApi": { useCommerceApi: () => ({ refreshCredoApplication: api }) },
     "~/utils/credoCheckout": util,
   }, { setTimeout: (fn) => { timers.set(++next, fn); return next; }, clearTimeout: (id) => timers.delete(id) });
   const mounted = renderer.createApp({ setup() { state = module.useCredoApplicationStatus(value); return () => null; } });
@@ -120,6 +120,25 @@ test("returning from the bank refreshes once and removes listeners on unmount", 
   } finally {
     page?.unmount();
     if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;
+    if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
+  }
+});
+
+test("hidden tab never polls bank refresh in the background and resumes on return", async () => {
+  const originalDocument = globalThis.document;
+  const listeners = new Map(); let page; let calls = 0;
+  globalThis.document = { hidden: false, addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: (event) => listeners.delete(event) };
+  try {
+    page = mountStatus(async () => { calls++; return app(); }); await flush();
+    globalThis.document.hidden = true;
+    for (let i = 0; i < 3; i++) {
+      const [id, callback] = [...page.timers][0]; page.timers.delete(id); callback(); await flush();
+      assert.equal(calls, 1); assert.equal(page.timers.size, 1);
+    }
+    globalThis.document.hidden = false; listeners.get("visibilitychange")(); await flush();
+    assert.equal(calls, 2);
+  } finally {
+    page?.unmount();
     if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
   }
 });

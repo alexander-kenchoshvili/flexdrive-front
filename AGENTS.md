@@ -1,5 +1,24 @@
 # Project Instructions
 
+## Shared Existing Payment Cron And Owner Refresh Prepared - 2026-11-26
+
+- Owner rejected paid worker/new cron; updated frontend status composable calls
+  new owner/CSRF-protected POST /commerce/payments/credo/<uuid>/refresh/ every8s
+  while visible. Backend enforces shared30s bank cooldown/lease across tabs/cron;
+  existing GET remains local/read-only. No secret/bank evidence from browser.
+- Hidden tabs send no refresh requests; return focus refreshes promptly. Existing
+  manual-only loading, no-flicker button behavior, initial-label removal and
+  customer purchase wording remain. No source snapshot/checkout amount change.
+-47 checkout checks, scoped ESLint and strict app vue-tsc pass. Backend105 scoped
+  regressions pass; no new migration. Owner needs BOTH repos deployed again.
+  Existing bog-payment-reconciliation job later changes run command to
+  `python manage.py reconcile_payments --limit 100 --min-age-minutes 10 --retry-minutes 15 --max-seconds 600`;
+  keep15m schedule/component/size and increase existing12m timeout to15m. No new
+  worker/job; disabled Credo skips only Credo, provider failures are isolated.
+- No real bank/DB/ENV/browser/DO/push/deploy action in this source task. Backend
+  production commerce0047/0048/pages0088 already applied; no repeat needed.
+  Backend docs/CREDO_INTEGRATION_PLAN.md records current rollout and limits.
+
 ## Customer Credo Confirmation Copy Clarified - 2026-11-26
 
 - Owner rejected showing merchant settlement wait to customers. Shared public

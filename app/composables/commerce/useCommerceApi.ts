@@ -244,6 +244,10 @@ export const useCommerceApi = () => {
     `/commerce/payments/credo/${token}/`, { retry: 0 },
   );
 
+  const refreshCredoApplication = async (token: string) => apiFetchRaw<CommerceCredoApplication>(
+    `/commerce/payments/credo/${token}/refresh/`, { method: "POST", body: {}, retry: 0 },
+  );
+
   const getCardPaymentStatus = async (paymentToken: string) => {
     return apiFetchRaw<CommerceCardPayment>(
       `/commerce/payments/card/${paymentToken}/`,
@@ -319,6 +323,7 @@ export const useCommerceApi = () => {
     getCredoAvailability,
     startCredoApplication,
     getCredoApplicationStatus,
+    refreshCredoApplication,
     startCartCardPayment,
     startBuyNowCardPayment,
     getCardPaymentStatus,
