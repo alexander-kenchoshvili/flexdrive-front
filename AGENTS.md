@@ -1,5 +1,24 @@
 # Project Instructions
 
+## Page Visitors And Sources Prepared - 2026-11-27
+
+- Owner requested page visitors/source details in the EXISTING Google / Website
+  analytics / Pages and devices tab. Added blogs/articles/catalog categories,
+  20-row remote pagination and title/path search; >500 matches asks to narrow.
+  Search discovers paths then reads full metrics, avoiding title-split users.
+- Selected public path shows period users/sessions/views/active time, daily rows
+  and first50 session sources with total count. Independent Facebook aggregate
+  deduplicates across its subdomains; never sum unique users across sources/days.
+  Source is session acquisition, not proof of the landing page/post or full reading.
+- Existing private pages GET/session/no-store/host guards retained; scoped caches,
+  stale/missing states and abort/late-response protection. No visitor identity.
+- Live read-only GA4 check for Nov23-26 confirms Subaru search result20 users,
+  28 views/22 sessions; Facebook18 users/26 views/20 sessions. No event sent.
+  Scoped backend/frontend tests, ESLint and strict app vue-tsc verified. No browser,
+  dev server/full build, migration/working DB/ENV/provider write/push/deploy.
+- Deploy BOTH repositories; no new credentials or migration. Details are in
+  paired backend docs/BUSINESS_PAGE_ANALYTICS.md. Existing unrelated work preserved.
+
 ## Homepage Financing Title Accents Prepared - 2026-11-26
 
 - Owner adds wording in existing admin Hero title. HeroSection splits only
